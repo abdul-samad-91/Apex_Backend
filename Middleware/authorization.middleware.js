@@ -1,7 +1,7 @@
+require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const User = require("../Models/user.model");
 
-// 🔹 Protect (Token Verification)
 const protect = async (req, res, next) => {
   let token;
 

@@ -1,5 +1,6 @@
 const User = require('../Models/user.model');
 const bcrypt = require('bcrypt');
+const {generateToken} = require("../utils/generateToken")
 
 // Create new user
 const createUser = async (req, res) => {
@@ -41,7 +42,6 @@ const createUser = async (req, res) => {
     const existingUser = await User.findOne({
       $or: [{ email }, { cnic }, { phoneNumber }],
     });
-
     if (existingUser) {
       return res.status(400).json({
         message: "User already exists with provided email, CNIC, or phone number",
@@ -63,8 +63,8 @@ const createUser = async (req, res) => {
 
     await user.save();
 
-    const token = generateToken(user._id . user.role);
-
+    const token = generateToken(user._id . role);
+    console.log(token);
     res.status(201).json({
       message: "User created successfully",
     //   user: {
@@ -86,6 +86,7 @@ const createUser = async (req, res) => {
       }
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Error creating user",
       error: error.message,

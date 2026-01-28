@@ -17,6 +17,8 @@
     app.use(requestLogger);
     app.use(express.static(path.join(__dirname ,"public")))
 
+    connectDB();
+
     // Routes
     app.get('/', (req, res) => {
         // res.json({ message: 'Welcome to Apex Backend API' });
@@ -29,14 +31,6 @@
     app.use(notFound);
     app.use(errorHandler);
 
-    // Connect to MongoDB **after server starts**
-    connectDB()
-        .then(() => {
-            console.log('MongoDB connected successfully');
-        })
-        .catch((err) => {
-            console.error('MongoDB connection error:', err);
-        });
     // Start server immediately
     app.listen(PORT, () => {
         console.log(`🚀 Server is running on port ${PORT}`);
