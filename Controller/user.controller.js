@@ -3,40 +3,82 @@ const bcrypt = require('bcrypt');
 
 // Create new user
 const createUser = async (req, res) => {
-    try {
-        const { name, email, password, role } = req.body;
+  try {
+    const {
+      fullName,
+      cnic,
+      email,
+      phoneNumber,
+      password,
+      confirmPassword,
+      role,
+    } = req.body;
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create new user
-        const user = new User({
-            name,
-            email,
-            password: hashedPassword,
-            role
-        });
-
-        await user.save();
-
-        res.status(201).json({ 
-            message: 'User created successfully',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating user', error: error.message });
+    // 🔹 Required fields check
+    if (!fullName || !cnic || !email || !phoneNumber || !password || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required" });
     }
+
+    // 🔹 Regex validations
+    // if (!CNIC_REGEX.test(cnic)) {
+    //   return res.status(400).json({ message: "Invalid CNIC format" });
+    // }
+
+    // if (!EMAIL_REGEX.test(email)) {
+    //   return res.status(400).json({ message: "Invalid email format" });
+    // }
+
+    // if (!PHONE_REGEX.test(phoneNumber)) {
+    //   return res.status(400).json({ message: "Invalid phone number format" });
+    // }
+
+    // 🔹 Password match check
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    // 🔹 Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [{ email }, { cnic }, { phoneNumber }],
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists with provided email, CNIC, or phone number",
+      });
+    }
+
+    // 🔹 Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 🔹 Create new user
+    const user = new User({
+      fullName,
+      cnic,
+      email,
+      phoneNumber,
+      password: hashedPassword,
+      role,
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      message: "User created successfully",
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error creating user",
+      error: error.message,
+    });
+  }
 };
 
 // Get all users
