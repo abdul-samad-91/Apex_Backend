@@ -63,15 +63,27 @@ const createUser = async (req, res) => {
 
     await user.save();
 
+    const token = generateToken(user._id . user.role);
+
     res.status(201).json({
       message: "User created successfully",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-      },
+    //   user: {
+    //     id: user._id,
+    //     fullName: user.fullName,
+    //     email: user.email,
+    //     phoneNumber: user.phoneNumber,
+    //     role: user.role,
+    //   },
+          data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role
+        },
+        token
+      }
     });
   } catch (error) {
     res.status(500).json({
