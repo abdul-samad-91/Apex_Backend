@@ -15,12 +15,12 @@
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(requestLogger);
-    app.use(express.static(path.join(__dirname ,"Public")))
+    app.use(express.static(path.join(__dirname ,"public")))
 
     // Routes
     app.get('/', (req, res) => {
         // res.json({ message: 'Welcome to Apex Backend API' });
-        res.sendFile(path.join(__dirname , "Public" , "index.html"));
+        res.sendFile(path.join(__dirname , "public" , "index.html"));
     });
 
     app.use('/api/users', userRoutes);
