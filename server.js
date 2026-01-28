@@ -29,9 +29,16 @@
     app.use(notFound);
     app.use(errorHandler);
 
-    // Connect to MongoDB and start server
-    connectDB().then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
+    // Connect to MongoDB **after server starts**
+    connectDB()
+        .then(() => {
+            console.log('✅ MongoDB connected successfully');
+        })
+        .catch((err) => {
+            console.error('❌ MongoDB connection error:', err);
         });
+    // Start server immediately
+    app.listen(PORT, () => {
+        console.log(`🚀 Server is running on port ${PORT}`);
+
     });
