@@ -32,10 +32,10 @@
     // Connect to MongoDB **after server starts**
     connectDB()
         .then(() => {
-            console.log('✅ MongoDB connected successfully');
+            console.log('MongoDB connected successfully');
         })
         .catch((err) => {
-            console.error('❌ MongoDB connection error:', err);
+            console.error('MongoDB connection error:', err);
         });
     // Start server immediately
     app.listen(PORT, () => {
