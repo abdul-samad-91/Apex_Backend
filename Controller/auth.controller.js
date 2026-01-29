@@ -14,6 +14,7 @@ const {generateToken} = require('../utils/generateToken')
         message: 'Please provide username and password'
       });
     }
+    console.log(email,password )
     // Find user
     const user = await User.findOne({ email }).select('+password');
     console.log("users",user)
@@ -50,7 +51,7 @@ const {generateToken} = require('../utils/generateToken')
           email: user.email,
           fullName: user.fullName,
           role: user.role
-        },
+       },
         token
       }
     });
