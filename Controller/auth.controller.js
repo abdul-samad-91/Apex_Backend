@@ -16,6 +16,7 @@ const {generateToken} = require('../utils/generateToken')
     }
     // Find user
     const user = await User.findOne({ email }).select('+password');
+    console.log("users",user)
     if (!user || !user.isActive) {
       return res.status(401).json({
         success: false,
@@ -24,6 +25,8 @@ const {generateToken} = require('../utils/generateToken')
     }
     // Check password
     const isPasswordMatch = await user.comparePassword(password);
+    console.log(isPasswordMatch);
+    
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
