@@ -1,6 +1,7 @@
     const express = require('express');
     const connectDB = require('./Config/DB');
     const userRoutes = require('./Routes/user.routes');
+    const transactionRoutes = require('./Routes/transaction.routes');
     const { 
         requestLogger, 
         errorHandler, 
@@ -26,6 +27,7 @@
     });
 
     app.use('/api/users', userRoutes);
+    app.use("/api/transactions", transactionRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);
