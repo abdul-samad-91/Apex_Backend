@@ -18,8 +18,11 @@ router.post('/register', createUser);
 // authenticate user/admin
 router.post ('/auth' , login)
 
-// Get all users
-router.get('/', protect , isAdmin , getAllUsers);
+// Get all users (must be before /:id route)
+router.get('/getAllUsers', protect, isAdmin , getAllUsers);
+
+// Update password (must be before /:id route)
+router.put('/:id/password', protect, updatePassword);
 
 // Get user by ID
 router.get('/:id', protect  , getUserById);
@@ -28,9 +31,6 @@ router.get('/:id', protect  , getUserById);
 router.put('/:id' , protect , updateUser);
 
 // Delete user
-router.delete('/:id', protect , isAdmin ,  deleteUser);
-
-// Update password
-router.put('/:id/password', protect , updatePassword);
+router.delete('/:id' , protect , isAdmin , deleteUser);
 
 module.exports = router;

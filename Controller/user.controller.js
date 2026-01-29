@@ -48,22 +48,19 @@ const createUser = async (req, res) => {
       });
     }
 
-    // 🔹 Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 🔹 Create new user
+    // 🔹 Create new user (password will be hashed by pre-save hook)
     const user = new User({
       fullName,
       cnic,
       email,
       phoneNumber,
-      password: hashedPassword,
+      password, // Don't hash here - let the model handle it
       role,
     });
 
     await user.save();
 
-    const token = generateToken(user._id . role);
+    const token = generateToken(user._id, role);
     console.log(token);
     res.status(201).json({
       message: "User created successfully",
