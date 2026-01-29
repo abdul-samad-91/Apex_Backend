@@ -7,7 +7,7 @@ const {protect , isAdmin} = require("../Middleware/authorization.middleware");
 const upload = require('../Middleware/upload.middleware');
 
 // Create new transaction (with file upload)
-router.post('/createTransaction/:id', protect, upload.single('screenshot'), createTransaction);
+router.post('/createTransaction', protect, upload.single('screenshot'), createTransaction);
 
 // Get all transactions (admin only)
 router.get('/getAllTransactions', protect, getAllTransactions);
