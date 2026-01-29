@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-    createTransaction, getAllTransactions
+    createTransaction, getAllTransactions, updateTransactionStatus
 } = require('../Controller/transaction.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware");
 const upload = require('../Middleware/upload.middleware');
@@ -11,6 +11,9 @@ router.post('/createTransaction', protect, upload.single('screenshot'), createTr
 
 // Get all transactions (admin only)
 router.get('/getAllTransactions', protect, getAllTransactions);
+
+// Update transaction status (admin only)
+router.put("/updateTransactionStatus/:id", protect, isAdmin, updateTransactionStatus);
 
 
 module.exports = router;

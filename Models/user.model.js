@@ -16,7 +16,14 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      match: /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/,
+      validate: {
+        validator: function(v) {
+          // Remove all non-digit characters and check if it's exactly 13 digits
+          const digitsOnly = v.replace(/\D/g, '');
+          return digitsOnly.length === 13;
+        },
+        message: 'CNIC must contain exactly 13 digits'
+      }
     },
 
     email: {
@@ -53,11 +60,29 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    apexCoins:{
+      type: Number,
+      default: 0
+    }
   },
   {
     timestamps: true,
   }
 );
+
+// Format CNIC to add dashes if not present
+userSchema.pre("save", function () {
+  if (this.isModified("cnic") && this.cnic) {
+    // Remove all non-digit characters first
+    const cnicWithoutDashes = this.cnic.replace(/\D/g, "");
+    
+    // Check if it's exactly 13 digits
+    if (/^\d{13}$/.test(cnicWithoutDashes)) {
+      // Format as: 12345-1234567-1
+      this.cnic = `${cnicWithoutDashes.slice(0, 5)}-${cnicWithoutDashes.slice(5, 12)}-${cnicWithoutDashes.slice(12)}`;
+    }
+  }
+});
 
 // Hash password before saving
 userSchema.pre("save", async function () {
