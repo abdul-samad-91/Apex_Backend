@@ -35,7 +35,7 @@ const {generateToken} = require('../utils/generateToken')
     user.lastLogin = new Date();
     await user.save();
 
-    const token = generateToken(user._id . user.role);
+    const token = generateToken(user._id, user.role);
 
     res.status(200).json({
       success: true,
