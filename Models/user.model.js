@@ -63,6 +63,18 @@ const userSchema = new mongoose.Schema(
     apexCoins:{
       type: Number,
       default: 0
+    },
+    isVerified:{
+      type: Boolean,
+      default: false
+    },
+    otp: {
+      type: String,
+      select: false
+    },
+    otpExpiry: {
+      type: Date,
+      select: false
     }
   },
   {

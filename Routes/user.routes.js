@@ -7,13 +7,21 @@ const {
     getUserById,
     updateUser,
     deleteUser,
-    updatePassword
+    updatePassword,
+    verifyOTP,
+    resendOTP
 } = require('../Controller/user.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
 
 // Create new user
 router.post('/register', createUser);
+
+// Verify OTP
+router.post('/verify-otp', verifyOTP);
+
+// Resend OTP
+router.post('/resend-otp', resendOTP);
 
 // authenticate user/admin
 router.post ('/auth' , login)
