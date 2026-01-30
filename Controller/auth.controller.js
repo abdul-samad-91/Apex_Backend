@@ -14,6 +14,7 @@ const {generateToken} = require('../utils/generateToken')
         message: 'Please provide username and password'
       });
     }
+    console.log("details",email,password )
     // Find user
     const user = await User.findOne({ email }).select('+password');
     if (!user || !user.isActive) {
@@ -24,6 +25,7 @@ const {generateToken} = require('../utils/generateToken')
     }
     // Check password
     const isPasswordMatch = await user.comparePassword(password);
+    
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
@@ -47,7 +49,7 @@ const {generateToken} = require('../utils/generateToken')
           email: user.email,
           fullName: user.fullName,
           role: user.role
-        },
+       },
         token
       }
     });
