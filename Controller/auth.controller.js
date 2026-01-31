@@ -48,7 +48,8 @@ const {generateToken} = require('../utils/generateToken')
           username: user.username,
           email: user.email,
           fullName: user.fullName,
-          role: user.role
+          role: user.role,
+          isVerified: user.isVerified,
        },
         token
       }
