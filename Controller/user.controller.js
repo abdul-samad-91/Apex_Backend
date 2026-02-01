@@ -8,17 +8,20 @@ const createUser = async (req, res) => {
   try {
     const {
       fullName,
-      cnic,
       email,
       phoneNumber,
       password,
       confirmPassword,
       role,
       isVerified,
+      referralCode 
     } = req.body;
 
+    let referredByUser = null;
+    let referralChain = [];
+
     // 🔹 Required fields check
-    if (!fullName || !cnic || !email || !phoneNumber || !password || !confirmPassword) {
+    if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -42,13 +45,29 @@ const createUser = async (req, res) => {
 
     // 🔹 Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { cnic }, { phoneNumber }],
+      $or: [{ email }],
     });
     if (existingUser) {
       return res.status(400).json({
-        message: "User already exists with provided email, CNIC, or phone number",
+        message: "User already exists with provided email",
       });
     }
+
+
+
+  if (referralCode) {
+    referredByUser = await User.findOne({ referralCode });
+
+    if (!referredByUser) {
+      return res.status(400).json({ message: "Invalid referral code" });
+    }
+
+    referralChain = [
+      referredByUser._id,
+      ...(referredByUser.referralChain || [])
+    ];
+  }
+
 
     // 🔹 Generate OTP
     const otp = generateOTP();
@@ -57,14 +76,16 @@ const createUser = async (req, res) => {
     // 🔹 Create new user (password will be hashed by pre-save hook)
     const user = new User({
       fullName,
-      cnic,
       email,
       phoneNumber,
       password, // Don't hash here - let the model handle it
       role,
       otp,
       otpExpiry,
-      isVerified: false
+      isVerified: false,
+      referralCode: generateReferralCode(),
+      referredBy: referredByUser?._id || null,
+      referralChain
     });
 
     await user.save();
