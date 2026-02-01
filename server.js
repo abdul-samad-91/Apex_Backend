@@ -4,6 +4,7 @@
     const userRoutes = require('./Routes/user.routes');
     const transactionRoutes = require('./Routes/transaction.routes');
     const gatewayRoutes = require('./Routes/gateway.routes');
+    const roiRoutes = require('./Routes/roi.routes');
     const cors = require('cors');
     const { 
         requestLogger, 
@@ -40,6 +41,7 @@
     app.use('/api/users', userRoutes);
     app.use("/api/transactions", transactionRoutes);
     app.use('/api/gateways', gatewayRoutes);
+    app.use('/api/roi', roiRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);
