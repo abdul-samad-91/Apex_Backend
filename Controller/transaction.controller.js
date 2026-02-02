@@ -84,29 +84,37 @@ const updateTransactionStatus = async (req, res) => {
             return res.status(400).json({ message: "Status is required" });
         }
 
-        // Find and update transaction using findByIdAndUpdate to avoid validation issues
-        const transaction = await Transaction.findByIdAndUpdate(
-            transactionId,
-            { status },
-            { new: true, runValidators: false } // Disable validators to avoid user field validation
-        );
+        // Find the transaction first to get the current status and amount
+        const transaction = await Transaction.findById(transactionId);
         
         if (!transaction) {
             return res.status(404).json({ message: "Transaction not found" });
         }
         
-        // If approved, add coins to user
-        if (status === "approved" && transaction.user) {
-            const User = require('../Models/user.model');
+        // If approving a pending transaction, add coins to user
+        if (status === "approved" && transaction.status !== "approved" && transaction.user) {
             const user = await User.findById(transaction.user);
             if (user) {
-                user.apexCoins += parseFloat(transaction.amount);
+                // Convert amount to number and add to apexCoins
+                const amountToAdd = parseFloat(transaction.amount);
+                user.apexCoins = (user.apexCoins || 0) + amountToAdd;
                 await user.save();
+                console.log(`Added ${amountToAdd} apexCoins to user ${user._id}. New balance: ${user.apexCoins}`);
+            } else {
+                return res.status(404).json({ message: "User not found" });
             }
         }
         
-        res.status(200).json({ message: "Transaction status updated successfully", transaction });
+        // Update transaction status
+        transaction.status = status;
+        await transaction.save();
+        
+        res.status(200).json({ 
+            message: "Transaction status updated successfully", 
+            transaction 
+        });
     } catch (error) {
+        console.error("Error updating transaction status:", error);
         res.status(500).json({ message: error.message });
     }   
 };
