@@ -75,7 +75,31 @@ const userSchema = new mongoose.Schema(
     otpExpiry: {
       type: Date,
       select: false
-    }
+    },
+    
+    referralCode: {
+      type: String,
+      unique: true
+    },
+
+    // DIRECT referrer
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+
+    // DIRECT referrals
+    referrals: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }],
+
+    // INDIRECT chain (A → B → C → D)
+    referralChain: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }]
   },
   {
     timestamps: true,

@@ -4,12 +4,17 @@
     const connectDB = require('./Config/DB');
     const userRoutes = require('./Routes/user.routes');
     const transactionRoutes = require('./Routes/transaction.routes');
+    const gatewayRoutes = require('./Routes/gateway.routes');
+    const roiRoutes = require('./Routes/roi.routes');
+    const cors = require('cors');
     const { 
         requestLogger, 
         errorHandler, 
         notFound 
     } = require('./Middleware/middleware');
     const path = require("path")
+
+
 
     const app = express();
     const PORT = process.env.PORT || 3000;
@@ -23,6 +28,12 @@
     }));
 
     // Middleware
+    
+    app.use(cors({
+        origin: ['http://localhost:5173','https://apex-admin-gules.vercel.app'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        // allowedHeaders: ['Content-Type', 'Authorization']
+    }));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(requestLogger);
@@ -38,6 +49,8 @@
 
     app.use('/api/users', userRoutes);
     app.use("/api/transactions", transactionRoutes);
+    app.use('/api/gateways', gatewayRoutes);
+    app.use('/api/roi', roiRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);
