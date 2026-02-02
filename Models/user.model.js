@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
 
     cnic: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
       trim: true,
       validate: {

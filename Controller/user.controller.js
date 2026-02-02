@@ -2,6 +2,7 @@ const User = require('../Models/user.model');
 const bcrypt = require('bcrypt');
 const {generateToken} = require("../utils/generateToken");
 const { generateOTP, sendOTPEmail } = require('../utils/sendEmail');
+const generateReferralCode = require('../utils/generateReferalCode');
 
 // Create new user
 const createUser = async (req, res) => {
