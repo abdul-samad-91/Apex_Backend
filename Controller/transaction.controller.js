@@ -1,5 +1,4 @@
 const Transaction = require('../Models/transaction.model');
-const cloudinary = require('../Config/cloudinary');
 const User = require('../Models/user.model');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 

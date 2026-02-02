@@ -6,7 +6,6 @@
     const transactionRoutes = require('./Routes/transaction.routes');
     const gatewayRoutes = require('./Routes/gateway.routes');
     const roiRoutes = require('./Routes/roi.routes');
-    const cors = require('cors');
     const { 
         requestLogger, 
         errorHandler, 
@@ -17,11 +16,11 @@
 
 
     const app = express();
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 5000;
 
     // CORS configuration
     app.use(cors({
-        origin: ['http://localhost:5173', 'http://localhost:3000'],
+        origin: ['http://localhost:5173', 'http://localhost:5000'],
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization']

@@ -6,9 +6,9 @@ const upload = require('../Middleware/upload.middleware');
 
 
 // Admin creates a gateway
-router.post('/', protect, isAdmin, protect, upload.single('accountImage'), createGateway);
+router.post('/gateway', protect, isAdmin, protect, upload.single('accountImage'), createGateway);
 
 // Public: list gateways
-router.get('/', getGateways);
+router.get('/getAllGateways', getGateways);
 
 module.exports = router;
