@@ -9,6 +9,8 @@ const createTransaction = async (req, res) => {
         transactionId,
         amount,
         accountName,
+        bankAccountNumber,
+        bankName,
         status
     } = req.body;
     
@@ -49,6 +51,8 @@ const createTransaction = async (req, res) => {
         screenshotUrl,
         amount,
         accountName,
+        bankAccountNumber,
+        bankName,
         status
     });
     await transaction.save();
@@ -68,6 +72,41 @@ const getAllTransactions = async (req, res) => {
     try {
         const transactions = await Transaction.find();
         res.status(200).json(transactions);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Get transaction history for a specific user
+const getUserTransactionHistory = async (req, res) => {
+    try {
+        const userId = req.params.userId || req.user._id; // Support both route param and authenticated user
+        
+        const transactions = await Transaction.find({ user: userId })
+            .sort({ createdAt: -1 }) // Most recent first
+            .select('transactionId amount accountName bankAccountNumber bankName status createdAt updatedAt screenshotUrl')
+            .lean();
+        
+        // Format the response with all required fields
+        const formattedTransactions = transactions.map(txn => ({
+            transactionId: txn.transactionId,
+            date: new Date(txn.createdAt).toLocaleDateString(),
+            time: new Date(txn.createdAt).toLocaleTimeString(),
+            amount: txn.amount,
+            accountName: txn.accountName,
+            bankAccountNumber: txn.bankAccountNumber || 'N/A',
+            bankName: txn.bankName || 'N/A',
+            status: txn.status,
+            screenshotUrl: txn.screenshotUrl,
+            createdAt: txn.createdAt,
+            updatedAt: txn.updatedAt
+        }));
+        
+        res.status(200).json({
+            message: 'Transaction history retrieved successfully',
+            count: formattedTransactions.length,
+            transactions: formattedTransactions
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -123,5 +162,6 @@ const updateTransactionStatus = async (req, res) => {
 module.exports = {
     createTransaction,
     getAllTransactions,
+    getUserTransactionHistory,
     updateTransactionStatus
 };

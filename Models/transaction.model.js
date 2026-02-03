@@ -25,6 +25,14 @@ const transactionSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    bankAccountNumber:{
+        type: String,
+        trim: true
+    },
+    bankName:{
+        type: String,
+        trim: true
+    },
     status:{
         type: String,
         enum: ["pending", "approved", "rejected"],
