@@ -47,6 +47,7 @@ const createUser = async (req, res) => {
             if (!referredByUser) {
                 return res.status(400).json({ message: "Invalid referral code" });
             }
+            // Build the referral chain: direct referrer + their chain
             referralChain = [
                 referredByUser._id,
                 ...(referredByUser.referralChain || [])
@@ -87,6 +88,27 @@ const createUser = async (req, res) => {
                 });
 
     await user.save();
+
+    // Add new user to referrer's referrals array and update referral chain
+    if (referredByUser) {
+        // Add new user ID to the direct referrer's referrals array
+        await User.findByIdAndUpdate(
+            referredByUser._id,
+            { $push: { referrals: user._id } }
+        );
+
+        // Update referral chain for all users in the chain
+        // Each user in the chain should have this new user in their referrals
+        if (referralChain.length > 1) {
+            // Update all users in the referral chain (except the direct referrer, already updated)
+            for (let i = 1; i < referralChain.length; i++) {
+                await User.findByIdAndUpdate(
+                    referralChain[i],
+                    { $addToSet: { referrals: user._id } } // $addToSet prevents duplicates
+                );
+            }
+        }
+    }
 
     // 🔹 Send OTP email
     const emailResult = await sendOTPEmail(email, otp, fullName);
