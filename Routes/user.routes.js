@@ -14,8 +14,9 @@ const {
 const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
 
-// Create new user
-router.post('/register', createUser);
+const upload = require('../Middleware/upload.middleware');
+// Create new user (with profile picture upload)
+router.post('/register', upload.single('profilePicture'), createUser);
 
 // Verify OTP
 router.post('/verify-otp', verifyOTP);

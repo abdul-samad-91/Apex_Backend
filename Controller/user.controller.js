@@ -4,90 +4,86 @@ const {generateToken} = require("../utils/generateToken");
 const { generateOTP, sendOTPEmail } = require('../utils/sendEmail');
 const generateReferralCode = require('../utils/generateReferalCode');
 
+const uploadToCloudinary = require('../utils/uploadToCloudinary');
 // Create new user
 const createUser = async (req, res) => {
-  try {
-    const {
-      fullName,
-      email,
-      phoneNumber,
-      password,
-      confirmPassword,
-      role,
-      isVerified,
-      referralCode 
-    } = req.body;
+    try {
+        const {
+            fullName,
+            email,
+            phoneNumber,
+            password,
+            confirmPassword,
+            role,
+            isVerified,
+            referralCode 
+        } = req.body;
 
-    let referredByUser = null;
-    let referralChain = [];
+        let referredByUser = null;
+        let referralChain = [];
 
-    // 🔹 Required fields check
-    if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+        // Required fields check
+        if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
 
-    // 🔹 Regex validations
-    // if (!CNIC_REGEX.test(cnic)) {
-    //   return res.status(400).json({ message: "Invalid CNIC format" });
-    // }
+        // Password match check
+        if (password !== confirmPassword) {
+            return res.status(400).json({ message: "Passwords do not match" });
+        }
 
-    // if (!EMAIL_REGEX.test(email)) {
-    //   return res.status(400).json({ message: "Invalid email format" });
-    // }
+        // Check if user already exists
+        const existingUser = await User.findOne({
+            $or: [{ email }],
+        });
+        if (existingUser) {
+            return res.status(400).json({
+                message: "User already exists with provided email",
+            });
+        }
 
-    // if (!PHONE_REGEX.test(phoneNumber)) {
-    //   return res.status(400).json({ message: "Invalid phone number format" });
-    // }
+        if (referralCode) {
+            referredByUser = await User.findOne({ referralCode });
+            if (!referredByUser) {
+                return res.status(400).json({ message: "Invalid referral code" });
+            }
+            referralChain = [
+                referredByUser._id,
+                ...(referredByUser.referralChain || [])
+            ];
+        }
 
-    // 🔹 Password match check
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
+        // Handle profile picture upload
+        let profilePictureUrl = null;
+        if (req.file) {
+            try {
+                const uploadResult = await uploadToCloudinary(req.file.buffer);
+                profilePictureUrl = uploadResult.secure_url;
+            } catch (err) {
+                return res.status(500).json({ message: 'Profile image upload failed', error: err.message });
+            }
+        }
 
-    // 🔹 Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }],
-    });
-    if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists with provided email",
-      });
-    }
+        // Generate OTP
+        const otp = generateOTP();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
 
+        // Create new user (password will be hashed by pre-save hook)
 
-
-  if (referralCode) {
-    referredByUser = await User.findOne({ referralCode });
-
-    if (!referredByUser) {
-      return res.status(400).json({ message: "Invalid referral code" });
-    }
-
-    referralChain = [
-      referredByUser._id,
-      ...(referredByUser.referralChain || [])
-    ];
-  }
-
-
-    // 🔹 Generate OTP
-    const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
-
-    // 🔹 Create new user (password will be hashed by pre-save hook)
-    const user = new User({
-      fullName,
-      email,
-      phoneNumber,
-      password, // Don't hash here - let the model handle it
-      role,
-      otp,
-      otpExpiry,
-      isVerified: false,
-      referralCode: generateReferralCode(),
-      referredBy: referredByUser?._id || null,
-      referralChain
-    });
+                const user = new User({
+                        fullName,
+                        email,
+                        phoneNumber,
+                        password,
+                        profilePictureUrl,
+                        role,
+                        isVerified,
+                        referralCode: generateReferralCode(),
+                        referredBy: referredByUser ? referredByUser._id : null,
+                        referralChain,
+                        otp,
+                        otpExpiry
+                });
 
     await user.save();
 
@@ -121,6 +117,7 @@ const createUser = async (req, res) => {
     });
   }
 };
+
 
 // Get all users
 const getAllUsers = async (req, res) => {
