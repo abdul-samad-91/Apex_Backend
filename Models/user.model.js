@@ -10,21 +10,29 @@ const userSchema = new mongoose.Schema(
       minlength: 3,
       maxlength: 100,
     },
-
-    cnic: {
+    profilePictureUrl: {
       type: String,
-      required: true,
-      unique: true,
       trim: true,
-      validate: {
-        validator: function(v) {
-          // Remove all non-digit characters and check if it's exactly 13 digits
-          const digitsOnly = v.replace(/\D/g, '');
-          return digitsOnly.length === 13;
-        },
-        message: 'CNIC must contain exactly 13 digits'
-      }
+      default: null
     },
+
+    // cnic: {
+    //   type: String,
+    //   // required: true,
+    //   unique: true,
+    //   sparse: true,  // Allows multiple null values
+    //   trim: true,
+    //   validate: {
+    //     validator: function(v) {
+    //       // Skip validation if CNIC is not provided
+    //       if (!v) return true;
+    //       // Remove all non-digit characters and check if it's exactly 13 digits
+    //       const digitsOnly = v.replace(/\D/g, '');
+    //       return digitsOnly.length === 13;
+    //     },
+    //     message: 'CNIC must contain exactly 13 digits'
+    //   }
+    // },
 
     email: {
       type: String,
@@ -106,19 +114,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Format CNIC to add dashes if not present
-userSchema.pre("save", function () {
-  if (this.isModified("cnic") && this.cnic) {
-    // Remove all non-digit characters first
-    const cnicWithoutDashes = this.cnic.replace(/\D/g, "");
-    
-    // Check if it's exactly 13 digits
-    if (/^\d{13}$/.test(cnicWithoutDashes)) {
-      // Format as: 12345-1234567-1
-      this.cnic = `${cnicWithoutDashes.slice(0, 5)}-${cnicWithoutDashes.slice(5, 12)}-${cnicWithoutDashes.slice(12)}`;
-    }
-  }
-});
+// NOTE: `cnic` field removed from schema; any existing CNIC data
+// should be removed from the database using the migration script
+// located at `scripts/remove_cnic.js`.
 
 // Hash password before saving
 userSchema.pre("save", async function () {
