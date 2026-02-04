@@ -3,10 +3,10 @@ const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
 const createGateway = async (req, res) => {
   try {
-    const { walletId, walletAddress } = req.body;
+    const { walletName, walletAddress } = req.body;
 
-    if (!walletId || !walletAddress) {
-      return res.status(400).json({ message: 'walletId and walletAddress are required' });
+    if (!walletName || !walletAddress) {
+      return res.status(400).json({ message: 'walletName and walletAddress are required' });
     }
 
     if (!req.file) {
@@ -18,7 +18,7 @@ const createGateway = async (req, res) => {
 
     const gateway = new Gateway({
       image,
-      walletId,
+      walletName,
       walletAddress,
       createdBy: req.user ? req.user._id : null,
     });
