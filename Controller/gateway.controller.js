@@ -3,42 +3,23 @@ const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
 const createGateway = async (req, res) => {
   try {
-    const {
-      bankName,
-      bankAccountNumber,
-      bankRoutingNumber,
-      bankBranchName,
-      gatewayCurrency,
-      conversionRate,
-      charge,
-      allowAsPaymentMethod,
-    } = req.body;
+    const { walletId, walletAddress } = req.body;
 
-    if (!bankName || !bankAccountNumber || !gatewayCurrency) {
-      return res
-        .status(400)
-        .json({ message: 'bankName, bankAccountNumber and gatewayCurrency are required' });
+    if (!walletId || !walletAddress) {
+      return res.status(400).json({ message: 'walletId and walletAddress are required' });
     }
 
-        if (!req.file) {
-        return res.status(400).json({ message: "bank image is required" });
+    if (!req.file) {
+      return res.status(400).json({ message: 'Image is required' });
     }
 
-
-    
     const uploadResult = await uploadToCloudinary(req.file.buffer);
-    const bankImageUrl = uploadResult.secure_url;
-    
+    const image = uploadResult.secure_url;
+
     const gateway = new Gateway({
-      bankImageUrl,
-      bankName,
-      bankAccountNumber,
-      bankRoutingNumber,
-      bankBranchName,
-      gatewayCurrency,
-      conversionRate: conversionRate || 1,
-      charge: charge || 0,
-      allowAsPaymentMethod: allowAsPaymentMethod === 'true' || allowAsPaymentMethod === true,
+      image,
+      walletId,
+      walletAddress,
       createdBy: req.user ? req.user._id : null,
     });
 

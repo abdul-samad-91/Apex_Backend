@@ -21,10 +21,10 @@
     // Middleware
     
     app.use(cors({
-        // origin: ['http://localhost:5173','https://apex-admin-gules.vercel.app'],
-        origin: 'https://apex-admin-gules.vercel.app',
-        // methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        // allowedHeaders: ['Content-Type', 'Authorization']
+        origin: ['http://localhost:5173','https://apex-admin-gules.vercel.app'],
+        // origin: 'https://apex-admin-gules.vercel.app',
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        allowedHeaders: ['Content-Type', 'Authorization']
     }));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));

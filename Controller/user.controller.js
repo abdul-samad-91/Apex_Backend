@@ -337,6 +337,62 @@ const resendOTP = async (req, res) => {
     }
 };
 
+// Purchase ApexCoins using accountBalance
+const purchaseApexCoins = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const userId = req.user?._id;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        // Validate amount
+        if (!amount) {
+            return res.status(400).json({ message: 'Amount is required' });
+        }
+
+        const purchaseAmount = parseFloat(amount);
+        if (isNaN(purchaseAmount) || purchaseAmount <= 0) {
+            return res.status(400).json({ message: 'Amount must be a valid positive number' });
+        }
+
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if user has sufficient accountBalance
+        const currentBalance = user.accountBalance || 0;
+        if (currentBalance < purchaseAmount) {
+            return res.status(400).json({ 
+                message: 'Insufficient account balance',
+                currentBalance: currentBalance,
+                requestedAmount: purchaseAmount
+            });
+        }
+
+        // Deduct from accountBalance and add to apexCoins
+        user.accountBalance = currentBalance - purchaseAmount;
+        user.apexCoins = (user.apexCoins || 0) + purchaseAmount;
+        
+        await user.save();
+
+        res.status(200).json({
+            message: 'ApexCoins purchased successfully',
+            data: {
+                purchasedAmount: purchaseAmount,
+                newAccountBalance: user.accountBalance,
+                newApexCoins: user.apexCoins
+            }
+        });
+    } catch (error) {
+        console.error('Error purchasing ApexCoins:', error);
+        res.status(500).json({ message: 'Error purchasing ApexCoins', error: error.message });
+    }
+};
+
 module.exports = {
     createUser,
     getAllUsers,
@@ -345,5 +401,6 @@ module.exports = {
     deleteUser,
     updatePassword,
     verifyOTP,
-    resendOTP
+    resendOTP,
+    purchaseApexCoins
 };

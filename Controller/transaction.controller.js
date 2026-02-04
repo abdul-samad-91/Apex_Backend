@@ -30,6 +30,10 @@ const createTransaction = async (req, res) => {
     if (!transactionId || !amount || !accountName || !status) {
         return res.status(400).json({ message: "All fields are required" });
     }
+    // 🔹 Validate amount is a valid number
+    if (isNaN(amount) || Number(amount) <= 0) {
+        return res.status(400).json({ message: "Amount must be a valid positive number" });
+    }
 
     // 🔹 Check if transaction already exists
     const existingTransaction = await Transaction.findOne({ transactionId });
@@ -130,15 +134,18 @@ const updateTransactionStatus = async (req, res) => {
             return res.status(404).json({ message: "Transaction not found" });
         }
         
-        // If approving a pending transaction, add coins to user
+        // If approving a pending transaction, add amount to user's accountBalance
         if (status === "approved" && transaction.status !== "approved" && transaction.user) {
+            // Validate transaction.amount is a valid number
+            const amountToAdd = parseFloat(transaction.amount);
+            if (isNaN(amountToAdd) || amountToAdd <= 0) {
+                return res.status(400).json({ message: "Transaction amount is invalid. Cannot update account balance." });
+            }
             const user = await User.findById(transaction.user);
             if (user) {
-                // Convert amount to number and add to apexCoins
-                const amountToAdd = parseFloat(transaction.amount);
-                user.apexCoins = (user.apexCoins || 0) + amountToAdd;
+                user.accountBalance = (user.accountBalance || 0) + amountToAdd;
                 await user.save();
-                console.log(`Added ${amountToAdd} apexCoins to user ${user._id}. New balance: ${user.apexCoins}`);
+                console.log(`Added ${amountToAdd} to user ${user._id} accountBalance. New balance: ${user.accountBalance}`);
             } else {
                 return res.status(404).json({ message: "User not found" });
             }

@@ -9,7 +9,8 @@ const {
     deleteUser,
     updatePassword,
     verifyOTP,
-    resendOTP
+    resendOTP,
+    purchaseApexCoins
 } = require('../Controller/user.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
@@ -41,5 +42,8 @@ router.put('/:id' , protect , updateUser);
 
 // Delete user
 router.delete('/:id' , protect , isAdmin , deleteUser);
+
+// Purchase ApexCoins (user only)
+router.post('/purchaseApex', protect, purchaseApexCoins);
 
 module.exports = router;
