@@ -76,6 +76,22 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    lockedApexCoins: {
+      type: Number,
+      default: 0
+    },
+    lockStartDate: {
+      type: Date,
+      default: null
+    },
+    lockEndDate: {
+      type: Date,
+      default: null
+    },
+    totalRoiEarned: {
+      type: Number,
+      default: 0
+    },
     isVerified:{
       type: Boolean,
       default: false

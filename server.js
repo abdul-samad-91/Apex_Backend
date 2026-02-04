@@ -6,6 +6,7 @@
     const transactionRoutes = require('./Routes/transaction.routes');
     const gatewayRoutes = require('./Routes/gateway.routes');
     const roiRoutes = require('./Routes/roi.routes');
+    const apexCoinRateRoutes = require('./Routes/apexCoinRate.routes');
     const { 
         requestLogger, 
         errorHandler, 
@@ -43,6 +44,7 @@
     app.use("/api/transactions", transactionRoutes);
     app.use('/api/gateways', gatewayRoutes);
     app.use('/api/roi', roiRoutes);
+    app.use('/api/apexcoinRate', apexCoinRateRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);

@@ -10,7 +10,9 @@ const {
     updatePassword,
     verifyOTP,
     resendOTP,
-    purchaseApexCoins
+    purchaseApexCoins,
+    lockApexCoins,
+    // unlockApexCoins
 } = require('../Controller/user.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
@@ -34,6 +36,15 @@ router.get('/getAllUsers', protect, isAdmin , getAllUsers);
 // Update password (must be before /:id route)
 router.put('/:id/password', protect, updatePassword);
 
+// Purchase ApexCoins (user only)
+router.post('/purchaseApex', protect, purchaseApexCoins);
+
+// Lock ApexCoins for 6 months to earn ROI (user only)
+router.post('/lockApexCoins', protect, lockApexCoins);
+
+// Unlock/Delete current locked ApexCoins (user only)
+// router.delete('/unlockApexCoins', protect, unlockApexCoins);
+
 // Get user by ID
 router.get('/:id', protect  , getUserById);
 
@@ -42,8 +53,5 @@ router.put('/:id' , protect , updateUser);
 
 // Delete user
 router.delete('/:id' , protect , isAdmin , deleteUser);
-
-// Purchase ApexCoins (user only)
-router.post('/purchaseApex', protect, purchaseApexCoins);
 
 module.exports = router;
