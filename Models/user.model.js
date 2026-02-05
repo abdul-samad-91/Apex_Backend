@@ -88,6 +88,68 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    lastLockDate: {
+      type: Date,
+      default: null
+    },
+    lockedCoinsEntries: [{
+      amount: {
+        type: Number,
+        required: true
+      },
+      lockStartDate: {
+        type: Date,
+        required: true
+      },
+      lockEndDate: {
+        type: Date,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: ['active', 'completed', 'unlock-pending', 'unlocked'],
+        default: 'active'
+      },
+      unlockRequest: {
+        requestedAt: {
+          type: Date,
+          default: null
+        },
+        processAfter: {
+          type: Date,
+          default: null
+        },
+        penaltyPercentage: {
+          type: Number,
+          default: 0
+        },
+        penaltyAmount: {
+          type: Number,
+          default: 0
+        },
+        amountAfterPenalty: {
+          type: Number,
+          default: 0
+        },
+        daysElapsedAtRequest: {
+          type: Number,
+          default: 0
+        },
+        approvedAt: {
+          type: Date,
+          default: null
+        },
+        approvedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null
+        }
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
     totalRoiEarned: {
       type: Number,
       default: 0

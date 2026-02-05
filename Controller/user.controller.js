@@ -44,6 +44,18 @@ const createUser = async (req, res) => {
             });
         }
 
+        // Check if this is the first user (root user)
+        const userCount = await User.countDocuments();
+        const isRootUser = userCount === 0;
+
+        // If not the first user, referral code is mandatory
+        if (!isRootUser && !referralCode) {
+            return res.status(400).json({ 
+                message: "Referral code is required. Please use a valid referral code to register.",
+                isRootUser: false
+            });
+        }
+
         if (referralCode) {
             referredByUser = await User.findOne({ referralCode });
             if (!referredByUser) {
@@ -71,6 +83,17 @@ const createUser = async (req, res) => {
         const otp = generateOTP();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
 
+        // Generate unique referral code for this user
+        let uniqueReferralCode;
+        let isUnique = false;
+        while (!isUnique) {
+            uniqueReferralCode = generateReferralCode();
+            const existingCode = await User.findOne({ referralCode: uniqueReferralCode });
+            if (!existingCode) {
+                isUnique = true;
+            }
+        }
+
         // Create new user (password will be hashed by pre-save hook)
 
                 const user = new User({
@@ -81,8 +104,7 @@ const createUser = async (req, res) => {
                         profilePictureUrl,
                         role,
                         isVerified,
-                        // referralCode: generateReferralCode(),
-                        referralCode: null,
+                        referralCode: uniqueReferralCode,
                         referredBy: referredByUser ? referredByUser._id : null,
                         referralChain,
                         otp,
@@ -121,7 +143,9 @@ const createUser = async (req, res) => {
     const token = generateToken(user._id, role);
     console.log(token);
     res.status(201).json({
-      message: "User created successfully. Please verify your email with the OTP sent.",
+      message: isRootUser 
+        ? "Root user created successfully. You are the first user and the start of the referral tree!" 
+        : "User created successfully. Please verify your email with the OTP sent.",
       data: {
         user: {
           id: user._id,
@@ -129,7 +153,9 @@ const createUser = async (req, res) => {
           email: user.email,
           fullName: user.fullName,
           role: user.role,
-          isVerified: user.isVerified
+          isVerified: user.isVerified,
+          referralCode: user.referralCode,
+          isRootUser: isRootUser
         },
         token
       }
@@ -163,60 +189,74 @@ const getUserById = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Calculate ROI profits if coins are locked
-        let roiData = {
-            monthlyProfit: 0,
-            totalProfit: 0,
-            monthsCompleted: 0,
-            currentRoiRate: 0
-        };
+        // Calculate ROI profits for each locked coins entry
+        let lockedEntriesData = [];
+        let totalLockedAmount = 0;
 
-        if (user.lockedApexCoins > 0 && user.lockStartDate) {
-            // Get current ROI rate
-            const currentRoi = await Roi.findOne({ isActive: true }).sort({ createdAt: -1 });
-            const roiRate = currentRoi ? currentRoi.rate : 0;
+        // Get current ROI rate
+        const currentRoi = await Roi.findOne({ isActive: true }).sort({ createdAt: -1 });
+        const roiRate = currentRoi ? currentRoi.rate : 0;
 
-            // Get current ApexCoin to dollar rate
-            const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
-            const apexCoinToDollarRate = coinRate ? coinRate.rate : 1;
+        // Get current ApexCoin to dollar rate
+        const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
+        const apexCoinToDollarRate = coinRate ? coinRate.rate : 1;
 
-            // Calculate days elapsed since lock start
+        if (user.lockedCoinsEntries && user.lockedCoinsEntries.length > 0) {
             const now = new Date();
-            const lockStart = new Date(user.lockStartDate);
             const millisecondsPerDay = 1000 * 60 * 60 * 24;
-            const daysElapsed = Math.max(0, Math.floor((now - lockStart) / millisecondsPerDay));
 
-            // Calculate months completed
-            const monthsDiff = (now.getFullYear() - lockStart.getFullYear()) * 12 + 
-                             (now.getMonth() - lockStart.getMonth());
-            const monthsCompleted = Math.max(0, monthsDiff);
+            user.lockedCoinsEntries.forEach((entry, index) => {
+                if (entry.status === 'active') {
+                    totalLockedAmount += entry.amount;
 
-            // Calculate monthly profit: (lockedCoins * ROI%) / 100
-            const monthlyProfitInCoins = (user.lockedApexCoins * roiRate) / 100;
-            const monthlyProfitInDollars = monthlyProfitInCoins * apexCoinToDollarRate;
-            
-            // Calculate daily profit (assuming 30 days per month)
-            const dailyProfitInCoins = monthlyProfitInCoins / 30;
-            const dailyProfitInDollars = dailyProfitInCoins * apexCoinToDollarRate;
-            
-            // Calculate total profit earned so far (daily accrual)
-            const totalProfitInCoins = (dailyProfitInCoins * daysElapsed) + (user.totalRoiEarned || 0);
-            const totalProfitInDollars = totalProfitInCoins * apexCoinToDollarRate;
+                    // Calculate days elapsed since this entry's lock start
+                    const lockStart = new Date(entry.lockStartDate);
+                    const daysElapsed = Math.max(0, Math.floor((now - lockStart) / millisecondsPerDay));
 
-            roiData = {
-                monthlyProfit: parseFloat(monthlyProfitInDollars.toFixed(2)),
-                dailyProfit: parseFloat(dailyProfitInDollars.toFixed(2)),
-                totalProfit: parseFloat(totalProfitInDollars.toFixed(2)),
-                daysElapsed: daysElapsed,
-                monthsCompleted: monthsCompleted,
-                currentRoiRate: roiRate,
-                apexCoinToDollarRate: apexCoinToDollarRate
-            };
+                    // Calculate months completed
+                    const monthsDiff = (now.getFullYear() - lockStart.getFullYear()) * 12 + 
+                                     (now.getMonth() - lockStart.getMonth());
+                    const monthsCompleted = Math.max(0, monthsDiff);
+
+                    // Calculate monthly profit: (lockedCoins * ROI%) / 100
+                    const monthlyProfitInCoins = (entry.amount * roiRate) / 100;
+                    const monthlyProfitInDollars = monthlyProfitInCoins * apexCoinToDollarRate;
+                    
+                    // Calculate daily profit (assuming 30 days per month)
+                    const dailyProfitInCoins = monthlyProfitInCoins / 30;
+                    const dailyProfitInDollars = dailyProfitInCoins * apexCoinToDollarRate;
+                    
+                    // Calculate total profit earned so far (daily accrual)
+                    const totalProfitInCoins = dailyProfitInCoins * daysElapsed;
+                    const totalProfitInDollars = totalProfitInCoins * apexCoinToDollarRate;
+
+                    lockedEntriesData.push({
+                        entryId: entry._id,
+                        amount: entry.amount,
+                        lockStartDate: entry.lockStartDate,
+                        lockEndDate: entry.lockEndDate,
+                        status: entry.status,
+                        monthlyProfit: parseFloat(monthlyProfitInDollars.toFixed(2)),
+                        dailyProfit: parseFloat(dailyProfitInDollars.toFixed(2)),
+                        totalProfit: parseFloat(totalProfitInDollars.toFixed(2)),
+                        daysElapsed: daysElapsed,
+                        monthsCompleted: monthsCompleted
+                    });
+                }
+            });
         }
+
+        const roiData = {
+            lockedEntries: lockedEntriesData,
+            totalLockedAmount: totalLockedAmount,
+            currentRoiRate: roiRate,
+            apexCoinToDollarRate: apexCoinToDollarRate
+        };
 
         res.status(200).json({ 
             user: {
                 ...user.toObject(),
+                currentRoiRate: roiRate,
                 roiData
             }
         });
@@ -464,7 +504,7 @@ const purchaseApexCoins = async (req, res) => {
     }
 };
 
-// Lock ApexCoins for 6 months to earn ROI
+// Lock ApexCoins for 14 months to earn ROI
 const lockApexCoins = async (req, res) => {
     try {
         const { amount } = req.body;
@@ -490,12 +530,24 @@ const lockApexCoins = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if user already has locked coins
-        if (user.lockedApexCoins > 0 && user.lockEndDate && new Date() < new Date(user.lockEndDate)) {
-            return res.status(400).json({ 
-                message: 'You already have locked apex coins. Please wait until the lock period ends.',
-                lockEndDate: user.lockEndDate
-            });
+        // Check if user can lock coins again (must wait 24 hours from last lock)
+        if (user.lastLockDate) {
+            const now = new Date();
+            const lastLock = new Date(user.lastLockDate);
+            const hoursSinceLastLock = (now - lastLock) / (1000 * 60 * 60); // Convert milliseconds to hours
+            
+            if (hoursSinceLastLock < 24) {
+                const hoursRemaining = Math.ceil(24 - hoursSinceLastLock);
+                const minutesRemaining = Math.ceil((24 - hoursSinceLastLock) * 60);
+                
+                return res.status(400).json({ 
+                    message: `You can lock apex coins again in ${hoursRemaining} hour(s)`,
+                    hoursRemaining: hoursRemaining,
+                    minutesRemaining: minutesRemaining,
+                    lastLockDate: user.lastLockDate,
+                    nextLockAvailable: new Date(lastLock.getTime() + (24 * 60 * 60 * 1000))
+                });
+            }
         }
 
         // Check if user has sufficient apexCoins
@@ -520,15 +572,31 @@ const lockApexCoins = async (req, res) => {
             return res.status(400).json({ message: 'ApexCoin rate not set yet.' });
         }
 
-        // Lock the coins
+        // Lock the coins - create a new entry
         const lockStartDate = new Date();
         const lockEndDate = new Date();
-        lockEndDate.setMonth(lockEndDate.getMonth() + 6); // 6 months from now
+        lockEndDate.setMonth(lockEndDate.getMonth() + 14); // 14 months from now
+
+        // Create new lock entry
+        const newLockEntry = {
+            amount: lockAmount,
+            lockStartDate: lockStartDate,
+            lockEndDate: lockEndDate,
+            status: 'active',
+            createdAt: new Date()
+        };
 
         user.apexCoins = currentCoins - lockAmount;
-        user.lockedApexCoins = lockAmount;
-        user.lockStartDate = lockStartDate;
-        user.lockEndDate = lockEndDate;
+        user.lockedApexCoins = (user.lockedApexCoins || 0) + lockAmount; // Update total for backward compatibility
+        user.lockStartDate = lockStartDate; // Keep for backward compatibility
+        user.lockEndDate = lockEndDate; // Keep for backward compatibility
+        user.lastLockDate = lockStartDate; // Track when the user last locked coins
+        
+        // Add the new entry to the array
+        if (!user.lockedCoinsEntries) {
+            user.lockedCoinsEntries = [];
+        }
+        user.lockedCoinsEntries.push(newLockEntry);
         
         await user.save();
 
@@ -542,11 +610,11 @@ const lockApexCoins = async (req, res) => {
                 lockedAmount: lockAmount,
                 lockStartDate: lockStartDate,
                 lockEndDate: lockEndDate,
-                currentRoiRate: currentRoi.rate,
                 monthlyProfit: parseFloat(monthlyProfitInDollars.toFixed(2)),
-                estimatedTotalProfit: parseFloat((monthlyProfitInDollars * 6).toFixed(2)),
+                estimatedTotalProfit: parseFloat((monthlyProfitInDollars * 14).toFixed(2)),
                 remainingApexCoins: user.apexCoins,
-                apexCoinToDollarRate: coinRate.rate
+                apexCoinToDollarRate: coinRate.rate,
+                totalLockedEntries: user.lockedCoinsEntries.length
             }
         });
     } catch (error) {
@@ -555,7 +623,252 @@ const lockApexCoins = async (req, res) => {
     }
 };
 
+// Request to unlock a specific locked ApexCoins entry
+const requestUnlockApexCoins = async (req, res) => {
+    try {
+        const { entryId } = req.body;
+        const userId = req.user?._id;
 
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        if (!entryId) {
+            return res.status(400).json({ message: 'Entry ID is required' });
+        }
+
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Find the specific locked entry
+        const entryIndex = user.lockedCoinsEntries.findIndex(
+            entry => entry._id.toString() === entryId
+        );
+
+        if (entryIndex === -1) {
+            return res.status(404).json({ message: 'Locked entry not found' });
+        }
+
+        const entry = user.lockedCoinsEntries[entryIndex];
+
+        // Check if entry is active
+        if (entry.status !== 'active') {
+            return res.status(400).json({ 
+                message: `Cannot unlock. Entry status is: ${entry.status}`,
+                currentStatus: entry.status
+            });
+        }
+
+        // Calculate days elapsed since lock start
+        const now = new Date();
+        const lockStart = new Date(entry.lockStartDate);
+        const millisecondsPerDay = 1000 * 60 * 60 * 24;
+        const daysElapsed = Math.floor((now - lockStart) / millisecondsPerDay);
+
+        // Check if 60 days have passed
+        if (daysElapsed < 60) {
+            const daysRemaining = 60 - daysElapsed;
+            return res.status(400).json({ 
+                message: `Cannot unlock before 60 days. ${daysRemaining} days remaining.`,
+                daysElapsed: daysElapsed,
+                daysRemaining: daysRemaining,
+                unlockEligibleDate: new Date(lockStart.getTime() + (60 * millisecondsPerDay))
+            });
+        }
+
+        // Determine penalty percentage based on days elapsed
+        let penaltyPercentage;
+        if (daysElapsed >= 180) {
+            penaltyPercentage = 10;
+        } else if (daysElapsed >= 90) {
+            penaltyPercentage = 20;
+        } else {
+            // 60-89 days
+            penaltyPercentage = 25;
+        }
+
+        // Calculate penalty and amount after penalty
+        const penaltyAmount = (entry.amount * penaltyPercentage) / 100;
+        const amountAfterPenalty = entry.amount - penaltyAmount;
+
+        // Set processing period (7 days from now)
+        const processAfter = new Date();
+        processAfter.setDate(processAfter.getDate() + 7);
+
+        // Update the entry with unlock request details
+        user.lockedCoinsEntries[entryIndex].status = 'unlock-pending';
+        user.lockedCoinsEntries[entryIndex].unlockRequest = {
+            requestedAt: now,
+            processAfter: processAfter,
+            penaltyPercentage: penaltyPercentage,
+            penaltyAmount: penaltyAmount,
+            amountAfterPenalty: amountAfterPenalty,
+            daysElapsedAtRequest: daysElapsed,
+            approvedAt: null,
+            approvedBy: null
+        };
+
+        await user.save();
+
+        res.status(200).json({
+            message: 'Unlock request submitted successfully. Admin will process within 7 days.',
+            data: {
+                entryId: entry._id,
+                originalAmount: entry.amount,
+                daysElapsed: daysElapsed,
+                penaltyPercentage: penaltyPercentage,
+                penaltyAmount: penaltyAmount,
+                amountAfterPenalty: amountAfterPenalty,
+                requestedAt: now,
+                processAfter: processAfter,
+                status: 'unlock-pending'
+            }
+        });
+    } catch (error) {
+        console.error('Error requesting unlock:', error);
+        res.status(500).json({ message: 'Error requesting unlock', error: error.message });
+    }
+};
+
+// Admin: Approve unlock request and migrate coins
+const approveUnlockRequest = async (req, res) => {
+    try {
+        const { userId, entryId } = req.body;
+        const adminId = req.user?._id;
+
+        if (!adminId) {
+            return res.status(401).json({ message: 'Admin not authenticated' });
+        }
+
+        if (!userId || !entryId) {
+            return res.status(400).json({ message: 'User ID and Entry ID are required' });
+        }
+
+        // Find the user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Find the specific locked entry
+        const entryIndex = user.lockedCoinsEntries.findIndex(
+            entry => entry._id.toString() === entryId
+        );
+
+        if (entryIndex === -1) {
+            return res.status(404).json({ message: 'Locked entry not found' });
+        }
+
+        const entry = user.lockedCoinsEntries[entryIndex];
+
+        // Check if entry is pending unlock
+        if (entry.status !== 'unlock-pending') {
+            return res.status(400).json({ 
+                message: `Cannot approve. Entry status is: ${entry.status}`,
+                currentStatus: entry.status
+            });
+        }
+
+        // Check if 7-day processing period has passed
+        const now = new Date();
+        const processAfter = new Date(entry.unlockRequest.processAfter);
+        
+        if (now < processAfter) {
+            const hoursRemaining = Math.ceil((processAfter - now) / (1000 * 60 * 60));
+            return res.status(400).json({ 
+                message: `Processing period not completed. ${hoursRemaining} hours remaining.`,
+                processAfter: processAfter,
+                hoursRemaining: hoursRemaining
+            });
+        }
+
+        // Get the amount after penalty
+        const amountAfterPenalty = entry.unlockRequest.amountAfterPenalty;
+        const originalAmount = entry.amount;
+        const penaltyAmount = entry.unlockRequest.penaltyAmount;
+
+        // Update entry status to unlocked
+        user.lockedCoinsEntries[entryIndex].status = 'unlocked';
+        user.lockedCoinsEntries[entryIndex].unlockRequest.approvedAt = now;
+        user.lockedCoinsEntries[entryIndex].unlockRequest.approvedBy = adminId;
+
+        // Migrate coins to user's apexCoins (after penalty deduction)
+        user.apexCoins = (user.apexCoins || 0) + amountAfterPenalty;
+        
+        // Reduce lockedApexCoins total
+        user.lockedApexCoins = Math.max(0, (user.lockedApexCoins || 0) - originalAmount);
+
+        await user.save();
+
+        res.status(200).json({
+            message: 'Unlock request approved successfully. Coins migrated to user account.',
+            data: {
+                entryId: entry._id,
+                originalAmount: originalAmount,
+                penaltyPercentage: entry.unlockRequest.penaltyPercentage,
+                penaltyDeducted: penaltyAmount,
+                amountCredited: amountAfterPenalty,
+                newApexCoinsBalance: user.apexCoins,
+                approvedAt: now,
+                approvedBy: adminId
+            }
+        });
+    } catch (error) {
+        console.error('Error approving unlock:', error);
+        res.status(500).json({ message: 'Error approving unlock', error: error.message });
+    }
+};
+
+// Admin: Get all pending unlock requests
+const getPendingUnlockRequests = async (req, res) => {
+    try {
+        // Find all users with pending unlock requests
+        const usersWithPendingUnlocks = await User.find({
+            'lockedCoinsEntries.status': 'unlock-pending'
+        }).select('fullName email phoneNumber lockedCoinsEntries');
+
+        // Extract and format pending requests
+        const pendingRequests = [];
+
+        usersWithPendingUnlocks.forEach(user => {
+            user.lockedCoinsEntries.forEach(entry => {
+                if (entry.status === 'unlock-pending') {
+                    const now = new Date();
+                    const processAfter = new Date(entry.unlockRequest.processAfter);
+                    const canApprove = now >= processAfter;
+
+                    pendingRequests.push({
+                        userId: user._id,
+                        userName: user.fullName,
+                        userEmail: user.email,
+                        entryId: entry._id,
+                        originalAmount: entry.amount,
+                        lockStartDate: entry.lockStartDate,
+                        daysElapsedAtRequest: entry.unlockRequest.daysElapsedAtRequest,
+                        penaltyPercentage: entry.unlockRequest.penaltyPercentage,
+                        penaltyAmount: entry.unlockRequest.penaltyAmount,
+                        amountAfterPenalty: entry.unlockRequest.amountAfterPenalty,
+                        requestedAt: entry.unlockRequest.requestedAt,
+                        processAfter: entry.unlockRequest.processAfter,
+                        canApprove: canApprove
+                    });
+                }
+            });
+        });
+
+        res.status(200).json({
+            message: 'Pending unlock requests retrieved successfully',
+            count: pendingRequests.length,
+            data: pendingRequests
+        });
+    } catch (error) {
+        console.error('Error fetching pending unlocks:', error);
+        res.status(500).json({ message: 'Error fetching pending unlock requests', error: error.message });
+    }
+};
 
 
 module.exports = {
@@ -568,5 +881,8 @@ module.exports = {
     verifyOTP,
     resendOTP,
     purchaseApexCoins,
-    lockApexCoins
+    lockApexCoins,
+    requestUnlockApexCoins,
+    approveUnlockRequest,
+    getPendingUnlockRequests
 };
