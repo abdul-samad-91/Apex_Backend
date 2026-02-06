@@ -14,7 +14,8 @@ const {
     lockApexCoins,
     requestUnlockApexCoins,
     approveUnlockRequest,
-    getPendingUnlockRequests
+    getPendingUnlockRequests,
+    claimDailyProfits
 } = require('../Controller/user.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
@@ -46,6 +47,9 @@ router.post('/lockApexCoins', protect, lockApexCoins);
 
 // Request unlock of locked ApexCoins (user only)
 router.post('/requestUnlock', protect, requestUnlockApexCoins);
+
+// Claim accumulated daily profits (user only)
+router.post('/claimDailyProfits', protect, claimDailyProfits);
 
 // Admin: Get all pending unlock requests
 router.get('/pendingUnlocks', protect, isAdmin, getPendingUnlockRequests);

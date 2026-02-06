@@ -7,6 +7,16 @@ const ApexCoinRate = require('../Models/apexCoinRate.model');
 const Roi = require('../Models/roi.model');
 
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
+
+// Helper function to update user status based on locked apex coins
+const updateUserStatus = async (user) => {
+    if (user.lockedApexCoins > 0) {
+        user.isActive = true;
+    } else {
+        user.isActive = false;
+    }
+};
+
 // Create new user
 const createUser = async (req, res) => {
     try {
@@ -174,6 +184,20 @@ const createUser = async (req, res) => {
 const getAllUsers = async (req, res) => {
     try {
         const users = await User.find().select('-password');
+        
+        // Update status for all users based on locked apex coins
+        const updatePromises = users.map(async (user) => {
+            const previousStatus = user.isActive;
+            updateUserStatus(user);
+            
+            // Save only if status changed
+            if (previousStatus !== user.isActive) {
+                await user.save();
+            }
+        });
+        
+        await Promise.all(updatePromises);
+        
         res.status(200).json({ users });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching users', error: error.message });
@@ -189,13 +213,22 @@ const getUserById = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Update user status based on locked apex coins
+        const previousStatus = user.isActive;
+        updateUserStatus(user);
+        
+        // Save only if status changed
+        if (previousStatus !== user.isActive) {
+            await user.save();
+        }
+
         // Calculate ROI profits for each locked coins entry
         let lockedEntriesData = [];
         let totalLockedAmount = 0;
 
-        // Get current ROI rate
+        // Get current ROI rate (for display purposes)
         const currentRoi = await Roi.findOne({ isActive: true }).sort({ createdAt: -1 });
-        const roiRate = currentRoi ? currentRoi.rate : 0;
+        const currentRoiRate = currentRoi ? currentRoi.rate : 0;
 
         // Get current ApexCoin to dollar rate
         const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
@@ -218,8 +251,11 @@ const getUserById = async (req, res) => {
                                      (now.getMonth() - lockStart.getMonth());
                     const monthsCompleted = Math.max(0, monthsDiff);
 
+                    // Use the current ROI rate set by admin (not the historical rate)
+                    const entryRoiRate = currentRoiRate;
+
                     // Calculate monthly profit: (lockedCoins * ROI%) / 100
-                    const monthlyProfitInCoins = (entry.amount * roiRate) / 100;
+                    const monthlyProfitInCoins = (entry.amount * entryRoiRate) / 100;
                     const monthlyProfitInDollars = monthlyProfitInCoins * apexCoinToDollarRate;
                     
                     // Calculate daily profit (assuming 30 days per month)
@@ -230,15 +266,27 @@ const getUserById = async (req, res) => {
                     const totalProfitInCoins = dailyProfitInCoins * daysElapsed;
                     const totalProfitInDollars = totalProfitInCoins * apexCoinToDollarRate;
 
+                    // Calculate claimable profit (since last claim or lock start)
+                    const lastClaim = entry.lastClaimDate ? new Date(entry.lastClaimDate) : lockStart;
+                    const daysSinceLastClaim = Math.max(0, Math.floor((now - lastClaim) / millisecondsPerDay));
+                    const claimableProfitInCoins = dailyProfitInCoins * daysSinceLastClaim;
+                    const claimableProfitInDollars = claimableProfitInCoins * apexCoinToDollarRate;
+
                     lockedEntriesData.push({
                         entryId: entry._id,
                         amount: entry.amount,
                         lockStartDate: entry.lockStartDate,
                         lockEndDate: entry.lockEndDate,
                         status: entry.status,
+                        roiRateAtLock: entry.roiRateAtLock || 0, // Historical rate when locked
+                        currentRoiRate: entryRoiRate, // Current rate used for calculations
                         monthlyProfit: parseFloat(monthlyProfitInDollars.toFixed(2)),
                         dailyProfit: parseFloat(dailyProfitInDollars.toFixed(2)),
                         totalProfit: parseFloat(totalProfitInDollars.toFixed(2)),
+                        claimableProfit: parseFloat(claimableProfitInDollars.toFixed(2)),
+                        daysSinceLastClaim: daysSinceLastClaim,
+                        lastClaimDate: entry.lastClaimDate,
+                        totalClaimedProfit: entry.totalClaimedProfit || 0,
                         daysElapsed: daysElapsed,
                         monthsCompleted: monthsCompleted
                     });
@@ -246,17 +294,21 @@ const getUserById = async (req, res) => {
             });
         }
 
+        // Calculate total claimable amount across all entries
+        const totalClaimableAmount = lockedEntriesData.reduce((sum, entry) => sum + entry.claimableProfit, 0);
+
         const roiData = {
             lockedEntries: lockedEntriesData,
             totalLockedAmount: totalLockedAmount,
-            currentRoiRate: roiRate,
+            totalClaimableAmount: parseFloat(totalClaimableAmount.toFixed(2)),
+            currentRoiRate: currentRoiRate,
             apexCoinToDollarRate: apexCoinToDollarRate
         };
 
         res.status(200).json({ 
             user: {
                 ...user.toObject(),
-                currentRoiRate: roiRate,
+                currentRoiRate: currentRoiRate,
                 roiData
             }
         });
@@ -583,6 +635,7 @@ const lockApexCoins = async (req, res) => {
             lockStartDate: lockStartDate,
             lockEndDate: lockEndDate,
             status: 'active',
+            roiRateAtLock: currentRoi.rate,
             createdAt: new Date()
         };
 
@@ -597,6 +650,9 @@ const lockApexCoins = async (req, res) => {
             user.lockedCoinsEntries = [];
         }
         user.lockedCoinsEntries.push(newLockEntry);
+        
+        // Update user status to active since they now have locked coins
+        updateUserStatus(user);
         
         await user.save();
 
@@ -800,6 +856,9 @@ const approveUnlockRequest = async (req, res) => {
         
         // Reduce lockedApexCoins total
         user.lockedApexCoins = Math.max(0, (user.lockedApexCoins || 0) - originalAmount);
+        
+        // Update user status based on remaining locked coins
+        updateUserStatus(user);
 
         await user.save();
 
@@ -870,6 +929,115 @@ const getPendingUnlockRequests = async (req, res) => {
     }
 };
 
+// Claim accumulated daily profits from all active locked entries
+const claimDailyProfits = async (req, res) => {
+    try {
+        const userId = req.user?._id;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if user has any active locked entries
+        const activeEntries = user.lockedCoinsEntries?.filter(entry => entry.status === 'active') || [];
+        if (activeEntries.length === 0) {
+            return res.status(400).json({ 
+                message: 'No active locked entries found',
+                claimableAmount: 0
+            });
+        }
+
+        // Get current ApexCoin to dollar rate
+        const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
+        if (!coinRate) {
+            return res.status(400).json({ message: 'ApexCoin rate not set yet.' });
+        }
+
+        // Get current ROI rate set by admin
+        const currentRoi = await Roi.findOne({ isActive: true }).sort({ createdAt: -1 });
+        if (!currentRoi) {
+            return res.status(400).json({ message: 'ROI rate not set by admin.' });
+        }
+
+        const apexCoinToDollarRate = coinRate.rate;
+        const currentRoiRate = currentRoi.rate;
+        const now = new Date();
+        const millisecondsPerDay = 1000 * 60 * 60 * 24;
+        
+        let totalClaimableAmount = 0;
+        const claimDetails = [];
+
+        // Calculate claimable profit for each active entry
+        user.lockedCoinsEntries.forEach((entry, index) => {
+            if (entry.status === 'active') {
+                const lockStart = new Date(entry.lockStartDate);
+                const lastClaim = entry.lastClaimDate ? new Date(entry.lastClaimDate) : lockStart;
+                
+                // Calculate days since last claim (or since lock start if never claimed)
+                const daysSinceLastClaim = Math.max(0, Math.floor((now - lastClaim) / millisecondsPerDay));
+                
+                if (daysSinceLastClaim > 0) {
+                    // Use current ROI rate for calculations
+                    const monthlyProfitInCoins = (entry.amount * currentRoiRate) / 100;
+                    const dailyProfitInCoins = monthlyProfitInCoins / 30;
+                    
+                    // Calculate claimable profit in coins for this entry
+                    const claimableProfitInCoins = dailyProfitInCoins * daysSinceLastClaim;
+                    const claimableProfitInDollars = claimableProfitInCoins * apexCoinToDollarRate;
+                    
+                    totalClaimableAmount += claimableProfitInDollars;
+                    
+                    // Update entry
+                    entry.unclaimedProfit = 0; // Reset unclaimed profit
+                    entry.lastClaimDate = now;
+                    entry.totalClaimedProfit = (entry.totalClaimedProfit || 0) + claimableProfitInDollars;
+                    
+                    claimDetails.push({
+                        entryId: entry._id,
+                        amount: entry.amount,
+                        daysSinceLastClaim: daysSinceLastClaim,
+                        claimedAmount: parseFloat(claimableProfitInDollars.toFixed(2)),
+                        dailyRate: parseFloat((dailyProfitInCoins * apexCoinToDollarRate).toFixed(2))
+                    });
+                }
+            }
+        });
+
+        if (totalClaimableAmount === 0) {
+            return res.status(400).json({ 
+                message: 'No profits available to claim yet. Please wait at least one day since your last claim.',
+                claimableAmount: 0
+            });
+        }
+
+        // Transfer profits to accountBalance
+        user.accountBalance = (user.accountBalance || 0) + totalClaimableAmount;
+        user.totalRoiEarned = (user.totalRoiEarned || 0) + totalClaimableAmount;
+        
+        await user.save();
+
+        res.status(200).json({
+            message: 'Daily profits claimed successfully',
+            data: {
+                totalClaimedAmount: parseFloat(totalClaimableAmount.toFixed(2)),
+                newAccountBalance: parseFloat(user.accountBalance.toFixed(2)),
+                totalRoiEarned: parseFloat(user.totalRoiEarned.toFixed(2)),
+                claimDetails: claimDetails,
+                claimedAt: now
+            }
+        });
+    } catch (error) {
+        console.error('Error claiming daily profits:', error);
+        res.status(500).json({ message: 'Error claiming daily profits', error: error.message });
+    }
+};
+
 
 module.exports = {
     createUser,
@@ -884,5 +1052,6 @@ module.exports = {
     lockApexCoins,
     requestUnlockApexCoins,
     approveUnlockRequest,
-    getPendingUnlockRequests
+    getPendingUnlockRequests,
+    claimDailyProfits
 };

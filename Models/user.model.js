@@ -66,7 +66,7 @@ const userSchema = new mongoose.Schema(
 
     isActive: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     apexCoins:{
       type: Number,
@@ -110,6 +110,11 @@ const userSchema = new mongoose.Schema(
         enum: ['active', 'completed', 'unlock-pending', 'unlocked'],
         default: 'active'
       },
+      roiRateAtLock: {
+        type: Number,
+        required: true,
+        default: 0
+      },
       unlockRequest: {
         requestedAt: {
           type: Date,
@@ -144,6 +149,18 @@ const userSchema = new mongoose.Schema(
           ref: "User",
           default: null
         }
+      },
+      unclaimedProfit: {
+        type: Number,
+        default: 0
+      },
+      lastClaimDate: {
+        type: Date,
+        default: null
+      },
+      totalClaimedProfit: {
+        type: Number,
+        default: 0
       },
       createdAt: {
         type: Date,
