@@ -9,13 +9,14 @@ const Roi = require('../Models/roi.model');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
 // Helper function to update user status based on locked apex coins
-const updateUserStatus = async (user) => {
-    if (user.lockedApexCoins > 0) {
-        user.isActive = true;
-    } else {
-        user.isActive = false;
-    }
-};
+// DISABLED: Users should remain active regardless of locked coins
+// const updateUserStatus = async (user) => {
+//     if (user.lockedApexCoins > 0) {
+//         user.isActive = true;
+//     } else {
+//         user.isActive = false;
+//     }
+// };
 
 // Create new user
 const createUser = async (req, res) => {
@@ -185,19 +186,6 @@ const getAllUsers = async (req, res) => {
     try {
         const users = await User.find().select('-password');
         
-        // Update status for all users based on locked apex coins
-        const updatePromises = users.map(async (user) => {
-            const previousStatus = user.isActive;
-            updateUserStatus(user);
-            
-            // Save only if status changed
-            if (previousStatus !== user.isActive) {
-                await user.save();
-            }
-        });
-        
-        await Promise.all(updatePromises);
-        
         res.status(200).json({ users });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching users', error: error.message });
@@ -211,15 +199,6 @@ const getUserById = async (req, res) => {
         
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Update user status based on locked apex coins
-        const previousStatus = user.isActive;
-        updateUserStatus(user);
-        
-        // Save only if status changed
-        if (previousStatus !== user.isActive) {
-            await user.save();
         }
 
         // Calculate ROI profits for each locked coins entry
@@ -651,9 +630,6 @@ const lockApexCoins = async (req, res) => {
         }
         user.lockedCoinsEntries.push(newLockEntry);
         
-        // Update user status to active since they now have locked coins
-        updateUserStatus(user);
-        
         await user.save();
 
         // Calculate monthly profit in apex coins then convert to dollars
@@ -856,9 +832,6 @@ const approveUnlockRequest = async (req, res) => {
         
         // Reduce lockedApexCoins total
         user.lockedApexCoins = Math.max(0, (user.lockedApexCoins || 0) - originalAmount);
-        
-        // Update user status based on remaining locked coins
-        updateUserStatus(user);
 
         await user.save();
 
