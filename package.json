@@ -21,7 +21,12 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
     "multer": "^2.0.2",
+    "mysql2": "^3.9.0",
     "nodemailer": "^7.0.13",
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "sequelize": "^6.37.0"
+  },
+  "scripts-migration": {
+    "migrate:mongo-to-mysql": "node scripts/migrate_mongodb_to_mysql.js"
   }
 }
