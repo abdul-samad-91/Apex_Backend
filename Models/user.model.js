@@ -171,6 +171,16 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    // Total bonus earned from referral investments (one-time commissions)
+    totalBonusEarned: {
+      type: Number,
+      default: 0
+    },
+    // Total profit share earned from referral ROI (daily royalty)
+    totalProfitShareEarned: {
+      type: Number,
+      default: 0
+    },
     isVerified:{
       type: Boolean,
       default: false

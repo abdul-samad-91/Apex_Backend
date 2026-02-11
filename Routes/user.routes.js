@@ -17,6 +17,11 @@ const {
     getPendingUnlockRequests,
     claimDailyProfits
 } = require('../Controller/user.controller');
+const {
+    getBonusHistory,
+    getProfitShareHistory,
+    getReferralStats
+} = require('../Controller/referralBonus.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
 
@@ -56,6 +61,19 @@ router.get('/pendingUnlocks', protect, isAdmin, getPendingUnlockRequests);
 
 // Admin: Approve unlock request
 router.post('/approveUnlock', protect, isAdmin, approveUnlockRequest);
+
+// ============ REFERRAL BONUS SYSTEM ROUTES ============
+
+// Get user's one-time bonus (commission) history
+router.get('/bonusHistory', protect, getBonusHistory);
+
+// Get user's daily profit share (royalty) history
+router.get('/profitShareHistory', protect, getProfitShareHistory);
+
+// Get user's referral network statistics and earnings
+router.get('/referralStats', protect, getReferralStats);
+
+// ======================================================
 
 // Get user by ID
 router.get('/:id', protect  , getUserById);

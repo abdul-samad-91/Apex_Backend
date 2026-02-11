@@ -5,6 +5,7 @@ const { generateOTP, sendOTPEmail } = require('../utils/sendEmail');
 const generateReferralCode = require('../utils/generateReferalCode');
 const ApexCoinRate = require('../Models/apexCoinRate.model');
 const Roi = require('../Models/roi.model');
+const { distributeStakingBonus, distributeProfitShare } = require('./referralBonus.controller');
 
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
@@ -554,6 +555,10 @@ const lockApexCoins = async (req, res) => {
         if (isNaN(lockAmount) || lockAmount <= 0) {
             return res.status(400).json({ message: 'Amount must be a valid positive number' });
         }
+        // Enforce minimum lock amount restriction
+        if (lockAmount < 50) {
+            return res.status(400).json({ message: 'The minimum coins that you can stack is 50' });
+        }
 
         // Find user
         const user = await User.findById(userId);
@@ -632,6 +637,13 @@ const lockApexCoins = async (req, res) => {
         
         await user.save();
 
+        // Get the entry ID of the newly created lock entry
+        const newEntryId = user.lockedCoinsEntries[user.lockedCoinsEntries.length - 1]._id;
+
+        // Distribute one-time bonus to upline (6 levels)
+        const bonusResult = await distributeStakingBonus(userId, lockAmount, newEntryId);
+        console.log('Bonus distribution result:', bonusResult);
+
         // Calculate monthly profit in apex coins then convert to dollars
         const monthlyProfitInCoins = (lockAmount * currentRoi.rate) / 100;
         const monthlyProfitInDollars = monthlyProfitInCoins * coinRate.rate;
@@ -646,7 +658,8 @@ const lockApexCoins = async (req, res) => {
                 estimatedTotalProfit: parseFloat((monthlyProfitInDollars * 14).toFixed(2)),
                 remainingApexCoins: user.apexCoins,
                 apexCoinToDollarRate: coinRate.rate,
-                totalLockedEntries: user.lockedCoinsEntries.length
+                totalLockedEntries: user.lockedCoinsEntries.length,
+                bonusDistribution: bonusResult
             }
         });
     } catch (error) {
@@ -995,6 +1008,10 @@ const claimDailyProfits = async (req, res) => {
         
         await user.save();
 
+        // Distribute profit share to upline (12 levels) based on ROI claimed
+        const profitShareResult = await distributeProfitShare(userId, totalClaimableAmount);
+        console.log('Profit share distribution result:', profitShareResult);
+
         res.status(200).json({
             message: 'Daily profits claimed successfully',
             data: {
@@ -1002,7 +1019,8 @@ const claimDailyProfits = async (req, res) => {
                 newAccountBalance: parseFloat(user.accountBalance.toFixed(2)),
                 totalRoiEarned: parseFloat(user.totalRoiEarned.toFixed(2)),
                 claimDetails: claimDetails,
-                claimedAt: now
+                claimedAt: now,
+                profitShareDistribution: profitShareResult
             }
         });
     } catch (error) {
