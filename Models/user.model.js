@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    p2pWallet: {
+      type: Number,
+      default: 0
+    },
     lockedApexCoins: {
       type: Number,
       default: 0

@@ -46,6 +46,16 @@ const profitShareTransactionSchema = new mongoose.Schema(
     claimDate: {
       type: Date,
       default: Date.now
+    },
+    // Whether this profit share has been claimed
+    isClaimed: {
+      type: Boolean,
+      default: false
+    },
+    // Date when profit share was claimed
+    claimedAt: {
+      type: Date,
+      default: null
     }
   },
   { timestamps: true }

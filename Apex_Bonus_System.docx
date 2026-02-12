@@ -1,0 +1,49 @@
+# Apex Backend Bonus System
+
+## One-Time Bonus (Referral Bonus)
+
+The one-time bonus is awarded to a user's upline (referrers) when the user locks (stakes) their ApexCoins. This bonus is distributed up to 6 levels in the referral chain. Each level receives a percentage of the staked amount, provided the upline meets the required number of active direct referrals for that level.
+
+- **Trigger:** When a user locks ApexCoins (stakes).
+- **Distribution:** Up to 6 levels in the referral chain.
+- **Eligibility:** Each upline must have enough active direct referrals to unlock their bonus level.
+- **Percentages:**
+  - Level 1: 9%
+  - Level 2: 4%
+  - Level 3: 3%
+  - Level 4: 2%
+  - Level 5: 1%
+  - Level 6: 1%
+- **API Endpoints:**
+  - `POST /lockApexCoins` (triggers bonus distribution)
+  - `GET /bonusHistory` (view bonus history)
+
+## Daily Referral Bonus (Profit Share)
+
+The daily referral bonus (profit share) is distributed to a user's upline based on their referral chain, up to 12 levels. Each level receives a percentage of the daily profits, provided the upline meets the eligibility criteria.
+
+- **Trigger:** When daily profits are distributed or claimed.
+- **Distribution:** Up to 12 levels in the referral chain.
+- **Percentages:**
+  - Level 1: 10%
+  - Level 2: 7%
+  - Level 3: 6%
+  - Level 4: 5%
+  - Level 5: 2%
+  - Level 6: 1%
+  - Level 7: 1%
+  - Level 8: 0.5%
+  - Level 9: 0.5%
+  - Level 10: 0.5%
+  - Level 11: 0.5%
+  - Level 12: 0.5%
+- **API Endpoints:**
+  - `POST /claimDailyProfits` (claim daily profit share)
+  - `GET /profitShareHistory` (view profit share history)
+
+---
+
+**Summary:**
+- The one-time bonus is received when a user locks ApexCoins, rewarding their upline.
+- The daily referral bonus is distributed based on daily profits, rewarding the upline up to 12 levels.
+- Both bonuses are tracked and can be viewed via their respective history APIs.

@@ -46,6 +46,16 @@ const bonusTransactionSchema = new mongoose.Schema(
     activeDirectReferralsAtTime: {
       type: Number,
       default: 0
+    },
+    // Whether this bonus has been claimed
+    isClaimed: {
+      type: Boolean,
+      default: false
+    },
+    // Date when bonus was claimed
+    claimedAt: {
+      type: Date,
+      default: null
     }
   },
   { timestamps: true }

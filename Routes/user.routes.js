@@ -20,7 +20,11 @@ const {
 const {
     getBonusHistory,
     getProfitShareHistory,
-    getReferralStats
+    getReferralStats,
+    getUnclaimedBonuses,
+    getUnclaimedProfitShares,
+    claimBonuses,
+    claimProfitShares
 } = require('../Controller/referralBonus.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
@@ -72,6 +76,18 @@ router.get('/profitShareHistory', protect, getProfitShareHistory);
 
 // Get user's referral network statistics and earnings
 router.get('/referralStats', protect, getReferralStats);
+
+// Get unclaimed bonuses
+router.get('/unclaimedBonuses', protect, getUnclaimedBonuses);
+
+// Get unclaimed profit shares
+router.get('/unclaimedProfitShares', protect, getUnclaimedProfitShares);
+
+// Claim bonuses (transfer to account balance)
+router.post('/claimBonuses', protect, claimBonuses);
+
+// Claim profit shares (transfer to account balance)
+router.post('/claimProfitShares', protect, claimProfitShares);
 
 // ======================================================
 
