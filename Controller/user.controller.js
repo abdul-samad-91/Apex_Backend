@@ -376,6 +376,7 @@ const getReferralLevels = async (req, res) => {
 
         const MAX_LEVELS = 12;
         const levels = {};
+        let totalCount = 0;
 
         // Start with direct referrals (level 1)
         let prevLevelIds = [userId];
@@ -401,12 +402,14 @@ const getReferralLevels = async (req, res) => {
                 users: mapped
             };
 
+            totalCount += mapped.length;
+
             // Prepare for next level
             if (users.length === 0) break;
             prevLevelIds = users.map(u => u._id);
         }
 
-        return res.status(200).json({ message: 'Referral levels retrieved', data: levels });
+        return res.status(200).json({ message: 'Referral levels retrieved', data: { levels, totalCount } });
     } catch (error) {
         console.error('Error fetching referral levels:', error);
         return res.status(500).json({ message: 'Error fetching referral levels', error: error.message });
