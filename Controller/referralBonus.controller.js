@@ -105,21 +105,20 @@ const buildReferralPath = async (rootUserId, endUserId) => {
 };
 
 /**
- * Count active direct referrals for a user
+ * Count active DIRECT referrals for a user (only users directly referred, not downchain)
  * Active = has lockedApexCoins > 0
  */
 const countActiveDirectReferrals = async (userId) => {
   try {
-    const user = await User.findById(userId).populate('referrals', 'lockedApexCoins');
-    if (!user || !user.referrals) {
-      return 0;
-    }
+    // Count users where referredBy === userId AND lockedApexCoins > 0
+    const activeDirectCount = await User.countDocuments({
+      referredBy: userId,
+      lockedApexCoins: { $gt: 0 }
+    });
     
-    // Count referrals who have locked coins (active investors)
-    const activeCount = user.referrals.filter(ref => ref.lockedApexCoins > 0).length;
-    return activeCount;
+    return activeDirectCount;
   } catch (error) {
-    console.error('Error counting active referrals:', error);
+    console.error('Error counting active direct referrals:', error);
     return 0;
   }
 };
@@ -552,16 +551,20 @@ const getReferralStats = async (req, res) => {
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
-    const user = await User.findById(userId)
-      .populate('referrals', 'fullName email lockedApexCoins isActive createdAt');
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Get only DIRECT referrals (users where referredBy === userId)
+    const directReferrals = await User.find({ referredBy: userId })
+      .select('fullName email lockedApexCoins isActive createdAt')
+      .sort({ createdAt: -1 });
+
     // Count active direct referrals
     const activeDirectReferrals = await countActiveDirectReferrals(userId);
-    const totalDirectReferrals = user.referrals?.length || 0;
+    const totalDirectReferrals = directReferrals.length;
 
     // Determine unlocked levels
     const unlockedBonusLevels = Math.min(activeDirectReferrals, 6);
@@ -583,15 +586,15 @@ const getReferralStats = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // Get referral details
-    const referralDetails = user.referrals?.map(ref => ({
+    // Get referral details (only direct referrals)
+    const referralDetails = directReferrals.map(ref => ({
       id: ref._id,
       fullName: ref.fullName,
       email: ref.email,
       isActive: ref.lockedApexCoins > 0,
       lockedAmount: ref.lockedApexCoins || 0,
       joinedAt: ref.createdAt
-    })) || [];
+    }));
 
     res.status(200).json({
       message: 'Referral statistics retrieved',
