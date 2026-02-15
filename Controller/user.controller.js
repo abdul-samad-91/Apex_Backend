@@ -5,7 +5,12 @@ const { generateOTP, sendOTPEmail } = require('../utils/sendEmail');
 const generateReferralCode = require('../utils/generateReferalCode');
 const ApexCoinRate = require('../Models/apexCoinRate.model');
 const Roi = require('../Models/roi.model');
-const { distributeStakingBonus } = require('./referralBonus.controller');
+const { 
+    distributeStakingBonus, 
+    countActiveDirectReferrals, 
+    BONUS_PERCENTAGES, 
+    PROFIT_SHARE_PERCENTAGES 
+} = require('./referralBonus.controller');
 
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
@@ -377,6 +382,12 @@ const getReferralLevels = async (req, res) => {
         const MAX_LEVELS = 12;
         const levels = {};
         let totalCount = 0;
+        let totalActive = 0;
+        let totalInactive = 0;
+
+        // Calculate how many earning levels are unlocked (based on active direct referrals)
+        const activeDirectReferralsCount = await countActiveDirectReferrals(userId);
+        const unlockedEarningLevels = Math.min(activeDirectReferralsCount, 12); // Max 12 profit share levels
 
         // Start with direct referrals (level 1)
         let prevLevelIds = [userId];
@@ -387,29 +398,83 @@ const getReferralLevels = async (req, res) => {
                 .select('-password')
                 .lean();
 
-            // Map concise data
-            const mapped = users.map(u => ({
-                id: u._id,
-                fullName: u.fullName,
-                email: u.email,
-                isActive: !!u.isActive,
-                lockedApexCoins: u.lockedApexCoins || 0,
-                createdAt: u.createdAt
-            }));
+            // Map concise data with active status
+            const mapped = users.map(u => {
+                const isActive = u.lockedApexCoins > 0;
+                return {
+                    id: u._id,
+                    fullName: u.fullName,
+                    email: u.email,
+                    isActive: isActive,
+                    lockedApexCoins: u.lockedApexCoins || 0,
+                    createdAt: u.createdAt
+                };
+            });
+
+            // Count active and inactive users at this level
+            const activeUsers = mapped.filter(u => u.isActive);
+            const inactiveUsers = mapped.filter(u => !u.isActive);
+
+            // Check if this earning level is unlocked
+            const isEarningLevelUnlocked = level <= unlockedEarningLevels;
+
+            // Calculate total locked amount at this level
+            const totalLockedAtLevel = mapped.reduce((sum, u) => sum + u.lockedApexCoins, 0);
 
             levels[`level${level}`] = {
-                count: mapped.length,
-                users: mapped
+                level: level,
+                levelName: level === 1 ? 'Direct Referrals' : level === 2 ? 'Indirect Network' : 'Deep Network',
+                isUnlocked: isEarningLevelUnlocked,
+                unlockStatus: isEarningLevelUnlocked ? 'UNLOCKED' : 'LOCKED',
+                requiredActiveDirectReferrals: level,
+                currentActiveDirectReferrals: activeDirectReferralsCount,
+                canEarnFromThisLevel: isEarningLevelUnlocked,
+                commission: {
+                    bonusPercentage: level <= 6 ? `${BONUS_PERCENTAGES[level]}%` : 'N/A',
+                    profitSharePercentage: `${PROFIT_SHARE_PERCENTAGES[level]}%`
+                },
+                members: {
+                    total: mapped.length,
+                    active: activeUsers.length,
+                    inactive: inactiveUsers.length,
+                    totalLockedCoins: totalLockedAtLevel
+                },
+                users: mapped, // All users (active + inactive)
+                statusMessage: isEarningLevelUnlocked 
+                    ? `✓ You can earn ${level <= 6 ? BONUS_PERCENTAGES[level] + '% bonus + ' : ''}${PROFIT_SHARE_PERCENTAGES[level]}% profit share from this level` 
+                    : `✗ Locked - Refer ${level - activeDirectReferralsCount} more active member${level - activeDirectReferralsCount > 1 ? 's' : ''} to unlock`
             };
 
             totalCount += mapped.length;
+            totalActive += activeUsers.length;
+            totalInactive += inactiveUsers.length;
 
             // Prepare for next level
             if (users.length === 0) break;
             prevLevelIds = users.map(u => u._id);
         }
 
-        return res.status(200).json({ message: 'Referral levels retrieved', data: { levels, totalCount } });
+        return res.status(200).json({ 
+            message: 'Referral levels retrieved successfully', 
+            data: { 
+                userInfo: {
+                    activeDirectReferrals: activeDirectReferralsCount,
+                    totalTeamMembers: totalCount,
+                    totalActiveMembers: totalActive,
+                    totalInactiveMembers: totalInactive
+                },
+                earningStatus: {
+                    unlockedLevels: unlockedEarningLevels,
+                    maxLevels: 12,
+                    unlockedLevelsText: `${unlockedEarningLevels}/12 Unlocked`,
+                    nextUnlockRequirement: unlockedEarningLevels < 12 
+                        ? `Refer ${unlockedEarningLevels + 1 - activeDirectReferralsCount} more active member(s) to unlock Level ${unlockedEarningLevels + 1}` 
+                        : 'All levels unlocked!',
+                    description: `With ${activeDirectReferralsCount} active direct referrals, you can earn commissions from ${unlockedEarningLevels} network levels.`
+                },
+                levels: levels
+            } 
+        });
     } catch (error) {
         console.error('Error fetching referral levels:', error);
         return res.status(500).json({ message: 'Error fetching referral levels', error: error.message });
