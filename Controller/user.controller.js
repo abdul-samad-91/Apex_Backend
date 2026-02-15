@@ -368,6 +368,54 @@ const updatePassword = async (req, res) => {
     }
 };
 
+// Get referral levels up to 12 for the authenticated user
+const getReferralLevels = async (req, res) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) return res.status(401).json({ message: 'User not authenticated' });
+
+        const MAX_LEVELS = 12;
+        const levels = {};
+        let totalCount = 0;
+
+        // Start with direct referrals (level 1)
+        let prevLevelIds = [userId];
+
+        for (let level = 1; level <= MAX_LEVELS; level++) {
+            // Find users whose referredBy is in prevLevelIds
+            const users = await User.find({ referredBy: { $in: prevLevelIds } })
+                .select('-password')
+                .lean();
+
+            // Map concise data
+            const mapped = users.map(u => ({
+                id: u._id,
+                fullName: u.fullName,
+                email: u.email,
+                isActive: !!u.isActive,
+                lockedApexCoins: u.lockedApexCoins || 0,
+                createdAt: u.createdAt
+            }));
+
+            levels[`level${level}`] = {
+                count: mapped.length,
+                users: mapped
+            };
+
+            totalCount += mapped.length;
+
+            // Prepare for next level
+            if (users.length === 0) break;
+            prevLevelIds = users.map(u => u._id);
+        }
+
+        return res.status(200).json({ message: 'Referral levels retrieved', data: { levels, totalCount } });
+    } catch (error) {
+        console.error('Error fetching referral levels:', error);
+        return res.status(500).json({ message: 'Error fetching referral levels', error: error.message });
+    }
+};
+
 // Verify OTP
 const verifyOTP = async (req, res) => {
     try {
@@ -1043,4 +1091,5 @@ module.exports = {
     approveUnlockRequest,
     getPendingUnlockRequests,
     claimDailyProfits
+    , getReferralLevels
 };

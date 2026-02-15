@@ -16,6 +16,7 @@ const {
     approveUnlockRequest,
     getPendingUnlockRequests,
     claimDailyProfits
+    , getReferralLevels
 } = require('../Controller/user.controller');
 const {
     getBonusHistory,
@@ -90,6 +91,9 @@ router.get('/availableDownchainProfitShares', protect, getAvailableDownchainProf
 router.post('/claimDownchainProfitShares', protect, claimDownchainProfitShares);
 
 // ======================================================
+
+// Get referral levels for authenticated user (levels 1..12)
+router.get('/referralLevels', protect, getReferralLevels);
 
 // Get user by ID
 router.get('/:id', protect  , getUserById);
