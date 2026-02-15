@@ -873,12 +873,348 @@ const claimProfitShares = async (req, res) => {
   }
 };
 
+/**
+ * Calculate available profit shares from entire downchain
+ * This allows upline users to claim their share of downchain's claimable profits
+ * WITHOUT waiting for those downline users to claim first
+ * @param {ObjectId} uplineUserId - The upline user claiming profit shares
+ */
+const calculateDownchainProfitShares = async (uplineUserId) => {
+  try {
+    const Roi = require('../Models/roi.model');
+    const ApexCoinRate = require('../Models/apexCoinRate.model');
+    
+    const uplineUser = await User.findById(uplineUserId);
+    if (!uplineUser) {
+      return { success: false, error: 'User not found', totalClaimable: 0, details: [] };
+    }
+
+    // Get current ROI rate and coin rate
+    const currentRoi = await Roi.findOne({ isActive: true }).sort({ createdAt: -1 });
+    const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
+    
+    if (!currentRoi || !coinRate) {
+      return { success: false, error: 'ROI or coin rate not set', totalClaimable: 0, details: [] };
+    }
+
+    const currentRoiRate = currentRoi.rate;
+    const apexCoinToDollarRate = coinRate.rate;
+    const now = new Date();
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+    // Find all users who have this upline user in their referral chain
+    const downchainUsers = await User.find({
+      referralChain: uplineUserId
+    });
+
+    if (!downchainUsers || downchainUsers.length === 0) {
+      return { success: true, totalClaimable: 0, details: [], message: 'No downchain users found' };
+    }
+
+    let totalClaimableShare = 0;
+    const shareDetails = [];
+
+    // Count active direct referrals for this upline
+    const activeDirectReferrals = await countActiveDirectReferrals(uplineUserId);
+
+    // For each downchain user, calculate their claimable profit and this upline's share
+    for (const downchainUser of downchainUsers) {
+      // Determine the level of this downchain user relative to upline
+      const levelIndex = downchainUser.referralChain.findIndex(
+        id => id.toString() === uplineUserId.toString()
+      );
+      
+      if (levelIndex === -1) continue; // User not in chain (shouldn't happen)
+      
+      const level = levelIndex + 1; // Level 1-12
+
+      // Check if upline has unlocked this level
+      if (level > 12 || activeDirectReferrals < level) {
+        continue; // Level not unlocked
+      }
+
+      // Calculate this downchain user's claimable daily profits
+      const activeEntries = downchainUser.lockedCoinsEntries?.filter(entry => entry.status === 'active') || [];
+      
+      let downchainUserTotalClaimable = 0;
+
+      for (const entry of activeEntries) {
+        const lockStart = new Date(entry.lockStartDate);
+        
+        // Get the last time THIS upline user claimed profit share from THIS downchain user's entry
+        const lastClaimKey = `${downchainUser._id.toString()}_${entry._id.toString()}`;
+        const lastClaimDateForThisUser = uplineUser.lastProfitShareClaimDates?.get(lastClaimKey) || lockStart;
+        
+        // Calculate days since last claim by THIS upline user
+        const daysSinceLastClaim = Math.max(0, Math.floor((now - new Date(lastClaimDateForThisUser)) / millisecondsPerDay));
+        
+        if (daysSinceLastClaim > 0) {
+          // Calculate claimable profit for THIS entry
+          const monthlyProfitInCoins = (entry.amount * currentRoiRate) / 100;
+          const dailyProfitInCoins = monthlyProfitInCoins / 30;
+          const claimableProfitInCoins = dailyProfitInCoins * daysSinceLastClaim;
+          const claimableProfitInDollars = claimableProfitInCoins * apexCoinToDollarRate;
+          
+          downchainUserTotalClaimable += claimableProfitInDollars;
+        }
+      }
+
+      if (downchainUserTotalClaimable > 0) {
+        // Calculate this upline's share based on the level
+        const sharePercentage = PROFIT_SHARE_PERCENTAGES[level];
+        const shareAmount = (downchainUserTotalClaimable * sharePercentage) / 100;
+        
+        totalClaimableShare += shareAmount;
+        
+        shareDetails.push({
+          downchainUserId: downchainUser._id,
+          downchainUserName: downchainUser.fullName,
+          downchainUserEmail: downchainUser.email,
+          level: level,
+          sharePercentage: sharePercentage,
+          downchainClaimableAmount: parseFloat(downchainUserTotalClaimable.toFixed(2)),
+          uplineShareAmount: parseFloat(shareAmount.toFixed(2)),
+          activeEntries: activeEntries.length
+        });
+      }
+    }
+
+    return {
+      success: true,
+      totalClaimable: parseFloat(totalClaimableShare.toFixed(2)),
+      details: shareDetails,
+      activeDirectReferrals: activeDirectReferrals,
+      unlockedLevels: Math.min(activeDirectReferrals, 12)
+    };
+  } catch (error) {
+    console.error('Error calculating downchain profit shares:', error);
+    return {
+      success: false,
+      error: error.message,
+      totalClaimable: 0,
+      details: []
+    };
+  }
+};
+
+/**
+ * Get available downchain profit shares (without claiming)
+ */
+const getAvailableDownchainProfitShares = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    const result = await calculateDownchainProfitShares(userId);
+
+    if (!result.success) {
+      return res.status(400).json({ 
+        message: result.error || 'Error calculating available profit shares',
+        totalClaimable: 0
+      });
+    }
+
+    res.status(200).json({
+      message: 'Available downchain profit shares calculated',
+      data: {
+        totalClaimable: result.totalClaimable,
+        details: result.details,
+        activeDirectReferrals: result.activeDirectReferrals,
+        unlockedLevels: result.unlockedLevels,
+        downchainUsersCount: result.details.length
+      }
+    });
+  } catch (error) {
+    console.error('Error getting available downchain profit shares:', error);
+    res.status(500).json({ message: 'Error getting available profit shares', error: error.message });
+  }
+};
+
+/**
+ * Claim profit shares from downchain (independent of when downchain users claim)
+ */
+const claimDownchainProfitShares = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    const Roi = require('../Models/roi.model');
+    const ApexCoinRate = require('../Models/apexCoinRate.model');
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get current ROI rate and coin rate
+    const currentRoi = await Roi.findOne({ isActive: true }).sort({ createdAt: -1 });
+    const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
+    
+    if (!currentRoi || !coinRate) {
+      return res.status(400).json({ message: 'ROI or coin rate not set' });
+    }
+
+    const currentRoiRate = currentRoi.rate;
+    const apexCoinToDollarRate = coinRate.rate;
+    const now = new Date();
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+    // Find all users who have this user in their referral chain
+    const downchainUsers = await User.find({
+      referralChain: userId
+    });
+
+    if (!downchainUsers || downchainUsers.length === 0) {
+      return res.status(400).json({ 
+        message: 'No downchain users found',
+        claimableAmount: 0
+      });
+    }
+
+    let totalClaimedShare = 0;
+    const claimDetails = [];
+    const profitShareTransactions = [];
+
+    // Count active direct referrals
+    const activeDirectReferrals = await countActiveDirectReferrals(userId);
+
+    // For each downchain user, calculate their claimable profit and this user's share
+    for (const downchainUser of downchainUsers) {
+      // Determine the level of this downchain user relative to claiming user
+      const levelIndex = downchainUser.referralChain.findIndex(
+        id => id.toString() === userId.toString()
+      );
+      
+      if (levelIndex === -1) continue;
+      
+      const level = levelIndex + 1; // Level 1-12
+
+      // Check if user has unlocked this level
+      if (level > 12 || activeDirectReferrals < level) {
+        continue;
+      }
+
+      // Calculate this downchain user's claimable daily profits
+      const activeEntries = downchainUser.lockedCoinsEntries?.filter(entry => entry.status === 'active') || [];
+      
+      let downchainUserTotalClaimable = 0;
+      const entryDetails = [];
+
+      for (const entry of activeEntries) {
+        const lockStart = new Date(entry.lockStartDate);
+        
+        // Get the last time THIS user claimed profit share from THIS downchain user's entry
+        const lastClaimKey = `${downchainUser._id.toString()}_${entry._id.toString()}`;
+        const lastClaimDateForThisUser = user.lastProfitShareClaimDates?.get(lastClaimKey) || lockStart;
+        
+        // Calculate days since last claim by THIS user
+        const daysSinceLastClaim = Math.max(0, Math.floor((now - new Date(lastClaimDateForThisUser)) / millisecondsPerDay));
+        
+        if (daysSinceLastClaim > 0) {
+          // Calculate claimable profit for THIS entry
+          const monthlyProfitInCoins = (entry.amount * currentRoiRate) / 100;
+          const dailyProfitInCoins = monthlyProfitInCoins / 30;
+          const claimableProfitInCoins = dailyProfitInCoins * daysSinceLastClaim;
+          const claimableProfitInDollars = claimableProfitInCoins * apexCoinToDollarRate;
+          
+          downchainUserTotalClaimable += claimableProfitInDollars;
+          
+          entryDetails.push({
+            entryId: entry._id,
+            amount: entry.amount,
+            daysSinceLastClaim: daysSinceLastClaim,
+            claimableProfit: parseFloat(claimableProfitInDollars.toFixed(2))
+          });
+          
+          // Update last claim date for this user-entry combination
+          if (!user.lastProfitShareClaimDates) {
+            user.lastProfitShareClaimDates = new Map();
+          }
+          user.lastProfitShareClaimDates.set(lastClaimKey, now);
+        }
+      }
+
+      if (downchainUserTotalClaimable > 0) {
+        // Calculate this user's share based on the level
+        const sharePercentage = PROFIT_SHARE_PERCENTAGES[level];
+        const shareAmount = (downchainUserTotalClaimable * sharePercentage) / 100;
+        
+        totalClaimedShare += shareAmount;
+        
+        claimDetails.push({
+          downchainUserId: downchainUser._id,
+          downchainUserName: downchainUser.fullName,
+          level: level,
+          sharePercentage: sharePercentage,
+          downchainClaimableAmount: parseFloat(downchainUserTotalClaimable.toFixed(2)),
+          shareAmount: parseFloat(shareAmount.toFixed(2)),
+          entries: entryDetails
+        });
+
+        // Create profit share transaction record
+        const profitShareTransaction = new ProfitShareTransaction({
+          userId: userId,
+          fromUserId: downchainUser._id,
+          roiAmount: downchainUserTotalClaimable,
+          sharePercentage: sharePercentage,
+          shareAmount: shareAmount,
+          level: level,
+          activeDirectReferralsAtTime: activeDirectReferrals,
+          claimDate: now,
+          isClaimed: true,
+          claimedAt: now
+        });
+        
+        profitShareTransactions.push(profitShareTransaction);
+      }
+    }
+
+    if (totalClaimedShare === 0) {
+      return res.status(400).json({ 
+        message: 'No profit shares available to claim yet. Your downchain users may not have accumulated claimable profits since your last claim.',
+        claimableAmount: 0
+      });
+    }
+
+    // Save all profit share transactions
+    await ProfitShareTransaction.insertMany(profitShareTransactions);
+
+    // Update user's account balance and total profit share earned
+    user.accountBalance = (user.accountBalance || 0) + totalClaimedShare;
+    user.totalProfitShareEarned = (user.totalProfitShareEarned || 0) + totalClaimedShare;
+    
+    await user.save();
+
+    res.status(200).json({
+      message: 'Downchain profit shares claimed successfully',
+      data: {
+        totalClaimedAmount: parseFloat(totalClaimedShare.toFixed(2)),
+        newAccountBalance: parseFloat(user.accountBalance.toFixed(2)),
+        totalProfitShareEarned: parseFloat(user.totalProfitShareEarned.toFixed(2)),
+        claimDetails: claimDetails,
+        claimedAt: now,
+        activeDirectReferrals: activeDirectReferrals,
+        unlockedLevels: Math.min(activeDirectReferrals, 12),
+        downchainUsersProcessed: claimDetails.length
+      }
+    });
+  } catch (error) {
+    console.error('Error claiming downchain profit shares:', error);
+    res.status(500).json({ message: 'Error claiming downchain profit shares', error: error.message });
+  }
+};
+
 module.exports = {
   // Helper functions for use in other controllers
   buildReferralPath,
   countActiveDirectReferrals,
   distributeStakingBonus,
-  distributeProfitShare,
   BONUS_PERCENTAGES,
   PROFIT_SHARE_PERCENTAGES,
   
@@ -887,7 +1223,7 @@ module.exports = {
   getProfitShareHistory,
   getReferralStats,
   getUnclaimedBonuses,
-  getUnclaimedProfitShares,
   claimBonuses,
-  claimProfitShares
+  getAvailableDownchainProfitShares,
+  claimDownchainProfitShares
 };

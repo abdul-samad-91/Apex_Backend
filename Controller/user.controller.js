@@ -5,7 +5,7 @@ const { generateOTP, sendOTPEmail } = require('../utils/sendEmail');
 const generateReferralCode = require('../utils/generateReferalCode');
 const ApexCoinRate = require('../Models/apexCoinRate.model');
 const Roi = require('../Models/roi.model');
-const { distributeStakingBonus, distributeProfitShare } = require('./referralBonus.controller');
+const { distributeStakingBonus } = require('./referralBonus.controller');
 
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
@@ -1008,9 +1008,8 @@ const claimDailyProfits = async (req, res) => {
         
         await user.save();
 
-        // Distribute profit share to upline (12 levels) based on ROI claimed
-        const profitShareResult = await distributeProfitShare(userId, totalClaimableAmount);
-        console.log('Profit share distribution result:', profitShareResult);
+        // NOTE: Upline profit shares are now claimed independently via /claimDownchainProfitShares
+        // Uplines don't need to wait for downline to claim - they can claim anytime
 
         res.status(200).json({
             message: 'Daily profits claimed successfully',
@@ -1019,8 +1018,7 @@ const claimDailyProfits = async (req, res) => {
                 newAccountBalance: parseFloat(user.accountBalance.toFixed(2)),
                 totalRoiEarned: parseFloat(user.totalRoiEarned.toFixed(2)),
                 claimDetails: claimDetails,
-                claimedAt: now,
-                profitShareDistribution: profitShareResult
+                claimedAt: now
             }
         });
     } catch (error) {

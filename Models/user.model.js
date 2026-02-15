@@ -185,6 +185,12 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    // Track last profit share claim date per downline user
+    lastProfitShareClaimDates: {
+      type: Map,
+      of: Date,
+      default: new Map()
+    },
     isVerified:{
       type: Boolean,
       default: false
