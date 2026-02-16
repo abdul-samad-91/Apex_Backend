@@ -317,6 +317,34 @@ const getBonusHistory = async (req, res) => {
     const referralPaths = {};
 
     for (const bonus of bonuses) {
+      // Handle case where fromUserId is null (user was deleted)
+      if (!bonus.fromUserId) {
+        // Create a separate group for deleted users
+        const deletedKey = 'deleted_user';
+        if (!groupedByUser[deletedKey]) {
+          groupedByUser[deletedKey] = {
+            fromUserId: { _id: null, fullName: 'Deleted User', email: 'N/A' },
+            referralPath: [],
+            transactions: []
+          };
+        }
+        
+        groupedByUser[deletedKey].transactions.push({
+          _id: bonus._id,
+          stakeEntryId: bonus.stakeEntryId,
+          investmentAmount: bonus.investmentAmount,
+          bonusPercentage: bonus.bonusPercentage,
+          bonusAmount: bonus.bonusAmount,
+          level: bonus.level,
+          activeDirectReferralsAtTime: bonus.activeDirectReferralsAtTime,
+          isClaimed: bonus.isClaimed,
+          claimedAt: bonus.claimedAt,
+          createdAt: bonus.createdAt,
+          updatedAt: bonus.updatedAt
+        });
+        continue;
+      }
+
       const fromUserIdStr = bonus.fromUserId._id.toString();
       
       // If we haven't seen this user before, build their referral path
@@ -441,6 +469,34 @@ const getProfitShareHistory = async (req, res) => {
     const referralPaths = {};
 
     for (const share of profitShares) {
+      // Handle case where fromUserId is null (user was deleted)
+      if (!share.fromUserId) {
+        // Create a separate group for deleted users
+        const deletedKey = 'deleted_user';
+        if (!groupedByUser[deletedKey]) {
+          groupedByUser[deletedKey] = {
+            fromUserId: { _id: null, fullName: 'Deleted User', email: 'N/A' },
+            referralPath: [],
+            transactions: []
+          };
+        }
+        
+        groupedByUser[deletedKey].transactions.push({
+          _id: share._id,
+          roiAmount: share.roiAmount,
+          sharePercentage: share.sharePercentage,
+          shareAmount: share.shareAmount,
+          level: share.level,
+          activeDirectReferralsAtTime: share.activeDirectReferralsAtTime,
+          isClaimed: share.isClaimed,
+          claimedAt: share.claimedAt,
+          claimDate: share.claimDate,
+          createdAt: share.createdAt,
+          updatedAt: share.updatedAt
+        });
+        continue;
+      }
+
       const fromUserIdStr = share.fromUserId._id.toString();
       
       // If we haven't seen this user before, build their referral path
