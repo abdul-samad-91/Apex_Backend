@@ -1196,6 +1196,8 @@ const claimDownchainProfitShares = async (req, res) => {
             user.lastProfitShareClaimDates = new Map();
           }
           user.lastProfitShareClaimDates.set(lastClaimKey, now);
+          // Mark the Map field as modified so MongoDB persists the change
+          user.markModified('lastProfitShareClaimDates');
         }
       }
 

@@ -302,19 +302,28 @@ const getUserById = async (req, res) => {
     }
 };
 
-// Update user
+// Update user (fullName, phoneNumber, profilePicture)
 const updateUser = async (req, res) => {
     try {
-        const { name, email, role, isActive } = req.body;
+        const { fullName, phoneNumber } = req.body;
+        const userId = req.params.id;
         
         const updateData = {};
-        if (name) updateData.name = name;
-        if (email) updateData.email = email;
-        if (role) updateData.role = role;
-        if (isActive !== undefined) updateData.isActive = isActive;
+        if (fullName) updateData.fullName = fullName;
+        if (phoneNumber) updateData.phoneNumber = phoneNumber;
+
+        // Handle profile picture upload if file is present
+        if (req.file) {
+            try {
+                const uploadResult = await uploadToCloudinary(req.file.buffer);
+                updateData.profilePictureUrl = uploadResult.secure_url;
+            } catch (err) {
+                return res.status(500).json({ message: 'Profile image upload failed', error: err.message });
+            }
+        }
 
         const user = await User.findByIdAndUpdate(
-            req.params.id,
+            userId,
             updateData,
             { new: true, runValidators: true }
         ).select('-password');
@@ -351,7 +360,7 @@ const deleteUser = async (req, res) => {
 const updatePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
-        const user = await User.findById(req.params.id);
+        const user = await User.findById(req.params.id).select('+password');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });

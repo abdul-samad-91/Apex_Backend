@@ -98,8 +98,8 @@ router.get('/referralLevels', protect, getReferralLevels);
 // Get user by ID
 router.get('/:id', protect  , getUserById);
 
-// Update user
-router.put('/:id' , protect , updateUser);
+// Update user (with optional profile picture upload)
+router.put('/:id' , protect , upload.single('profilePicture'), updateUser);
 
 // Delete user
 router.delete('/:id' , protect , isAdmin , deleteUser);
