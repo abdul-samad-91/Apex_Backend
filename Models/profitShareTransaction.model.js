@@ -1,69 +1,95 @@
-const mongoose = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../Config/DB');
 
-const profitShareTransactionSchema = new mongoose.Schema(
-  {
-    // Who receives the profit share (upline user)
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true
+class ProfitShareTransaction extends Model {}
+
+ProfitShareTransaction.init(
+    {
+        id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        // Who receives the profit share (upline user)
+        user_id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+            references: {
+                model: 'users',
+                key: 'id'
+            },
+            onDelete: 'CASCADE'
+        },
+        // Who earned the ROI (downline user)
+        from_user_id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+            references: {
+                model: 'users',
+                key: 'id'
+            },
+            onDelete: 'CASCADE'
+        },
+        // The ROI amount that triggered this share (daily profit claimed by downline)
+        roi_amount: {
+            type: DataTypes.DECIMAL(20, 8),
+            allowNull: false
+        },
+        // Share percentage for this level
+        share_percentage: {
+            type: DataTypes.DECIMAL(5, 2),
+            allowNull: false
+        },
+        // Actual profit share amount earned
+        share_amount: {
+            type: DataTypes.DECIMAL(20, 8),
+            allowNull: false
+        },
+        // Level in the referral chain (1-12)
+        level: {
+            type: DataTypes.TINYINT.UNSIGNED,
+            allowNull: false,
+            validate: {
+                min: 1,
+                max: 12
+            }
+        },
+        // Active direct referrals at the time of profit share
+        active_direct_referrals_at_time: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            defaultValue: 0
+        },
+        // Reference to the claim date for tracking
+        claim_date: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW
+        },
+        // Whether this profit share has been claimed
+        is_claimed: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        // Date when profit share was claimed
+        claimed_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        }
     },
-    // Who earned the ROI (downline user)
-    fromUserId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    // The ROI amount that triggered this share (daily profit claimed by downline)
-    roiAmount: {
-      type: Number,
-      required: true
-    },
-    // Share percentage for this level (e.g., 10, 7, 6, 5, 2, 1, 1, 0.5, 0.5, 0.5, 1, 1)
-    sharePercentage: {
-      type: Number,
-      required: true
-    },
-    // Actual profit share amount earned
-    shareAmount: {
-      type: Number,
-      required: true
-    },
-    // Level in the referral chain (1-12)
-    level: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 12
-    },
-    // Active direct referrals at the time of profit share
-    activeDirectReferralsAtTime: {
-      type: Number,
-      default: 0
-    },
-    // Reference to the claim date for tracking
-    claimDate: {
-      type: Date,
-      default: Date.now
-    },
-    // Whether this profit share has been claimed
-    isClaimed: {
-      type: Boolean,
-      default: false
-    },
-    // Date when profit share was claimed
-    claimedAt: {
-      type: Date,
-      default: null
+    {
+        sequelize,
+        modelName: 'ProfitShareTransaction',
+        tableName: 'profit_share_transactions',
+        timestamps: true,
+        underscored: true,
+        indexes: [
+            { fields: ['user_id', 'created_at'] },
+            { fields: ['from_user_id'] },
+            { fields: ['claim_date'] },
+            { fields: ['is_claimed'] },
+            { fields: ['user_id', 'is_claimed'] }
+        ]
     }
-  },
-  { timestamps: true }
 );
 
-// Index for efficient queries
-profitShareTransactionSchema.index({ userId: 1, createdAt: -1 });
-profitShareTransactionSchema.index({ fromUserId: 1 });
-profitShareTransactionSchema.index({ claimDate: -1 });
-
-module.exports = mongoose.model('ProfitShareTransaction', profitShareTransactionSchema);
+module.exports = ProfitShareTransaction;

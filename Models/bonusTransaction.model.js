@@ -1,69 +1,100 @@
-const mongoose = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../Config/DB');
 
-const bonusTransactionSchema = new mongoose.Schema(
-  {
-    // Who receives the bonus (upline user)
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true
+class BonusTransaction extends Model {}
+
+BonusTransaction.init(
+    {
+        id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        // Who receives the bonus (upline user)
+        user_id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+            references: {
+                model: 'users',
+                key: 'id'
+            },
+            onDelete: 'CASCADE'
+        },
+        // Who made the investment (downline user)
+        from_user_id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+            references: {
+                model: 'users',
+                key: 'id'
+            },
+            onDelete: 'CASCADE'
+        },
+        // Which stake entry triggered this bonus
+        stake_entry_id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+            references: {
+                model: 'locked_coins_entries',
+                key: 'id'
+            },
+            onDelete: 'CASCADE'
+        },
+        // Original investment/stake amount
+        investment_amount: {
+            type: DataTypes.DECIMAL(20, 8),
+            allowNull: false
+        },
+        // Bonus percentage for this level (e.g., 9, 4, 3, 2, 1, 1)
+        bonus_percentage: {
+            type: DataTypes.DECIMAL(5, 2),
+            allowNull: false
+        },
+        // Actual bonus amount earned
+        bonus_amount: {
+            type: DataTypes.DECIMAL(20, 8),
+            allowNull: false
+        },
+        // Level in the referral chain (1-6)
+        level: {
+            type: DataTypes.TINYINT.UNSIGNED,
+            allowNull: false,
+            validate: {
+                min: 1,
+                max: 6
+            }
+        },
+        // Active direct referrals at the time of bonus
+        active_direct_referrals_at_time: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            defaultValue: 0
+        },
+        // Whether this bonus has been claimed
+        is_claimed: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        // Date when bonus was claimed
+        claimed_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        }
     },
-    // Who made the investment (downline user)
-    fromUserId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    // Which stake entry triggered this bonus
-    stakeEntryId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true
-    },
-    // Original investment/stake amount
-    investmentAmount: {
-      type: Number,
-      required: true
-    },
-    // Bonus percentage for this level (e.g., 9, 4, 3, 2, 1, 1)
-    bonusPercentage: {
-      type: Number,
-      required: true
-    },
-    // Actual bonus amount earned
-    bonusAmount: {
-      type: Number,
-      required: true
-    },
-    // Level in the referral chain (1-6)
-    level: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 6
-    },
-    // Active direct referrals at the time of bonus
-    activeDirectReferralsAtTime: {
-      type: Number,
-      default: 0
-    },
-    // Whether this bonus has been claimed
-    isClaimed: {
-      type: Boolean,
-      default: false
-    },
-    // Date when bonus was claimed
-    claimedAt: {
-      type: Date,
-      default: null
+    {
+        sequelize,
+        modelName: 'BonusTransaction',
+        tableName: 'bonus_transactions',
+        timestamps: true,
+        underscored: true,
+        indexes: [
+            { fields: ['user_id', 'created_at'] },
+            { fields: ['from_user_id'] },
+            { fields: ['stake_entry_id'] },
+            { fields: ['is_claimed'] },
+            { fields: ['user_id', 'is_claimed'] }
+        ]
     }
-  },
-  { timestamps: true }
 );
 
-// Index for efficient queries
-bonusTransactionSchema.index({ userId: 1, createdAt: -1 });
-bonusTransactionSchema.index({ fromUserId: 1 });
-bonusTransactionSchema.index({ stakeEntryId: 1 });
-
-module.exports = mongoose.model('BonusTransaction', bonusTransactionSchema);
+module.exports = BonusTransaction;

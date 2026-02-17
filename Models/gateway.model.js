@@ -1,13 +1,47 @@
-const mongoose = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../Config/DB');
 
-const gatewaySchema = new mongoose.Schema(
-  {
-    image: { type: String },
-    walletName: { type: String, trim: true },
-    walletAddress: { type: String, trim: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  },
-  { timestamps: true }
+class Gateway extends Model {}
+
+Gateway.init(
+    {
+        id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        image: {
+            type: DataTypes.STRING(500),
+            allowNull: true
+        },
+        wallet_name: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
+        wallet_address: {
+            type: DataTypes.STRING(500),
+            allowNull: true
+        },
+        created_by: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: true,
+            references: {
+                model: 'users',
+                key: 'id'
+            },
+            onDelete: 'SET NULL'
+        }
+    },
+    {
+        sequelize,
+        modelName: 'Gateway',
+        tableName: 'gateways',
+        timestamps: true,
+        underscored: true,
+        indexes: [
+            { fields: ['created_by'] }
+        ]
+    }
 );
 
-module.exports = mongoose.model('Gateway', gatewaySchema);
+module.exports = Gateway;

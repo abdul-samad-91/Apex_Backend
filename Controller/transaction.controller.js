@@ -1,81 +1,132 @@
+const { sequelize } = require('../Config/DB');
 const Transaction = require('../Models/transaction.model');
 const User = require('../Models/user.model');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
 // Create new transaction
 const createTransaction = async (req, res) => {
-  try {
-    const {
-        transactionId,
-        amount,
-        accountName,
-        bankAccountNumber,
-        bankName,
-        status
-    } = req.body;
+    const dbTransaction = await sequelize.transaction();
     
-    console.log('req.user:', req.user); // Debug log
-    const userId = req.user?._id; // Get user ID from authenticated user
-    
-    if (!userId) {
-        return res.status(401).json({ message: "User not authenticated" });
-    }
-    
-    // 🔹 Check if screenshot file is uploaded
-    if (!req.file) {
-        return res.status(400).json({ message: "Screenshot is required" });
-    }
+    try {
+        const {
+            transactionId,
+            amount,
+            accountName,
+            bankAccountNumber,
+            bankName,
+            status
+        } = req.body;
 
-    // 🔹 Required fields check
-    if (!transactionId || !amount || !accountName || !status) {
-        return res.status(400).json({ message: "All fields are required" });
-    }
-    // 🔹 Validate amount is a valid number
-    if (isNaN(amount) || Number(amount) <= 0) {
-        return res.status(400).json({ message: "Amount must be a valid positive number" });
-    }
+        console.log('req.user:', req.user); // Debug log
+        const userId = req.user?.id; // Get user ID from authenticated user
 
-    // 🔹 Check if transaction already exists
-    const existingTransaction = await Transaction.findOne({ transactionId });
-    if (existingTransaction) {
-        return res.status(400).json({
-            message: "Transaction already exists with provided transaction ID",
-        });
-    }
+        if (!userId) {
+            await dbTransaction.rollback();
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
 
-    // 🔹 Upload screenshot to Cloudinary
-    const uploadResult = await uploadToCloudinary(req.file.buffer);
-    const screenshotUrl = uploadResult.secure_url;
+        // Check if screenshot file is uploaded
+        if (!req.file) {
+            await dbTransaction.rollback();
+            return res.status(400).json({ message: 'Screenshot is required' });
+        }
 
-    // 🔹 Create new transaction
-    const transaction = new Transaction({
+        // Required fields check
+        if (!transactionId || !amount || !accountName || !status) {
+            await dbTransaction.rollback();
+            return res.status(400).json({ message: 'All fields are required' });
+        }
         
-        transactionId,
-        user: userId,
-        screenshotUrl,
-        amount,
-        accountName,
-        bankAccountNumber,
-        bankName,
-        status
-    });
-    await transaction.save();
-    res.status(201).json({ 
-      message: "Transaction created successfully", 
-      transaction 
-    });
+        // Validate amount is a valid number
+        if (isNaN(amount) || Number(amount) <= 0) {
+            await dbTransaction.rollback();
+            return res.status(400).json({ message: 'Amount must be a valid positive number' });
+        }
 
-} catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+        // Check if transaction already exists
+        const existingTransaction = await Transaction.findOne({
+            where: { transaction_id: transactionId },
+            transaction: dbTransaction
+        });
+        if (existingTransaction) {
+            await dbTransaction.rollback();
+            return res.status(400).json({
+                message: 'Transaction already exists with provided transaction ID'
+            });
+        }
+
+        // Upload screenshot to Cloudinary
+        const uploadResult = await uploadToCloudinary(req.file.buffer);
+        const screenshotUrl = uploadResult.secure_url;
+
+        // Create new transaction
+        const transaction = await Transaction.create({
+            transaction_id: transactionId,
+            user_id: userId,
+            screenshot_url: screenshotUrl,
+            amount: parseFloat(amount),
+            account_name: accountName,
+            bank_account_number: bankAccountNumber || null,
+            bank_name: bankName || null,
+            status: status
+        }, { transaction: dbTransaction });
+
+        await dbTransaction.commit();
+
+        res.status(201).json({
+            message: 'Transaction created successfully',
+            transaction: {
+                id: transaction.id,
+                transactionId: transaction.transaction_id,
+                userId: transaction.user_id,
+                screenshotUrl: transaction.screenshot_url,
+                amount: parseFloat(transaction.amount),
+                accountName: transaction.account_name,
+                bankAccountNumber: transaction.bank_account_number,
+                bankName: transaction.bank_name,
+                status: transaction.status,
+                createdAt: transaction.created_at,
+                updatedAt: transaction.updated_at
+            }
+        });
+    } catch (error) {
+        await dbTransaction.rollback();
+        console.log(error);
+        res.status(500).json({ message: error.message });
     }
-
 };
 
 const getAllTransactions = async (req, res) => {
     try {
-        const transactions = await Transaction.find();
-        res.status(200).json(transactions);
+        const transactions = await Transaction.findAll({
+            include: [{
+                model: User,
+                as: 'user',
+                attributes: ['id', 'full_name', 'email']
+            }],
+            order: [['created_at', 'DESC']]
+        });
+
+        // Format response for backward compatibility
+        const formattedTransactions = transactions.map(txn => ({
+            id: txn.id,
+            transactionId: txn.transaction_id,
+            user: txn.user ? {
+                id: txn.user.id,
+                fullName: txn.user.full_name,
+                email: txn.user.email
+            } : null,
+            screenshotUrl: txn.screenshot_url,
+            amount: parseFloat(txn.amount),
+            accountName: txn.account_name,
+            bankAccountNumber: txn.bank_account_number,
+            bankName: txn.bank_name,
+            status: txn.status,
+            createdAt: txn.created_at,
+            updatedAt: txn.updated_at
+        }));
+
+        res.status(200).json(formattedTransactions);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -84,28 +135,28 @@ const getAllTransactions = async (req, res) => {
 // Get transaction history for a specific user
 const getUserTransactionHistory = async (req, res) => {
     try {
-        const userId = req.params.userId || req.user._id; // Support both route param and authenticated user
-        
-        const transactions = await Transaction.find({ user: userId })
-            .sort({ createdAt: -1 }) // Most recent first
-            .select('transactionId amount accountName bankAccountNumber bankName status createdAt updatedAt screenshotUrl')
-            .lean();
-        
+        const userId = req.params.userId || req.user.id;
+
+        const transactions = await Transaction.findAll({
+            where: { user_id: userId },
+            order: [['created_at', 'DESC']]
+        });
+
         // Format the response with all required fields
         const formattedTransactions = transactions.map(txn => ({
-            transactionId: txn.transactionId,
-            date: new Date(txn.createdAt).toLocaleDateString(),
-            time: new Date(txn.createdAt).toLocaleTimeString(),
-            amount: txn.amount,
-            accountName: txn.accountName,
-            bankAccountNumber: txn.bankAccountNumber || 'N/A',
-            bankName: txn.bankName || 'N/A',
+            transactionId: txn.transaction_id,
+            date: new Date(txn.created_at).toLocaleDateString(),
+            time: new Date(txn.created_at).toLocaleTimeString(),
+            amount: parseFloat(txn.amount),
+            accountName: txn.account_name,
+            bankAccountNumber: txn.bank_account_number || 'N/A',
+            bankName: txn.bank_name || 'N/A',
             status: txn.status,
-            screenshotUrl: txn.screenshotUrl,
-            createdAt: txn.createdAt,
-            updatedAt: txn.updatedAt
+            screenshotUrl: txn.screenshot_url,
+            createdAt: txn.created_at,
+            updatedAt: txn.updated_at
         }));
-        
+
         res.status(200).json({
             message: 'Transaction history retrieved successfully',
             count: formattedTransactions.length,
@@ -116,55 +167,75 @@ const getUserTransactionHistory = async (req, res) => {
     }
 };
 
-//update transaction status
+// Update transaction status
 const updateTransactionStatus = async (req, res) => {
+    const dbTransaction = await sequelize.transaction();
+    
     try {
         const transactionId = req.params.id;
         const { status } = req.body;
-        
+
         // Validate status
         if (!status) {
-            return res.status(400).json({ message: "Status is required" });
+            await dbTransaction.rollback();
+            return res.status(400).json({ message: 'Status is required' });
         }
 
-        // Find the transaction first to get the current status and amount
-        const transaction = await Transaction.findById(transactionId);
-        
+        // Find the transaction first with lock for update
+        const transaction = await Transaction.findByPk(transactionId, {
+            transaction: dbTransaction,
+            lock: true
+        });
+
         if (!transaction) {
-            return res.status(404).json({ message: "Transaction not found" });
+            await dbTransaction.rollback();
+            return res.status(404).json({ message: 'Transaction not found' });
         }
-        
+
         // If approving a pending transaction, add amount to user's accountBalance
-        if (status === "approved" && transaction.status !== "approved" && transaction.user) {
+        if (status === 'approved' && transaction.status !== 'approved' && transaction.user_id) {
             // Validate transaction.amount is a valid number
             const amountToAdd = parseFloat(transaction.amount);
             if (isNaN(amountToAdd) || amountToAdd <= 0) {
-                return res.status(400).json({ message: "Transaction amount is invalid. Cannot update account balance." });
+                await dbTransaction.rollback();
+                return res.status(400).json({ message: 'Transaction amount is invalid. Cannot update account balance.' });
             }
-            const user = await User.findById(transaction.user);
+            
+            const user = await User.findByPk(transaction.user_id, {
+                transaction: dbTransaction,
+                lock: true
+            });
+            
             if (user) {
-                user.accountBalance = (user.accountBalance || 0) + amountToAdd;
-                await user.save();
-                console.log(`Added ${amountToAdd} to user ${user._id} accountBalance. New balance: ${user.accountBalance}`);
+                const newBalance = (parseFloat(user.account_balance) || 0) + amountToAdd;
+                await user.update({ account_balance: newBalance }, { transaction: dbTransaction });
+                console.log(`Added ${amountToAdd} to user ${user.id} accountBalance. New balance: ${newBalance}`);
             } else {
-                return res.status(404).json({ message: "User not found" });
+                await dbTransaction.rollback();
+                return res.status(404).json({ message: 'User not found' });
             }
         }
-        
+
         // Update transaction status
-        transaction.status = status;
-        await transaction.save();
-        
-        res.status(200).json({ 
-            message: "Transaction status updated successfully", 
-            transaction 
+        await transaction.update({ status }, { transaction: dbTransaction });
+
+        await dbTransaction.commit();
+
+        res.status(200).json({
+            message: 'Transaction status updated successfully',
+            transaction: {
+                id: transaction.id,
+                transactionId: transaction.transaction_id,
+                status: transaction.status,
+                amount: parseFloat(transaction.amount)
+            }
         });
     } catch (error) {
-        console.error("Error updating transaction status:", error);
+        await dbTransaction.rollback();
+        console.error('Error updating transaction status:', error);
         res.status(500).json({ message: error.message });
-    }   
+    }
 };
-
 
 module.exports = {
     createTransaction,

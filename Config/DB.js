@@ -1,16 +1,46 @@
 require('dotenv').config();
-const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/apex_db';
-console.log(MONGODB_URI);
+// Database connection configuration
+const sequelize = new Sequelize(
+    process.env.MYSQL_DATABASE || 'apex_db',
+    process.env.MYSQL_USER || 'root',
+    process.env.MYSQL_PASSWORD || '',
+    {
+        host: process.env.MYSQL_HOST || 'localhost',
+        port: process.env.MYSQL_PORT || 3306,
+        dialect: 'mysql',
+        logging: process.env.NODE_ENV === 'development' ? console.log : false,
+        pool: {
+            max: 10,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        },
+        define: {
+            timestamps: true,
+            underscored: true, // Use snake_case for column names
+            freezeTableName: true
+        },
+        timezone: '+00:00' // UTC timezone for consistency
+    }
+);
+
+// Test connection and sync models
 const connectDB = async () => {
     try {
-        await mongoose.connect(MONGODB_URI);
-        console.log('Connected to MongoDB successfully');
+        await sequelize.authenticate();
+        console.log('Connected to MySQL successfully');
+        
+        // Sync all models (in production, use migrations instead)
+        if (process.env.NODE_ENV !== 'production') {
+            await sequelize.sync({ alter: true });
+            console.log('Database synchronized');
+        }
     } catch (error) {
-        console.error('MongoDB connection error:', error);
+        console.error('MySQL connection error:', error);
         process.exit(1);
     }
 };
 
-module.exports = connectDB;
+module.exports = { sequelize, connectDB };

@@ -1,12 +1,46 @@
-const mongoose = require('mongoose');
+const { DataTypes, Model } = require('sequelize');
+const { sequelize } = require('../Config/DB');
 
-const roiSchema = new mongoose.Schema(
-  {
-    rate: { type: Number, required: true, default: 0 }, // percentage, e.g., 5 for 5%
-    isActive: { type: Boolean, default: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  },
-  { timestamps: true }
+class Roi extends Model {}
+
+Roi.init(
+    {
+        id: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        rate: {
+            type: DataTypes.DECIMAL(10, 4),
+            allowNull: false,
+            defaultValue: 0,
+            comment: 'Percentage rate, e.g., 5 for 5%'
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true
+        },
+        created_by: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: true,
+            references: {
+                model: 'users',
+                key: 'id'
+            },
+            onDelete: 'SET NULL'
+        }
+    },
+    {
+        sequelize,
+        modelName: 'Roi',
+        tableName: 'roi_rates',
+        timestamps: true,
+        underscored: true,
+        indexes: [
+            { fields: ['is_active'] },
+            { fields: ['created_at'] }
+        ]
+    }
 );
 
-module.exports = mongoose.model('Roi', roiSchema);
+module.exports = Roi;
