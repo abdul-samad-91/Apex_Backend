@@ -699,7 +699,7 @@ const lockApexCoins = async (req, res) => {
                 const minutesRemaining = Math.ceil((24 - hoursSinceLastLock) * 60);
                 
                 return res.status(400).json({ 
-                    message: `You can lock apex again in ${hoursRemaining} hour(s)`,
+                    message: `You can stake Apex again in ${hoursRemaining} hour(s)`,
                     hoursRemaining: hoursRemaining,
                     minutesRemaining: minutesRemaining,
                     lastLockDate: user.lastLockDate,
@@ -712,7 +712,7 @@ const lockApexCoins = async (req, res) => {
         const currentCoins = user.apexCoins || 0;
         if (currentCoins < lockAmount) {
             return res.status(400).json({ 
-                message: 'Insufficient apex',
+                message: 'Insufficient Apex',
                 currentApexCoins: currentCoins,
                 requestedAmount: lockAmount
             });
@@ -771,7 +771,7 @@ const lockApexCoins = async (req, res) => {
         const monthlyProfitInDollars = monthlyProfitInCoins * coinRate.rate;
 
         res.status(200).json({
-            message: 'Apex locked successfully',
+            message: 'Apex staked successfully',
             data: {
                 lockedAmount: lockAmount,
                 lockStartDate: lockStartDate,
@@ -785,8 +785,8 @@ const lockApexCoins = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error locking Apex:', error);
-        res.status(500).json({ message: 'Error locking Apex', error: error.message });
+        console.error('Error staking Apex:', error);
+        res.status(500).json({ message: 'Error staking Apex', error: error.message });
     }
 };
 
@@ -971,7 +971,7 @@ const approveUnlockRequest = async (req, res) => {
         await user.save();
 
         res.status(200).json({
-            message: 'Unlock request approved successfully. Coins migrated to user account.',
+            message: 'Unlock request approved successfully. Apex migrated to user account.',
             data: {
                 entryId: entry._id,
                 originalAmount: originalAmount,
@@ -984,8 +984,8 @@ const approveUnlockRequest = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error approving unlock:', error);
-        res.status(500).json({ message: 'Error approving unlock', error: error.message });
+        console.error('Error approving unstake:', error);
+        res.status(500).json({ message: 'Error approving unstake request', error: error.message });
     }
 };
 
@@ -1027,13 +1027,13 @@ const getPendingUnlockRequests = async (req, res) => {
         });
 
         res.status(200).json({
-            message: 'Pending unlock requests retrieved successfully',
+            message: 'Pending unstake requests retrieved successfully',
             count: pendingRequests.length,
             data: pendingRequests
         });
     } catch (error) {
-        console.error('Error fetching pending unlocks:', error);
-        res.status(500).json({ message: 'Error fetching pending unlock requests', error: error.message });
+        console.error('Error fetching pending unstake requests:', error);
+        res.status(500).json({ message: 'Error fetching pending unstake requests', error: error.message });
     }
 };
 
@@ -1056,7 +1056,7 @@ const claimDailyProfits = async (req, res) => {
         const activeEntries = user.lockedCoinsEntries?.filter(entry => entry.status === 'active') || [];
         if (activeEntries.length === 0) {
             return res.status(400).json({ 
-                message: 'No active locked entries found',
+                message: 'No active staked entries found',
                 claimableAmount: 0
             });
         }
@@ -1064,7 +1064,7 @@ const claimDailyProfits = async (req, res) => {
         // Get current ApexCoin to dollar rate
         const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
         if (!coinRate) {
-            return res.status(400).json({ message: 'ApexCoin rate not set yet.' });
+            return res.status(400).json({ message: 'Apex rate not set yet.' });
         }
 
         // Get current ROI rate set by admin
