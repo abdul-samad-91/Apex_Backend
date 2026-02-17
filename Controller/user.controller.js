@@ -601,12 +601,12 @@ const purchaseApexCoins = async (req, res) => {
 
         // Validate apexCoinsAmount
         if (!apexCoinsAmount) {
-            return res.status(400).json({ message: 'ApexCoins amount is required' });
+            return res.status(400).json({ message: 'Apex amount is required' });
         }
 
         const coinsAmount = parseFloat(apexCoinsAmount);
         if (isNaN(coinsAmount) || coinsAmount <= 0) {
-            return res.status(400).json({ message: 'ApexCoins amount must be a valid positive number' });
+            return res.status(400).json({ message: 'Apex amount must be a valid positive number' });
         }
 
         // Get current apex coin rate
@@ -643,7 +643,7 @@ const purchaseApexCoins = async (req, res) => {
         await user.save();
 
         res.status(200).json({
-            message: 'ApexCoins purchased successfully',
+            message: 'Apex purchased successfully',
             data: {
                 apexCoinsPurchased: coinsAmount,
                 dollarsPaid: dollarAmount,
@@ -653,8 +653,8 @@ const purchaseApexCoins = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error purchasing ApexCoins:', error);
-        res.status(500).json({ message: 'Error purchasing ApexCoins', error: error.message });
+        console.error('Error purchasing Apex:', error);
+        res.status(500).json({ message: 'Error purchasing Apex', error: error.message });
     }
 };
 
@@ -679,7 +679,7 @@ const lockApexCoins = async (req, res) => {
         }
         // Enforce minimum lock amount restriction
         if (lockAmount < 50) {
-            return res.status(400).json({ message: 'The minimum coins that you can stack is 50' });
+            return res.status(400).json({ message: 'The minimum tokens that you can stake is 50' });
         }
 
         // Find user
@@ -699,7 +699,7 @@ const lockApexCoins = async (req, res) => {
                 const minutesRemaining = Math.ceil((24 - hoursSinceLastLock) * 60);
                 
                 return res.status(400).json({ 
-                    message: `You can lock apex coins again in ${hoursRemaining} hour(s)`,
+                    message: `You can lock apex again in ${hoursRemaining} hour(s)`,
                     hoursRemaining: hoursRemaining,
                     minutesRemaining: minutesRemaining,
                     lastLockDate: user.lastLockDate,
@@ -712,7 +712,7 @@ const lockApexCoins = async (req, res) => {
         const currentCoins = user.apexCoins || 0;
         if (currentCoins < lockAmount) {
             return res.status(400).json({ 
-                message: 'Insufficient apex coins',
+                message: 'Insufficient apex',
                 currentApexCoins: currentCoins,
                 requestedAmount: lockAmount
             });
@@ -727,7 +727,7 @@ const lockApexCoins = async (req, res) => {
         // Get current ApexCoin to dollar rate
         const coinRate = await ApexCoinRate.findOne({ isActive: true }).sort({ createdAt: -1 });
         if (!coinRate) {
-            return res.status(400).json({ message: 'ApexCoin rate not set yet.' });
+            return res.status(400).json({ message: 'Apex rate not set yet.' });
         }
 
         // Lock the coins - create a new entry
@@ -771,7 +771,7 @@ const lockApexCoins = async (req, res) => {
         const monthlyProfitInDollars = monthlyProfitInCoins * coinRate.rate;
 
         res.status(200).json({
-            message: 'ApexCoins locked successfully',
+            message: 'Apex locked successfully',
             data: {
                 lockedAmount: lockAmount,
                 lockStartDate: lockStartDate,
@@ -785,8 +785,8 @@ const lockApexCoins = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error locking ApexCoins:', error);
-        res.status(500).json({ message: 'Error locking ApexCoins', error: error.message });
+        console.error('Error locking Apex:', error);
+        res.status(500).json({ message: 'Error locking Apex', error: error.message });
     }
 };
 
