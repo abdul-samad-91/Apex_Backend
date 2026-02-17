@@ -37,7 +37,7 @@ const createUser = async (req, res) => {
             isVerified,
             referralCode 
         } = req.body;
-
+        
         let referredByUser = null;
         let referralChain = [];
 
@@ -60,6 +60,18 @@ const createUser = async (req, res) => {
                 message: "User already exists with provided email",
             });
         }
+
+        //Check if the phone number is already registered
+        const existingPhone = await User.findOne({  
+            phoneNumber
+        });
+        if (existingPhone) {
+            return res.status(400).json({
+                message: "User already exists with provided phone number",
+            });
+        }
+
+
 
         // Check if this is the first user (root user)
         const userCount = await User.countDocuments();
