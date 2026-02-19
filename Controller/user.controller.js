@@ -302,11 +302,19 @@ const getUserById = async (req, res) => {
             apexCoinToDollarRate: apexCoinToDollarRate
         };
 
+        // Prepare system fees summary
+        const systemFees = {
+            p2pTransferFees: parseFloat((user.p2pSystemFees || 0).toFixed(2)),
+            withdrawalFees: parseFloat((user.withdrawalSystemFees || 0).toFixed(2)),
+            totalSystemFees: parseFloat(((user.p2pSystemFees || 0) + (user.withdrawalSystemFees || 0)).toFixed(2))
+        };
+
         res.status(200).json({ 
             user: {
                 ...user.toObject(),
                 currentRoiRate: currentRoiRate,
-                roiData
+                roiData,
+                systemFees
             }
         });
     } catch (error) {
@@ -1191,6 +1199,132 @@ const claimDailyProfits = async (req, res) => {
 };
 
 
+/**
+ * Get user's system fee transaction history
+ * Shows all P2P transfers and withdrawals with their respective fees
+ */
+const getSystemFeeHistory = async (req, res) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        const { page = 1, limit = 20, type } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const P2PTransfer = require('../Models/p2pTransfer.model');
+        const Withdrawal = require('../Models/withdrawal.model');
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Get P2P transfers (where user is sender)
+        let p2pTransfers = [];
+        if (!type || type === 'p2p' || type === 'all') {
+            p2pTransfers = await P2PTransfer.find({ sender: userId })
+                .populate('recipient', 'fullName email')
+                .sort({ createdAt: -1 })
+                .select('transferId amount systemFeeAmount amountAfterFee recipient note status createdAt');
+        }
+
+        // Get withdrawals
+        let withdrawals = [];
+        if (!type || type === 'withdrawal' || type === 'all') {
+            withdrawals = await Withdrawal.find({ user: userId })
+                .sort({ createdAt: -1 })
+                .select('withdrawalId amount systemFeeAmount amountAfterFee walletAddress network status createdAt processedAt');
+        }
+
+        // Format transactions
+        const formattedP2P = p2pTransfers.map(transfer => ({
+            id: transfer._id,
+            transactionId: transfer.transferId,
+            type: 'P2P Transfer',
+            amount: transfer.amount,
+            systemFee: transfer.systemFeeAmount || 0,
+            amountAfterFee: transfer.amountAfterFee || transfer.amount,
+            feePercentage: 3,
+            recipient: transfer.recipient ? transfer.recipient.fullName : 'N/A',
+            recipientEmail: transfer.recipient ? transfer.recipient.email : 'N/A',
+            note: transfer.note,
+            status: transfer.status,
+            createdAt: transfer.createdAt
+        }));
+
+        const formattedWithdrawals = withdrawals.map(withdrawal => ({
+            id: withdrawal._id,
+            transactionId: withdrawal.withdrawalId,
+            type: 'Withdrawal',
+            amount: withdrawal.amount,
+            systemFee: withdrawal.systemFeeAmount || 0,
+            amountAfterFee: withdrawal.amountAfterFee || withdrawal.amount,
+            feePercentage: 5,
+            walletAddress: withdrawal.walletAddress,
+            network: withdrawal.network,
+            status: withdrawal.status,
+            createdAt: withdrawal.createdAt,
+            processedAt: withdrawal.processedAt
+        }));
+
+        // Combine and sort by date
+        let allTransactions = [...formattedP2P, ...formattedWithdrawals];
+        allTransactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        // Apply pagination
+        const totalCount = allTransactions.length;
+        const paginatedTransactions = allTransactions.slice(skip, skip + parseInt(limit));
+
+        // Calculate summary
+        const summary = {
+            p2pTransfers: {
+                count: formattedP2P.length,
+                totalAmount: formattedP2P.reduce((sum, t) => sum + t.amount, 0),
+                totalFees: formattedP2P.reduce((sum, t) => sum + t.systemFee, 0)
+            },
+            withdrawals: {
+                count: formattedWithdrawals.length,
+                totalAmount: formattedWithdrawals.reduce((sum, t) => sum + t.amount, 0),
+                totalFees: formattedWithdrawals.reduce((sum, t) => sum + t.systemFee, 0)
+            },
+            overall: {
+                totalTransactions: totalCount,
+                totalFeesPaid: parseFloat((
+                    formattedP2P.reduce((sum, t) => sum + t.systemFee, 0) +
+                    formattedWithdrawals.reduce((sum, t) => sum + t.systemFee, 0)
+                ).toFixed(2))
+            }
+        };
+
+        // Add stored user fee totals
+        const userFeeTotals = {
+            p2pSystemFees: parseFloat((user.p2pSystemFees || 0).toFixed(2)),
+            withdrawalSystemFees: parseFloat((user.withdrawalSystemFees || 0).toFixed(2)),
+            totalSystemFees: parseFloat(((user.p2pSystemFees || 0) + (user.withdrawalSystemFees || 0)).toFixed(2))
+        };
+
+        res.status(200).json({
+            message: 'System fee transaction history retrieved',
+            data: {
+                transactions: paginatedTransactions,
+                summary: summary,
+                userFeeTotals: userFeeTotals,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(totalCount / parseInt(limit)),
+                    totalItems: totalCount,
+                    itemsPerPage: parseInt(limit)
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching system fee history:', error);
+        res.status(500).json({ message: 'Error fetching system fee history', error: error.message });
+    }
+};
+
 module.exports = {
     createUser,
     getAllUsers,
@@ -1205,6 +1339,7 @@ module.exports = {
     requestUnlockApexCoins,
     approveUnlockRequest,
     getPendingUnlockRequests,
-    claimDailyProfits
-    , getReferralLevels
+    claimDailyProfits,
+    getReferralLevels,
+    getSystemFeeHistory
 };

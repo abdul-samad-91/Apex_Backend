@@ -17,6 +17,18 @@ const withdrawalSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    systemFeePercentage: {
+        type: Number,
+        default: 5
+    },
+    systemFeeAmount: {
+        type: Number,
+        default: 0
+    },
+    amountAfterFee: {
+        type: Number,
+        default: 0
+    },
     walletAddress: {
         type: String,
         required: true,

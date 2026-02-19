@@ -22,6 +22,18 @@ const p2pTransferSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    systemFeePercentage: {
+        type: Number,
+        default: 3
+    },
+    systemFeeAmount: {
+        type: Number,
+        default: 0
+    },
+    amountAfterFee: {
+        type: Number,
+        default: 0
+    },
     note: {
         type: String,
         trim: true,

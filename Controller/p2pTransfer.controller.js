@@ -84,9 +84,17 @@ const transferP2P = async (req, res) => {
             });
         }
 
-        // Perform transfer
+        // Calculate 3% system fee
+        const systemFeePercentage = 3;
+        const systemFeeAmount = parseFloat((transferAmount * systemFeePercentage / 100).toFixed(2));
+        const amountAfterFee = parseFloat((transferAmount - systemFeeAmount).toFixed(2));
+
+        // Perform transfer (sender pays full amount, recipient gets amount after fee)
         sender.p2pWallet -= transferAmount;
-        recipient.p2pWallet = (recipient.p2pWallet || 0) + transferAmount;
+        recipient.p2pWallet = (recipient.p2pWallet || 0) + amountAfterFee;
+        
+        // Track system fees collected from P2P transfers
+        sender.p2pSystemFees = (sender.p2pSystemFees || 0) + systemFeeAmount;
 
         await sender.save({ session });
         await recipient.save({ session });
@@ -98,6 +106,9 @@ const transferP2P = async (req, res) => {
             sender: senderId,
             recipient: recipient._id,
             amount: transferAmount,
+            systemFeePercentage: systemFeePercentage,
+            systemFeeAmount: systemFeeAmount,
+            amountAfterFee: amountAfterFee,
             note: note || null,
             status: 'completed'
         });
@@ -115,6 +126,8 @@ const transferP2P = async (req, res) => {
                 recipient: recipient.fullName,
                 recipientEmail: recipient.email,
                 amount: parseFloat(transferAmount.toFixed(2)),
+                systemFee: systemFeeAmount,
+                amountReceived: amountAfterFee,
                 note: note || null,
                 newP2PBalance: parseFloat(sender.p2pWallet.toFixed(2)),
                 transferredAt: transfer.createdAt
@@ -175,6 +188,8 @@ const getP2PTransferHistory = async (req, res) => {
                 email: transfer.recipient.email
             },
             amount: transfer.amount,
+            systemFee: transfer.systemFeeAmount || 0,
+            amountAfterFee: transfer.amountAfterFee || transfer.amount,
             note: transfer.note,
             status: transfer.status,
             createdAt: transfer.createdAt

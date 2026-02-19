@@ -185,6 +185,16 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    // Total system fees collected from P2P transfers
+    p2pSystemFees: {
+      type: Number,
+      default: 0
+    },
+    // Total system fees collected from withdrawals
+    withdrawalSystemFees: {
+      type: Number,
+      default: 0
+    },
     // Track last profit share claim date per downline user
     lastProfitShareClaimDates: {
       type: Map,

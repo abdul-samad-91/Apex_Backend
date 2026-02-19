@@ -59,8 +59,17 @@ const requestWithdrawal = async (req, res) => {
             });
         }
 
+        // Calculate 5% system fee
+        const systemFeePercentage = 5;
+        const systemFeeAmount = parseFloat((withdrawalAmount * systemFeePercentage / 100).toFixed(2));
+        const amountAfterFee = parseFloat((withdrawalAmount - systemFeeAmount).toFixed(2));
+
         // Deduct amount from account balance
         user.accountBalance -= withdrawalAmount;
+        
+        // Track system fees collected from withdrawals
+        user.withdrawalSystemFees = (user.withdrawalSystemFees || 0) + systemFeeAmount;
+        
         await user.save();
 
         // Create withdrawal request
@@ -69,6 +78,9 @@ const requestWithdrawal = async (req, res) => {
             withdrawalId,
             user: userId,
             amount: withdrawalAmount,
+            systemFeePercentage: systemFeePercentage,
+            systemFeeAmount: systemFeeAmount,
+            amountAfterFee: amountAfterFee,
             walletAddress,
             network,
             status: 'pending'
@@ -81,6 +93,8 @@ const requestWithdrawal = async (req, res) => {
             data: {
                 withdrawalId: withdrawal.withdrawalId,
                 amount: withdrawalAmount,
+                systemFee: systemFeeAmount,
+                amountToReceive: amountAfterFee,
                 walletAddress: walletAddress,
                 network: network,
                 status: withdrawal.status,
@@ -127,21 +141,25 @@ const getUserWithdrawals = async (req, res) => {
                 $group: {
                     _id: '$status',
                     totalAmount: { $sum: '$amount' },
+                    totalFees: { $sum: '$systemFeeAmount' },
+                    totalAmountAfterFee: { $sum: '$amountAfterFee' },
                     count: { $sum: 1 }
                 }
             }
         ]);
 
         const summaryData = {
-            pending: { amount: 0, count: 0 },
-            processing: { amount: 0, count: 0 },
-            completed: { amount: 0, count: 0 },
-            rejected: { amount: 0, count: 0 }
+            pending: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 },
+            processing: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 },
+            completed: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 },
+            rejected: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 }
         };
 
         summary.forEach(item => {
             summaryData[item._id] = {
                 amount: parseFloat(item.totalAmount.toFixed(2)),
+                fees: parseFloat((item.totalFees || 0).toFixed(2)),
+                amountAfterFee: parseFloat((item.totalAmountAfterFee || 0).toFixed(2)),
                 count: item.count
             };
         });
@@ -192,21 +210,25 @@ const getAllWithdrawals = async (req, res) => {
                 $group: {
                     _id: '$status',
                     totalAmount: { $sum: '$amount' },
+                    totalFees: { $sum: '$systemFeeAmount' },
+                    totalAmountAfterFee: { $sum: '$amountAfterFee' },
                     count: { $sum: 1 }
                 }
             }
         ]);
 
         const summaryData = {
-            pending: { amount: 0, count: 0 },
-            processing: { amount: 0, count: 0 },
-            completed: { amount: 0, count: 0 },
-            rejected: { amount: 0, count: 0 }
+            pending: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 },
+            processing: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 },
+            completed: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 },
+            rejected: { amount: 0, fees: 0, amountAfterFee: 0, count: 0 }
         };
 
         summary.forEach(item => {
             summaryData[item._id] = {
                 amount: parseFloat(item.totalAmount.toFixed(2)),
+                fees: parseFloat((item.totalFees || 0).toFixed(2)),
+                amountAfterFee: parseFloat((item.totalAmountAfterFee || 0).toFixed(2)),
                 count: item.count
             };
         });
@@ -238,11 +260,15 @@ const getPendingWithdrawals = async (req, res) => {
             .sort({ createdAt: 1 }); // Oldest first
 
         const totalPendingAmount = withdrawals.reduce((sum, w) => sum + w.amount, 0);
+        const totalPendingFees = withdrawals.reduce((sum, w) => sum + (w.systemFeeAmount || 0), 0);
+        const totalPendingAfterFee = withdrawals.reduce((sum, w) => sum + (w.amountAfterFee || 0), 0);
 
         res.status(200).json({
             message: 'Pending withdrawals retrieved successfully',
             count: withdrawals.length,
             totalAmount: parseFloat(totalPendingAmount.toFixed(2)),
+            totalFees: parseFloat(totalPendingFees.toFixed(2)),
+            totalAmountAfterFee: parseFloat(totalPendingAfterFee.toFixed(2)),
             data: withdrawals
         });
     } catch (error) {
@@ -282,10 +308,12 @@ const updateWithdrawalStatus = async (req, res) => {
                 return res.status(400).json({ message: 'Rejection reason is required' });
             }
 
-            // Refund the amount to user's account balance
+            // Refund the amount to user's account balance and deduct fee from system
             const user = await User.findById(withdrawal.user._id);
             if (user) {
                 user.accountBalance = (user.accountBalance || 0) + withdrawal.amount;
+                // Deduct the fee from withdrawalSystemFees since withdrawal didn't happen
+                user.withdrawalSystemFees = Math.max(0, (user.withdrawalSystemFees || 0) - (withdrawal.systemFeeAmount || 0));
                 await user.save();
             }
 
@@ -324,6 +352,8 @@ const updateWithdrawalStatus = async (req, res) => {
             data: {
                 withdrawalId: withdrawal.withdrawalId,
                 amount: withdrawal.amount,
+                systemFee: withdrawal.systemFeeAmount || 0,
+                amountAfterFee: withdrawal.amountAfterFee || withdrawal.amount,
                 walletAddress: withdrawal.walletAddress,
                 network: withdrawal.network,
                 status: withdrawal.status,
