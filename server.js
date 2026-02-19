@@ -7,6 +7,8 @@
     const gatewayRoutes = require('./Routes/gateway.routes');
     const roiRoutes = require('./Routes/roi.routes');
     const apexCoinRateRoutes = require('./Routes/apexCoinRate.routes');
+    const withdrawalRoutes = require('./Routes/withdrawal.routes');
+    const p2pTransferRoutes = require('./Routes/p2pTransfer.routes');
     const { 
         requestLogger, 
         errorHandler, 
@@ -45,6 +47,8 @@
     app.use('/api/gateways', gatewayRoutes);
     app.use('/api/roi', roiRoutes);
     app.use('/api/apexcoinRate', apexCoinRateRoutes);
+    app.use('/api/withdrawals', withdrawalRoutes);
+    app.use('/api/p2p', p2pTransferRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);
