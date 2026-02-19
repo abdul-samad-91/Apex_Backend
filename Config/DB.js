@@ -2,27 +2,20 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
 // Database connection configuration
+console.log('Database Configuration:');
+console.log('Host:', process.env.MYSQL_HOST);
+console.log('Port:', process.env.MYSQL_PORT);
+console.log('Database:', process.env.MYSQL_DATABASE);
+console.log('User:', process.env.MYSQL_USER);
+console.log('password:', process.env.MYSQL_PASSWORD);
+// Note: Avoid logging sensitive information like passwords in production
 const sequelize = new Sequelize(
     process.env.MYSQL_DATABASE || 'apex_db',
     process.env.MYSQL_USER || 'root',
-    process.env.MYSQL_PASSWORD || '',
+    process.env.MYSQL_PASSWORD || '@bdul123',
     {
         host: process.env.MYSQL_HOST || 'localhost',
-        port: process.env.MYSQL_PORT || 3306,
-        dialect: 'mysql',
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
-        pool: {
-            max: 10,
-            min: 0,
-            acquire: 30000,
-            idle: 10000
-        },
-        define: {
-            timestamps: true,
-            underscored: true, // Use snake_case for column names
-            freezeTableName: true
-        },
-        timezone: '+00:00' // UTC timezone for consistency
+        dialect: 'mysql'
     }
 );
 

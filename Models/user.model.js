@@ -138,9 +138,9 @@ User.init(
         },
         // Store as JSON string for flexibility
         last_profit_share_claim_dates: {
-            type: DataTypes.TEXT('long'),
-            allowNull: true,
-            defaultValue: '{}'
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: {}
         },
         is_verified: {
             type: DataTypes.BOOLEAN,
@@ -168,9 +168,10 @@ User.init(
         },
         // Store referral chain as JSON array of user IDs
         referral_chain: {
-            type: DataTypes.TEXT('long'),
-            allowNull: true,
-            defaultValue: '[]'
+            // type: DataTypes.TEXT('long'),
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: []
         },
         last_login: {
             type: DataTypes.DATE,
