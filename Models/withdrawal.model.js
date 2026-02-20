@@ -61,6 +61,11 @@ const withdrawalSchema = new mongoose.Schema({
         type: String,
         default: null,
         trim: true
+    },
+    transactionID: {
+        type: String,
+        default: null,
+        trim: true
     }
 }, { timestamps: true });
 
