@@ -40,7 +40,7 @@
             await connectDB();
             // Sync all models - use { alter: true } in development if you need to update tables
             // In production, use migrations instead
-            await sequelize.sync({ alter: false });
+            // await sequelize.sync({ alter: false });
             console.log('✅ All models synchronized with database');
         } catch (error) {
             console.error('❌ Database initialization failed:', error);
