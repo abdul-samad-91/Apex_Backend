@@ -7,6 +7,8 @@ const Gateway = require('./gateway.model');
 const ApexCoinRate = require('./apexCoinRate.model');
 const BonusTransaction = require('./bonusTransaction.model');
 const ProfitShareTransaction = require('./profitShareTransaction.model');
+const P2PTransfer = require('./p2pTransfer.model');
+const Withdrawal = require('./withdrawal.model');
 
 // Define associations
 
@@ -45,6 +47,17 @@ User.hasMany(ProfitShareTransaction, { as: 'triggeredProfitShares', foreignKey: 
 ProfitShareTransaction.belongsTo(User, { as: 'recipient', foreignKey: 'user_id' });
 ProfitShareTransaction.belongsTo(User, { as: 'fromUser', foreignKey: 'from_user_id' });
 
+// User - P2PTransfer
+User.hasMany(P2PTransfer, { as: 'sentTransfers', foreignKey: 'sender_id' });
+User.hasMany(P2PTransfer, { as: 'receivedTransfers', foreignKey: 'recipient_id' });
+P2PTransfer.belongsTo(User, { as: 'sender', foreignKey: 'sender_id' });
+P2PTransfer.belongsTo(User, { as: 'recipient', foreignKey: 'recipient_id' });
+
+// User - Withdrawal
+User.hasMany(Withdrawal, { as: 'withdrawals', foreignKey: 'user_id' });
+Withdrawal.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+Withdrawal.belongsTo(User, { as: 'processedByUser', foreignKey: 'processed_by' });
+
 module.exports = {
     User,
     LockedCoinsEntry,
@@ -53,5 +66,7 @@ module.exports = {
     Gateway,
     ApexCoinRate,
     BonusTransaction,
-    ProfitShareTransaction
+    ProfitShareTransaction,
+    P2PTransfer,
+    Withdrawal
 };

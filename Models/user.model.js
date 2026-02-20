@@ -136,6 +136,16 @@ User.init(
             type: DataTypes.DECIMAL(20, 8),
             defaultValue: 0
         },
+        // Total system fees collected from P2P transfers
+        p2p_system_fees: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
+        },
+        // Total system fees collected from withdrawals
+        withdrawal_system_fees: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
+        },
         // Store as JSON string for flexibility
         last_profit_share_claim_dates: {
             type: DataTypes.JSON,
