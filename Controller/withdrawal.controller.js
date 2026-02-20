@@ -51,7 +51,7 @@ const requestWithdrawal = async (req, res) => {
         }
 
         // Optional: Set minimum withdrawal amount
-        const MIN_WITHDRAWAL = 5; // $5 minimum
+        const MIN_WITHDRAWAL = 10; // $10 minimum
         if (withdrawalAmount < MIN_WITHDRAWAL) {
             return res.status(400).json({ 
                 message: `Minimum withdrawal amount is $${MIN_WITHDRAWAL}`,

@@ -39,7 +39,7 @@ const transferP2P = async (req, res) => {
         }
 
         // Set minimum transfer amount
-        const MIN_TRANSFER = 1; // $1 minimum
+        const MIN_TRANSFER = 5; // $5 minimum
         if (transferAmount < MIN_TRANSFER) {
             await session.abortTransaction();
             session.endSession();

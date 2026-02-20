@@ -847,90 +847,90 @@ const claimBonuses = async (req, res) => {
 /**
  * Claim profit shares - transfer to P2P wallet (30%) and account balance (70%)
  */
-const claimProfitShares = async (req, res) => {
-  const session = await ProfitShareTransaction.startSession();
-  session.startTransaction();
+// const claimProfitShares = async (req, res) => {
+//   const session = await ProfitShareTransaction.startSession();
+//   session.startTransaction();
   
-  try {
-    const userId = req.user?._id;
-    if (!userId) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(401).json({ message: 'User not authenticated' });
-    }
+//   try {
+//     const userId = req.user?._id;
+//     if (!userId) {
+//       await session.abortTransaction();
+//       session.endSession();
+//       return res.status(401).json({ message: 'User not authenticated' });
+//     }
 
-    const { profitShareIds } = req.body; // Optional: claim specific profit shares, or claim all if not provided
+//     const { profitShareIds } = req.body; // Optional: claim specific profit shares, or claim all if not provided
 
-    // Build query
-    const query = { userId, isClaimed: false };
-    if (profitShareIds && Array.isArray(profitShareIds) && profitShareIds.length > 0) {
-      query._id = { $in: profitShareIds };
-    }
+//     // Build query
+//     const query = { userId, isClaimed: false };
+//     if (profitShareIds && Array.isArray(profitShareIds) && profitShareIds.length > 0) {
+//       query._id = { $in: profitShareIds };
+//     }
 
-    // Find unclaimed profit shares within transaction
-    const unclaimedShares = await ProfitShareTransaction.find(query).session(session);
+//     // Find unclaimed profit shares within transaction
+//     const unclaimedShares = await ProfitShareTransaction.find(query).session(session);
 
-    if (unclaimedShares.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: 'No unclaimed profit shares found' });
-    }
+//     if (unclaimedShares.length === 0) {
+//       await session.abortTransaction();
+//       session.endSession();
+//       return res.status(404).json({ message: 'No unclaimed profit shares found' });
+//     }
 
-    // Calculate total amount to claim
-    const totalAmount = unclaimedShares.reduce((sum, share) => sum + share.shareAmount, 0);
+//     // Calculate total amount to claim
+//     const totalAmount = unclaimedShares.reduce((sum, share) => sum + share.shareAmount, 0);
 
-    // Split the amount: 30% to P2P Wallet, 70% to Account Balance
-    const p2pAmount = parseFloat((totalAmount * 0.30).toFixed(2));
-    const accountAmount = parseFloat((totalAmount * 0.70).toFixed(2));
+//     // Split the amount: 30% to P2P Wallet, 70% to Account Balance
+//     const p2pAmount = parseFloat((totalAmount * 0.30).toFixed(2));
+//     const accountAmount = parseFloat((totalAmount * 0.70).toFixed(2));
 
-    // Update user's balances within transaction
-    const user = await User.findById(userId).session(session);
-    if (!user) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: 'User not found' });
-    }
+//     // Update user's balances within transaction
+//     const user = await User.findById(userId).session(session);
+//     if (!user) {
+//       await session.abortTransaction();
+//       session.endSession();
+//       return res.status(404).json({ message: 'User not found' });
+//     }
 
-    user.p2pWallet = (user.p2pWallet || 0) + p2pAmount;
-    user.accountBalance = (user.accountBalance || 0) + accountAmount;
-    user.totalProfitShareEarned = (user.totalProfitShareEarned || 0) + totalAmount;
-    await user.save({ session });
+//     user.p2pWallet = (user.p2pWallet || 0) + p2pAmount;
+//     user.accountBalance = (user.accountBalance || 0) + accountAmount;
+//     user.totalProfitShareEarned = (user.totalProfitShareEarned || 0) + totalAmount;
+//     await user.save({ session });
 
-    // Mark profit shares as claimed within transaction
-    const claimedAt = new Date();
-    await ProfitShareTransaction.updateMany(
-      query,
-      { 
-        $set: { 
-          isClaimed: true, 
-          claimedAt: claimedAt 
-        } 
-      },
-      { session }
-    );
+//     // Mark profit shares as claimed within transaction
+//     const claimedAt = new Date();
+//     await ProfitShareTransaction.updateMany(
+//       query,
+//       { 
+//         $set: { 
+//           isClaimed: true, 
+//           claimedAt: claimedAt 
+//         } 
+//       },
+//       { session }
+//     );
 
-    // Commit the transaction
-    await session.commitTransaction();
-    session.endSession();
+//     // Commit the transaction
+//     await session.commitTransaction();
+//     session.endSession();
 
-    res.status(200).json({
-      message: 'Profit shares claimed successfully',
-      data: {
-        totalClaimedAmount: parseFloat(totalAmount.toFixed(2)),
-        p2pWalletAmount: p2pAmount,
-        accountBalanceAmount: accountAmount,
-        claimedCount: unclaimedShares.length,
-        newP2PWallet: parseFloat(user.p2pWallet.toFixed(2)),
-        newAccountBalance: parseFloat(user.accountBalance.toFixed(2))
-      }
-    });
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    console.error('Error claiming profit shares:', error);
-    res.status(500).json({ message: 'Error claiming profit shares', error: error.message });
-  }
-};
+//     res.status(200).json({
+//       message: 'Profit shares claimed successfully',
+//       data: {
+//         totalClaimedAmount: parseFloat(totalAmount.toFixed(2)),
+//         p2pWalletAmount: p2pAmount,
+//         accountBalanceAmount: accountAmount,
+//         claimedCount: unclaimedShares.length,
+//         newP2PWallet: parseFloat(user.p2pWallet.toFixed(2)),
+//         newAccountBalance: parseFloat(user.accountBalance.toFixed(2))
+//       }
+//     });
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+//     console.error('Error claiming profit shares:', error);
+//     res.status(500).json({ message: 'Error claiming profit shares', error: error.message });
+//   }
+// };
 
 /**
  * Calculate available profit shares from entire downchain
@@ -1246,8 +1246,13 @@ const claimDownchainProfitShares = async (req, res) => {
     // Save all profit share transactions
     await ProfitShareTransaction.insertMany(profitShareTransactions);
 
-    // Update user's account balance and total profit share earned
-    user.accountBalance = (user.accountBalance || 0) + totalClaimedShare;
+    // Split the amount: 30% to P2P Wallet, 70% to Account Balance
+    const p2pAmount = parseFloat((totalClaimedShare * 0.30).toFixed(2));
+    const accountAmount = parseFloat((totalClaimedShare * 0.70).toFixed(2));
+
+    // Update user's balances and total profit share earned
+    user.p2pWallet = (user.p2pWallet || 0) + p2pAmount;
+    user.accountBalance = (user.accountBalance || 0) + accountAmount;
     user.totalProfitShareEarned = (user.totalProfitShareEarned || 0) + totalClaimedShare;
     
     await user.save();
@@ -1256,6 +1261,9 @@ const claimDownchainProfitShares = async (req, res) => {
       message: 'Downchain profit shares claimed successfully',
       data: {
         totalClaimedAmount: parseFloat(totalClaimedShare.toFixed(2)),
+        p2pWalletAmount: p2pAmount,
+        accountBalanceAmount: accountAmount,
+        newP2PWallet: parseFloat(user.p2pWallet.toFixed(2)),
         newAccountBalance: parseFloat(user.accountBalance.toFixed(2)),
         totalProfitShareEarned: parseFloat(user.totalProfitShareEarned.toFixed(2)),
         claimDetails: claimDetails,
