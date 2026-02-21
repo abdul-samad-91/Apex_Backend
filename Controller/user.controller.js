@@ -144,6 +144,32 @@ const createUser = async (req, res) => {
             otp_expiry: otpExpiry
         }, { transaction });
 
+        // Add new user to referrer's referrals array and all users in referral chain
+        if (referredByUser) {
+            // Update direct referrer's referrals array
+            const referrerReferrals = referredByUser.getReferralsArray();
+            referrerReferrals.push(user.id);
+            await referredByUser.update({
+                referrals: referrerReferrals
+            }, { transaction });
+
+            // Update all users in the referral chain (except the direct referrer, already updated)
+            if (referralChain.length > 1) {
+                for (let i = 1; i < referralChain.length; i++) {
+                    const uplineUser = await User.findByPk(referralChain[i], { transaction });
+                    if (uplineUser) {
+                        const uplineReferrals = uplineUser.getReferralsArray();
+                        if (!uplineReferrals.includes(user.id)) {
+                            uplineReferrals.push(user.id);
+                            await uplineUser.update({
+                                referrals: uplineReferrals
+                            }, { transaction });
+                        }
+                    }
+                }
+            }
+        }
+
         await transaction.commit();
 
         // Send OTP email
@@ -633,12 +659,12 @@ const resendOTP = async (req, res) => {
     }
 };
 
-// Purchase ApexCoins using accountBalance
+// Purchase ApexCoins using accountBalance or p2pWallet
 const purchaseApexCoins = async (req, res) => {
     const transaction = await sequelize.transaction();
     
     try {
-        const { apexCoinsAmount } = req.body;
+        const { apexCoinsAmount, paymentSource } = req.body;
         const userId = req.user?.id;
 
         if (!userId) {
@@ -656,6 +682,14 @@ const purchaseApexCoins = async (req, res) => {
         if (isNaN(coinsAmount) || coinsAmount <= 0) {
             await transaction.rollback();
             return res.status(400).json({ message: 'Apex amount must be a valid positive number' });
+        }
+
+        // Validate payment source
+        if (!paymentSource || !['accountBalance', 'p2pWallet'].includes(paymentSource)) {
+            await transaction.rollback();
+            return res.status(400).json({ 
+                message: 'Payment source is required. Use "accountBalance" or "p2pWallet"' 
+            });
         }
 
         // Get current apex coin rate
@@ -679,39 +713,63 @@ const purchaseApexCoins = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if user has sufficient accountBalance
-        const currentBalance = parseFloat(user.account_balance) || 0;
+        // Check balance based on payment source
+        let currentBalance;
+        let balanceField;
+        
+        if (paymentSource === 'accountBalance') {
+            currentBalance = parseFloat(user.account_balance) || 0;
+            balanceField = 'account_balance';
+        } else if (paymentSource === 'p2pWallet') {
+            currentBalance = parseFloat(user.p2p_wallet) || 0;
+            balanceField = 'p2p_wallet';
+        }
+
+        // Check if user has sufficient balance
         if (currentBalance < dollarAmount) {
             await transaction.rollback();
             return res.status(400).json({
-                message: 'Insufficient account balance',
-                currentBalance: currentBalance,
-                requiredAmount: dollarAmount,
+                message: `Insufficient ${paymentSource} balance`,
+                currentBalance: parseFloat(currentBalance.toFixed(2)),
+                requiredAmount: parseFloat(dollarAmount.toFixed(2)),
                 apexCoinsRequested: coinsAmount,
-                currentRate: parseFloat(currentRate.rate)
+                currentRate: parseFloat(currentRate.rate),
+                paymentSource: paymentSource
             });
         }
 
-        // Deduct from accountBalance and add to apexCoins
+        // Deduct from selected payment source and add to apexCoins
         const newBalance = currentBalance - dollarAmount;
         const newApexCoins = (parseFloat(user.apex_coins) || 0) + coinsAmount;
 
-        await user.update({
-            account_balance: newBalance,
+        const updateData = {
             apex_coins: newApexCoins
-        }, { transaction });
+        };
+        updateData[balanceField] = newBalance;
+
+        await user.update(updateData, { transaction });
 
         await transaction.commit();
 
+        // Prepare response data
+        const responseData = {
+            apexCoinsPurchased: coinsAmount,
+            dollarsPaid: parseFloat(dollarAmount.toFixed(2)),
+            rate: parseFloat(currentRate.rate),
+            paymentSource: paymentSource,
+            newApexCoins: newApexCoins
+        };
+
+        // Add the updated balance for the payment source used
+        if (paymentSource === 'accountBalance') {
+            responseData.newAccountBalance = parseFloat(newBalance.toFixed(2));
+        } else {
+            responseData.newP2PWallet = parseFloat(newBalance.toFixed(2));
+        }
+
         res.status(200).json({
-            message: 'Apex purchased successfully',
-            data: {
-                apexCoinsPurchased: coinsAmount,
-                dollarsPaid: dollarAmount,
-                rate: parseFloat(currentRate.rate),
-                newAccountBalance: newBalance,
-                newApexCoins: newApexCoins
-            }
+            message: 'Apex coins purchased successfully',
+            data: responseData
         });
     } catch (error) {
         await transaction.rollback();

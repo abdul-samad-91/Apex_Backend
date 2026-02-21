@@ -23,6 +23,31 @@ class User extends Model {
         this.referral_chain = JSON.stringify(chainArray || []);
     }
 
+    // Get direct referrals as array of IDs
+    getReferralsArray() {
+        if (!this.referrals) return [];
+        try {
+            if (Array.isArray(this.referrals)) return this.referrals;
+            return JSON.parse(this.referrals);
+        } catch {
+            return [];
+        }
+    }
+
+    // Set direct referrals from array
+    setReferralsArray(referralsArray) {
+        this.referrals = JSON.stringify(referralsArray || []);
+    }
+
+    // Add a referral to the referrals array
+    addReferral(userId) {
+        const referrals = this.getReferralsArray();
+        if (!referrals.includes(userId)) {
+            referrals.push(userId);
+            this.referrals = referrals;
+        }
+    }
+
     // Get last profit share claim dates as Map
     getLastProfitShareClaimDatesMap() {
         if (!this.last_profit_share_claim_dates) return new Map();
@@ -175,6 +200,12 @@ User.init(
                 model: 'users',
                 key: 'id'
             }
+        },
+        // Store direct referrals as JSON array of user IDs
+        referrals: {
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: []
         },
         // Store referral chain as JSON array of user IDs
         referral_chain: {

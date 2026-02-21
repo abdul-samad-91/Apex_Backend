@@ -214,6 +214,96 @@ const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) 
 };
 
 /**
+ * Distribute profit share to upline when user claims daily ROI
+ * @param {Number} claimingUserId - User who is claiming ROI
+ * @param {Number} roiAmount - The ROI amount being claimed (in dollars)
+ */
+const distributeProfitShare = async (claimingUserId, roiAmount) => {
+    try {
+        const claimingUser = await User.findByPk(claimingUserId);
+        if (!claimingUser) {
+            console.log('Claiming user not found');
+            return { success: true, sharesDistributed: 0, details: [] };
+        }
+
+        const referralChain = claimingUser.getReferralChainArray();
+        if (!referralChain || referralChain.length === 0) {
+            console.log('No referral chain for profit share distribution');
+            return { success: true, sharesDistributed: 0, details: [] };
+        }
+
+        const shareDetails = [];
+        let sharesDistributed = 0;
+        const claimDate = new Date();
+
+        // Traverse referral chain up to 12 levels
+        const maxLevels = Math.min(12, referralChain.length);
+
+        for (let level = 1; level <= maxLevels; level++) {
+            const uplineUserId = referralChain[level - 1]; // 0-indexed array
+
+            // Check if upline user exists
+            const uplineUser = await User.findByPk(uplineUserId);
+            if (!uplineUser) {
+                console.log(`Upline user not found at level ${level}`);
+                continue;
+            }
+
+            // Count active direct referrals for this upline
+            const activeDirectReferrals = await countActiveDirectReferrals(uplineUserId);
+
+            // Check if upline has enough active referrals to unlock this level
+            if (activeDirectReferrals < level) {
+                console.log(`Level ${level} not unlocked for user ${uplineUserId}. Active referrals: ${activeDirectReferrals}, Required: ${level}`);
+                continue;
+            }
+
+            // Calculate profit share
+            const sharePercentage = PROFIT_SHARE_PERCENTAGES[level];
+            const shareAmount = (roiAmount * sharePercentage) / 100;
+
+            // Record the profit share transaction (not automatically claimed)
+            await ProfitShareTransaction.create({
+                user_id: uplineUserId,
+                from_user_id: claimingUserId,
+                roi_amount: roiAmount,
+                share_percentage: sharePercentage,
+                share_amount: shareAmount,
+                level: level,
+                active_direct_referrals_at_time: activeDirectReferrals,
+                claim_date: claimDate
+            });
+
+            shareDetails.push({
+                uplineUserId: uplineUserId,
+                level: level,
+                sharePercentage: sharePercentage,
+                shareAmount: parseFloat(shareAmount.toFixed(2)),
+                activeDirectReferrals: activeDirectReferrals
+            });
+
+            sharesDistributed++;
+            console.log(`Profit share distributed: Level ${level}, User ${uplineUserId}, Amount ${shareAmount}`);
+        }
+
+        return {
+            success: true,
+            sharesDistributed: sharesDistributed,
+            totalRoiShared: roiAmount,
+            details: shareDetails
+        };
+    } catch (error) {
+        console.error('Error distributing profit share:', error);
+        return {
+            success: false,
+            error: error.message,
+            sharesDistributed: 0,
+            details: []
+        };
+    }
+};
+
+/**
  * Get user's bonus transaction history
  */
 const getBonusHistory = async (req, res) => {
@@ -1169,6 +1259,7 @@ module.exports = {
     buildReferralPath,
     countActiveDirectReferrals,
     distributeStakingBonus,
+    distributeProfitShare,
     BONUS_PERCENTAGES,
     PROFIT_SHARE_PERCENTAGES,
 
