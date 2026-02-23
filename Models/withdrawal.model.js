@@ -78,6 +78,11 @@ Withdrawal.init(
             type: DataTypes.STRING(255),
             allowNull: true,
             defaultValue: null
+        },
+        transaction_id: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            defaultValue: null
         }
     },
     {

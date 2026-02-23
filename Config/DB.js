@@ -26,7 +26,7 @@ const connectDB = async () => {
         
         // Sync all models (in production, use migrations instead)
         if (process.env.NODE_ENV !== 'production') {
-            await sequelize.sync({ alter: true });
+            // await sequelize.sync({ alter: true });
             console.log('Database synchronized');
         }
     } catch (error) {

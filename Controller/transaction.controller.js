@@ -85,8 +85,8 @@ const createTransaction = async (req, res) => {
                 bankAccountNumber: transaction.bank_account_number,
                 bankName: transaction.bank_name,
                 status: transaction.status,
-                createdAt: transaction.created_at,
-                updatedAt: transaction.updated_at
+                createdAt: transaction.createdAt,
+                updatedAt: transaction.updatedAt
             }
         });
     } catch (error) {
@@ -122,8 +122,8 @@ const getAllTransactions = async (req, res) => {
             bankAccountNumber: txn.bank_account_number,
             bankName: txn.bank_name,
             status: txn.status,
-            createdAt: txn.created_at,
-            updatedAt: txn.updated_at
+            createdAt: txn.createdAt,
+            updatedAt: txn.updatedAt
         }));
 
         res.status(200).json(formattedTransactions);
@@ -143,19 +143,36 @@ const getUserTransactionHistory = async (req, res) => {
         });
 
         // Format the response with all required fields
-        const formattedTransactions = transactions.map(txn => ({
-            transactionId: txn.transaction_id,
-            date: new Date(txn.created_at).toLocaleDateString(),
-            time: new Date(txn.created_at).toLocaleTimeString(),
-            amount: parseFloat(txn.amount),
-            accountName: txn.account_name,
-            bankAccountNumber: txn.bank_account_number || 'N/A',
-            bankName: txn.bank_name || 'N/A',
-            status: txn.status,
-            screenshotUrl: txn.screenshot_url,
-            createdAt: txn.created_at,
-            updatedAt: txn.updated_at
-        }));
+        const formattedTransactions = transactions.map(txn => {
+            let dateObj = null;
+            if (txn.createdAt) {
+                // If it's a string and not ISO, convert 'YYYY-MM-DD HH:mm:ss' to ISO
+                if (typeof txn.createdAt === 'string') {
+                    // If it already contains 'T', it's ISO
+                    if (txn.createdAt.includes('T')) {
+                        dateObj = new Date(txn.createdAt);
+                    } else {
+                        dateObj = new Date(txn.createdAt.replace(' ', 'T'));
+                    }
+                } else {
+                    dateObj = new Date(txn.createdAt);
+                }
+            }
+            const isValidDate = dateObj && !isNaN(dateObj.getTime());
+            return {
+                transactionId: txn.transaction_id,
+                date: isValidDate ? dateObj.toLocaleDateString() : String(txn.createdAt),
+                time: isValidDate ? dateObj.toLocaleTimeString() : String(txn.createdAt),
+                amount: parseFloat(txn.amount),
+                accountName: txn.account_name,
+                bankAccountNumber: txn.bank_account_number || 'N/A',
+                bankName: txn.bank_name || 'N/A',
+                status: txn.status,
+                screenshotUrl: txn.screenshot_url,
+                createdAt: txn.createdAt,
+                updatedAt: txn.updatedAt
+            };
+        });
 
         res.status(200).json({
             message: 'Transaction history retrieved successfully',

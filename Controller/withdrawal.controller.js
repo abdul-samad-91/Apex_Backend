@@ -177,10 +177,34 @@ const getUserWithdrawals = async (req, res) => {
             }
         });
 
+        // Transform withdrawals to camelCase
+        const formattedWithdrawals = withdrawals.map(withdrawal => {
+            const w = withdrawal.toJSON();
+            return {
+                id: w.id,
+                withdrawalId: w.withdrawal_id,
+                userId: w.user_id,
+                amount: parseFloat(w.amount),
+                systemFeePercentage: parseFloat(w.system_fee_percentage),
+                systemFeeAmount: parseFloat(w.system_fee_amount),
+                amountAfterFee: parseFloat(w.amount_after_fee),
+                walletAddress: w.wallet_address,
+                network: w.network,
+                status: w.status,
+                rejectionReason: w.rejection_reason,
+                processedAt: w.processed_at,
+                processedBy: w.processed_by,
+                transactionHash: w.transaction_hash,
+                transactionId: w.transaction_id,
+                createdAt: w.createdAt,
+                updatedAt: w.updatedAt
+            };
+        });
+
         res.status(200).json({
             message: 'Withdrawal history retrieved successfully',
             data: {
-                withdrawals: withdrawals,
+                withdrawals: formattedWithdrawals,
                 summary: summaryData,
                 pagination: {
                     currentPage: parseInt(page),
@@ -258,10 +282,46 @@ const getAllWithdrawals = async (req, res) => {
             }
         });
 
+        // Transform withdrawals to camelCase
+        const formattedWithdrawals = withdrawals.map(withdrawal => {
+            const w = withdrawal.toJSON();
+            return {
+                id: w.id,
+                withdrawalId: w.withdrawal_id,
+                userId: w.user_id,
+                amount: parseFloat(w.amount),
+                systemFeePercentage: parseFloat(w.system_fee_percentage),
+                systemFeeAmount: parseFloat(w.system_fee_amount),
+                amountAfterFee: parseFloat(w.amount_after_fee),
+                walletAddress: w.wallet_address,
+                network: w.network,
+                status: w.status,
+                rejectionReason: w.rejection_reason,
+                processedAt: w.processed_at,
+                processedBy: w.processed_by,
+                transactionHash: w.transaction_hash,
+                transactionId: w.transaction_id,
+                createdAt: w.createdAt,
+                updatedAt: w.updatedAt,
+                user: w.user ? {
+                    id: w.user.id,
+                    fullName: w.user.full_name,
+                    email: w.user.email,
+                    phoneNumber: w.user.phone_number,
+                    accountBalance: parseFloat(w.user.account_balance)
+                } : null,
+                processedByUser: w.processedByUser ? {
+                    id: w.processedByUser.id,
+                    fullName: w.processedByUser.full_name,
+                    email: w.processedByUser.email
+                } : null
+            };
+        });
+
         res.status(200).json({
             message: 'All withdrawals retrieved successfully',
             data: {
-                withdrawals: withdrawals,
+                withdrawals: formattedWithdrawals,
                 summary: summaryData,
                 pagination: {
                     currentPage: parseInt(page),
@@ -296,13 +356,44 @@ const getPendingWithdrawals = async (req, res) => {
         const totalPendingFees = withdrawals.reduce((sum, w) => sum + (parseFloat(w.system_fee_amount) || 0), 0);
         const totalPendingAfterFee = withdrawals.reduce((sum, w) => sum + (parseFloat(w.amount_after_fee) || 0), 0);
 
+        // Transform withdrawals to camelCase
+        const formattedWithdrawals = withdrawals.map(withdrawal => {
+            const w = withdrawal.toJSON();
+            return {
+                id: w.id,
+                withdrawalId: w.withdrawal_id,
+                userId: w.user_id,
+                amount: parseFloat(w.amount),
+                systemFeePercentage: parseFloat(w.system_fee_percentage),
+                systemFeeAmount: parseFloat(w.system_fee_amount),
+                amountAfterFee: parseFloat(w.amount_after_fee),
+                walletAddress: w.wallet_address,
+                network: w.network,
+                status: w.status,
+                rejectionReason: w.rejection_reason,
+                processedAt: w.processed_at,
+                processedBy: w.processed_by,
+                transactionHash: w.transaction_hash,
+                transactionId: w.transaction_id,
+                createdAt: w.createdAt,
+                updatedAt: w.updatedAt,
+                user: w.user ? {
+                    id: w.user.id,
+                    fullName: w.user.full_name,
+                    email: w.user.email,
+                    phoneNumber: w.user.phone_number,
+                    accountBalance: parseFloat(w.user.account_balance)
+                } : null
+            };
+        });
+
         res.status(200).json({
             message: 'Pending withdrawals retrieved successfully',
             count: withdrawals.length,
             totalAmount: parseFloat(totalPendingAmount.toFixed(2)),
             totalFees: parseFloat(totalPendingFees.toFixed(2)),
             totalAmountAfterFee: parseFloat(totalPendingAfterFee.toFixed(2)),
-            data: withdrawals
+            data: formattedWithdrawals
         });
     } catch (error) {
         console.error('Error fetching pending withdrawals:', error);
@@ -316,8 +407,11 @@ const updateWithdrawalStatus = async (req, res) => {
     
     try {
         const { withdrawalId } = req.params;
-        const { status, rejectionReason, transactionHash } = req.body;
+        const { status, rejectionReason, transactionHash, transactionId } = req.body;
         const adminId = req.user?.id;
+
+        console.log('Withdrawal approval request body:', req.body);
+        console.log('Extracted transactionId:', transactionId);
 
         if (!adminId) {
             await transaction.rollback();
@@ -391,8 +485,12 @@ const updateWithdrawalStatus = async (req, res) => {
         withdrawal.processed_at = new Date();
         withdrawal.processed_by = adminId;
         
+
         if (transactionHash) {
             withdrawal.transaction_hash = transactionHash;
+        }
+        if (transactionId) {
+            withdrawal.transaction_id = transactionId;
         }
 
         await withdrawal.save({ transaction });
@@ -409,6 +507,7 @@ const updateWithdrawalStatus = async (req, res) => {
                 network: withdrawal.network,
                 status: withdrawal.status,
                 transactionHash: withdrawal.transaction_hash,
+                transactionId: withdrawal.transaction_id,
                 processedAt: withdrawal.processed_at,
                 user: {
                     name: withdrawal.user.full_name,

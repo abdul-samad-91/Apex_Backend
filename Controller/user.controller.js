@@ -149,9 +149,11 @@ const createUser = async (req, res) => {
             // Update direct referrer's referrals array
             const referrerReferrals = referredByUser.getReferralsArray();
             referrerReferrals.push(user.id);
-            await referredByUser.update({
-                referrals: referrerReferrals
-            }, { transaction });
+            
+            // For JSON fields in Sequelize, we need to set and mark as changed
+            referredByUser.referrals = referrerReferrals;
+            referredByUser.changed('referrals', true);
+            await referredByUser.save({ transaction });
 
             // Update all users in the referral chain (except the direct referrer, already updated)
             if (referralChain.length > 1) {
@@ -161,9 +163,11 @@ const createUser = async (req, res) => {
                         const uplineReferrals = uplineUser.getReferralsArray();
                         if (!uplineReferrals.includes(user.id)) {
                             uplineReferrals.push(user.id);
-                            await uplineUser.update({
-                                referrals: uplineReferrals
-                            }, { transaction });
+                            
+                            // For JSON fields in Sequelize, we need to set and mark as changed
+                            uplineUser.referrals = uplineReferrals;
+                            uplineUser.changed('referrals', true);
+                            await uplineUser.save({ transaction });
                         }
                     }
                 }
@@ -215,7 +219,39 @@ const getAllUsers = async (req, res) => {
             attributes: { exclude: ['password', 'otp', 'otp_expiry'] }
         });
 
-        res.status(200).json({ users });
+        // Map users to camelCase only
+        const formattedUsers = users.map(user => {
+            const userObj = user.toJSON();
+            return {
+                id: userObj.id,
+                fullName: userObj.full_name,
+                email: userObj.email,
+                phoneNumber: userObj.phone_number,
+                profilePictureUrl: userObj.profile_picture_url,
+                role: userObj.role,
+                isActive: userObj.is_active,
+                apexCoins: parseFloat(userObj.apex_coins),
+                accountBalance: parseFloat(userObj.account_balance),
+                p2pWallet: parseFloat(userObj.p2p_wallet),
+                lockedApexCoins: parseFloat(userObj.locked_apex_coins),
+                lockStartDate: userObj.lock_start_date,
+                lockEndDate: userObj.lock_end_date,
+                lastLockDate: userObj.last_lock_date,
+                totalRoiEarned: parseFloat(userObj.total_roi_earned),
+                totalBonusEarned: parseFloat(userObj.total_bonus_earned),
+                totalProfitShareEarned: parseFloat(userObj.total_profit_share_earned),
+                isVerified: userObj.is_verified,
+                referralCode: userObj.referral_code,
+                referredBy: userObj.referred_by,
+                referrals: userObj.referrals || [],
+                referralChain: user.getReferralChainArray(),
+                lastLogin: userObj.last_login,
+                createdAt: userObj.createdAt,
+                updatedAt: userObj.updatedAt
+            };
+        });
+
+        res.status(200).json({ users: formattedUsers });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching users', error: error.message });
     }
@@ -331,11 +367,12 @@ const getUserById = async (req, res) => {
 
         res.status(200).json({
             user: {
-                ...userObj,
-                // Map snake_case to camelCase for backward compatibility
+                id: userObj.id,
                 fullName: userObj.full_name,
+                email: userObj.email,
                 phoneNumber: userObj.phone_number,
                 profilePictureUrl: userObj.profile_picture_url,
+                role: userObj.role,
                 isActive: userObj.is_active,
                 apexCoins: parseFloat(userObj.apex_coins),
                 accountBalance: parseFloat(userObj.account_balance),
@@ -347,13 +384,23 @@ const getUserById = async (req, res) => {
                 totalRoiEarned: parseFloat(userObj.total_roi_earned),
                 totalBonusEarned: parseFloat(userObj.total_bonus_earned),
                 totalProfitShareEarned: parseFloat(userObj.total_profit_share_earned),
+                lastProfitShareClaimDates: userObj.last_profit_share_claim_dates || {},
                 isVerified: userObj.is_verified,
                 referralCode: userObj.referral_code,
                 referredBy: userObj.referred_by,
+                referrals: userObj.referrals || [],
                 referralChain: user.getReferralChainArray(),
+                lastLogin: userObj.last_login,
+                createdAt: userObj.createdAt,
+                updatedAt: userObj.updatedAt,
                 currentRoiRate: currentRoiRate,
                 roiData,
-                lockedCoinsEntries: lockedEntriesData
+                lockedCoinsEntries: lockedEntriesData,
+                systemFees: {
+                    p2pTransferFees: parseFloat((parseFloat(userObj.p2p_system_fees) || 0).toFixed(2)),
+                    withdrawalFees: parseFloat((parseFloat(userObj.withdrawal_system_fees) || 0).toFixed(2)),
+                    totalSystemFees: parseFloat(((parseFloat(userObj.p2p_system_fees) || 0) + (parseFloat(userObj.withdrawal_system_fees) || 0)).toFixed(2))
+                }
             }
         });
     } catch (error) {
@@ -393,9 +440,37 @@ const updateUser = async (req, res) => {
             attributes: { exclude: ['password', 'otp', 'otp_expiry'] }
         });
 
+        const userObj = user.toJSON();
+
         res.status(200).json({
             message: 'User updated successfully',
-            user
+            user: {
+                id: userObj.id,
+                fullName: userObj.full_name,
+                email: userObj.email,
+                phoneNumber: userObj.phone_number,
+                profilePictureUrl: userObj.profile_picture_url,
+                role: userObj.role,
+                isActive: userObj.is_active,
+                apexCoins: parseFloat(userObj.apex_coins),
+                accountBalance: parseFloat(userObj.account_balance),
+                p2pWallet: parseFloat(userObj.p2p_wallet),
+                lockedApexCoins: parseFloat(userObj.locked_apex_coins),
+                lockStartDate: userObj.lock_start_date,
+                lockEndDate: userObj.lock_end_date,
+                lastLockDate: userObj.last_lock_date,
+                totalRoiEarned: parseFloat(userObj.total_roi_earned),
+                totalBonusEarned: parseFloat(userObj.total_bonus_earned),
+                totalProfitShareEarned: parseFloat(userObj.total_profit_share_earned),
+                isVerified: userObj.is_verified,
+                referralCode: userObj.referral_code,
+                referredBy: userObj.referred_by,
+                referrals: userObj.referrals || [],
+                referralChain: user.getReferralChainArray(),
+                lastLogin: userObj.last_login,
+                createdAt: userObj.createdAt,
+                updatedAt: userObj.updatedAt
+            }
         });
     } catch (error) {
         res.status(500).json({ message: 'Error updating user', error: error.message });
@@ -1332,6 +1407,140 @@ const claimDailyProfits = async (req, res) => {
     }
 };
 
+/**
+ * Get user's system fee transaction history
+ * Shows all P2P transfers and withdrawals with their respective fees
+ */
+const getSystemFeeHistory = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        const { page = 1, limit = 20, type } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const P2PTransfer = require('../Models/p2pTransfer.model');
+        const Withdrawal = require('../Models/withdrawal.model');
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Get P2P transfers (where user is sender)
+        let p2pTransfers = [];
+        if (!type || type === 'p2p' || type === 'all') {
+            p2pTransfers = await P2PTransfer.findAll({
+                where: { sender_id: userId },
+                include: [{
+                    model: User,
+                    as: 'recipient',
+                    attributes: ['id', 'full_name', 'email']
+                }],
+                order: [['created_at', 'DESC']],
+                attributes: ['id', 'transfer_id', 'amount', 'system_fee_amount', 'amount_after_fee', 'note', 'status', 'created_at']
+            });
+        }
+
+        // Get withdrawals
+        let withdrawals = [];
+        if (!type || type === 'withdrawal' || type === 'all') {
+            withdrawals = await Withdrawal.findAll({
+                where: { user_id: userId },
+                order: [['created_at', 'DESC']],
+                attributes: ['id', 'withdrawal_id', 'amount', 'system_fee_amount', 'amount_after_fee', 'wallet_address', 'network', 'status', 'created_at', 'processed_at']
+            });
+        }
+
+        // Format transactions
+        const formattedP2P = p2pTransfers.map(transfer => ({
+            id: transfer.id,
+            transactionId: transfer.transfer_id,
+            type: 'P2P Transfer',
+            amount: parseFloat(transfer.amount),
+            systemFee: parseFloat(transfer.system_fee_amount) || 0,
+            amountAfterFee: parseFloat(transfer.amount_after_fee) || parseFloat(transfer.amount),
+            feePercentage: 3,
+            recipient: transfer.recipient ? transfer.recipient.full_name : 'N/A',
+            recipientEmail: transfer.recipient ? transfer.recipient.email : 'N/A',
+            note: transfer.note,
+            status: transfer.status,
+            createdAt: transfer.created_at
+        }));
+
+        const formattedWithdrawals = withdrawals.map(withdrawal => ({
+            id: withdrawal.id,
+            transactionId: withdrawal.withdrawal_id,
+            type: 'Withdrawal',
+            amount: parseFloat(withdrawal.amount),
+            systemFee: parseFloat(withdrawal.system_fee_amount) || 0,
+            amountAfterFee: parseFloat(withdrawal.amount_after_fee) || parseFloat(withdrawal.amount),
+            feePercentage: 5,
+            walletAddress: withdrawal.wallet_address,
+            network: withdrawal.network,
+            status: withdrawal.status,
+            createdAt: withdrawal.created_at,
+            processedAt: withdrawal.processed_at
+        }));
+
+        // Combine and sort by date
+        let allTransactions = [...formattedP2P, ...formattedWithdrawals];
+        allTransactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        // Apply pagination
+        const totalCount = allTransactions.length;
+        const paginatedTransactions = allTransactions.slice(skip, skip + parseInt(limit));
+
+        // Calculate summary
+        const summary = {
+            p2pTransfers: {
+                count: formattedP2P.length,
+                totalAmount: formattedP2P.reduce((sum, t) => sum + t.amount, 0),
+                totalFees: formattedP2P.reduce((sum, t) => sum + t.systemFee, 0)
+            },
+            withdrawals: {
+                count: formattedWithdrawals.length,
+                totalAmount: formattedWithdrawals.reduce((sum, t) => sum + t.amount, 0),
+                totalFees: formattedWithdrawals.reduce((sum, t) => sum + t.systemFee, 0)
+            },
+            overall: {
+                totalTransactions: totalCount,
+                totalFeesPaid: parseFloat((
+                    formattedP2P.reduce((sum, t) => sum + t.systemFee, 0) +
+                    formattedWithdrawals.reduce((sum, t) => sum + t.systemFee, 0)
+                ).toFixed(2))
+            }
+        };
+
+        // Add stored user fee totals
+        const userFeeTotals = {
+            p2pSystemFees: parseFloat((parseFloat(user.p2p_system_fees) || 0).toFixed(2)),
+            withdrawalSystemFees: parseFloat((parseFloat(user.withdrawal_system_fees) || 0).toFixed(2)),
+            totalSystemFees: parseFloat(((parseFloat(user.p2p_system_fees) || 0) + (parseFloat(user.withdrawal_system_fees) || 0)).toFixed(2))
+        };
+
+        res.status(200).json({
+            message: 'System fee transaction history retrieved',
+            data: {
+                transactions: paginatedTransactions,
+                summary: summary,
+                userFeeTotals: userFeeTotals,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(totalCount / parseInt(limit)),
+                    totalItems: totalCount,
+                    itemsPerPage: parseInt(limit)
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching system fee history:', error);
+        res.status(500).json({ message: 'Error fetching system fee history', error: error.message });
+    }
+};
+
 module.exports = {
     createUser,
     getAllUsers,
@@ -1347,5 +1556,6 @@ module.exports = {
     approveUnlockRequest,
     getPendingUnlockRequests,
     claimDailyProfits,
-    getReferralLevels
+    getReferralLevels,
+    getSystemFeeHistory
 };

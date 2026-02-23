@@ -15,8 +15,9 @@ const {
     requestUnlockApexCoins,
     approveUnlockRequest,
     getPendingUnlockRequests,
-    claimDailyProfits
-    , getReferralLevels
+    claimDailyProfits,
+    getReferralLevels,
+    getSystemFeeHistory
 } = require('../Controller/user.controller');
 const {
     getBonusHistory,
@@ -94,6 +95,9 @@ router.post('/claimDownchainProfitShares', protect, claimDownchainProfitShares);
 
 // Get referral levels for authenticated user (levels 1..12)
 router.get('/referralLevels', protect, getReferralLevels);
+
+// Get system fee transaction history (P2P + Withdrawals)
+router.get('/systemFeeHistory', protect, getSystemFeeHistory);
 
 // Get user by ID
 router.get('/:id', protect  , getUserById);

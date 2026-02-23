@@ -800,6 +800,55 @@ const getUnclaimedBonuses = async (req, res) => {
 };
 
 /**
+ * Get unclaimed profit shares summary for user
+ */
+const getUnclaimedProfitShares = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        // Get all unclaimed profit shares
+        const unclaimedShares = await ProfitShareTransaction.findAll({
+            where: { user_id: userId, is_claimed: false },
+            include: [{
+                model: User,
+                as: 'fromUser',
+                attributes: ['id', 'full_name', 'email']
+            }]
+        });
+
+        // Calculate total unclaimed amount
+        const totalUnclaimed = unclaimedShares.reduce((sum, share) => sum + parseFloat(share.share_amount), 0);
+
+        res.status(200).json({
+            message: 'Unclaimed profit shares retrieved',
+            data: {
+                totalUnclaimedAmount: parseFloat(totalUnclaimed.toFixed(2)),
+                unclaimedCount: unclaimedShares.length,
+                profitShares: unclaimedShares.map(s => ({
+                    id: s.id,
+                    fromUserId: s.fromUser ? {
+                        id: s.fromUser.id,
+                        fullName: s.fromUser.full_name,
+                        email: s.fromUser.email
+                    } : null,
+                    shareAmount: parseFloat(s.share_amount),
+                    roiAmount: parseFloat(s.roi_amount),
+                    level: s.level,
+                    sharePercentage: parseFloat(s.share_percentage),
+                    createdAt: s.created_at
+                }))
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching unclaimed profit shares:', error);
+        res.status(500).json({ message: 'Error fetching unclaimed profit shares', error: error.message });
+    }
+};
+
+/**
  * Claim bonuses - transfer to P2P wallet (30%) and account balance (70%)
  */
 const claimBonuses = async (req, res) => {
@@ -1220,13 +1269,19 @@ const claimDownchainProfitShares = async (req, res) => {
         // Save all profit share transactions
         await ProfitShareTransaction.bulkCreate(profitShareTransactions, { transaction });
 
-        // Update user balances and save claim dates
-        const newAccountBalance = (parseFloat(user.account_balance) || 0) + totalClaimedShare;
+        // Split the amount: 30% to P2P Wallet, 70% to Account Balance
+        const p2pAmount = parseFloat((totalClaimedShare * 0.30).toFixed(2));
+        const accountAmount = parseFloat((totalClaimedShare * 0.70).toFixed(2));
+
+        // Update user's balances and total profit share earned
+        const newP2PWallet = (parseFloat(user.p2p_wallet) || 0) + p2pAmount;
+        const newAccountBalance = (parseFloat(user.account_balance) || 0) + accountAmount;
         const newTotalProfitShareEarned = (parseFloat(user.total_profit_share_earned) || 0) + totalClaimedShare;
 
         user.setLastProfitShareClaimDatesMap(lastClaimDates);
 
         await user.update({
+            p2p_wallet: newP2PWallet,
             account_balance: newAccountBalance,
             total_profit_share_earned: newTotalProfitShareEarned,
             last_profit_share_claim_dates: user.last_profit_share_claim_dates
@@ -1238,6 +1293,9 @@ const claimDownchainProfitShares = async (req, res) => {
             message: 'Downchain profit shares claimed successfully',
             data: {
                 totalClaimedAmount: parseFloat(totalClaimedShare.toFixed(2)),
+                p2pWalletAmount: p2pAmount,
+                accountBalanceAmount: accountAmount,
+                newP2PWallet: parseFloat(newP2PWallet.toFixed(2)),
                 newAccountBalance: parseFloat(newAccountBalance.toFixed(2)),
                 totalProfitShareEarned: parseFloat(newTotalProfitShareEarned.toFixed(2)),
                 claimDetails: claimDetails,
@@ -1255,11 +1313,10 @@ const claimDownchainProfitShares = async (req, res) => {
 };
 
 module.exports = {
-    // Helper functions
+    // Helper functions for use in other controllers
     buildReferralPath,
     countActiveDirectReferrals,
     distributeStakingBonus,
-    distributeProfitShare,
     BONUS_PERCENTAGES,
     PROFIT_SHARE_PERCENTAGES,
 
