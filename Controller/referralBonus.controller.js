@@ -856,12 +856,13 @@ const claimBonuses = async (req, res) => {
 
     try {
         const userId = req.user?.id;
+        
         if (!userId) {
             await transaction.rollback();
             return res.status(401).json({ message: 'User not authenticated' });
         }
 
-        const { bonusIds } = req.body;
+        const { bonusIds } = req.body || {};
 
         // Build query
         const whereClause = { user_id: userId, is_claimed: false };
@@ -889,7 +890,13 @@ const claimBonuses = async (req, res) => {
         const accountAmount = parseFloat((totalAmount * 0.70).toFixed(2));
 
         // Update user balances
+        console.log('Looking up user with ID:', userId);
         const user = await User.findByPk(userId, { transaction, lock: true });
+        console.log('User found:', user ? 'YES' : 'NO');
+        if (user) {
+            console.log('User data:', { id: user.id, fullName: user.full_name, email: user.email });
+        }
+        
         if (!user) {
             await transaction.rollback();
             return res.status(404).json({ message: 'User not found' });
