@@ -1,0 +1,2655 @@
+[{
+  "_id": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fullName": "Air Drop",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770301542/transactions/tumji6jsbn3j3uniaqum.jpg",
+  "email": "airdropinfo4@gmail.com",
+  "phoneNumber": "03450987654",
+  "password": "$2b$10$r6GtVHA77.8cTgZHh3IYx.HFzca3xiMkRn2ottESTslIg4tY06g1.",
+  "role": "admin",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 237.29199999999986,
+  "lockedApexCoins": 2051,
+  "lockStartDate": {
+    "$date": "2026-02-22T15:24:58.261Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-22T15:24:58.261Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-22T15:24:58.261Z"
+  },
+  "totalRoiEarned": 39.06666666666666,
+  "isVerified": true,
+  "referralCode": "6f4a00b5",
+  "referredBy": null,
+  "referrals": [
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984b4f624d3f3d534eaed33"
+    },
+    {
+      "$oid": "6984d4128b8a6a356dd48d0b"
+    },
+    {
+      "$oid": "6984d79b377d11385ffac9fa"
+    },
+    {
+      "$oid": "6984d7d4377d11385ffaca18"
+    },
+    {
+      "$oid": "6984db1e8b8a6a356dd48deb"
+    },
+    {
+      "$oid": "6984e3e942d623e893785968"
+    },
+    {
+      "$oid": "698512aa8d9e7d3be5d170e5"
+    },
+    {
+      "$oid": "69853c6d29e609ec6aa764d5"
+    },
+    {
+      "$oid": "6985496a8ce566fb1cfac3cb"
+    },
+    {
+      "$oid": "6985ae8cb52512e349ec7995"
+    },
+    {
+      "$oid": "6985d609e6ee8e5e4c246c9e"
+    },
+    {
+      "$oid": "6986eb20c3835618985b16ea"
+    },
+    {
+      "$oid": "6986f43061c03172bd5ca0b6"
+    },
+    {
+      "$oid": "6986fb60ead120264d248c3f"
+    },
+    {
+      "$oid": "698713befff7f7ca1d6a2844"
+    },
+    {
+      "$oid": "69899651c4e3ebda7a0cb358"
+    },
+    {
+      "$oid": "69899715c4e3ebda7a0cb36a"
+    },
+    {
+      "$oid": "69899825c4e3ebda7a0cb389"
+    },
+    {
+      "$oid": "69899876c4e3ebda7a0cb395"
+    },
+    {
+      "$oid": "698c7bc33253fd74ec0079be"
+    },
+    {
+      "$oid": "698dc05068938b83eefbda73"
+    },
+    {
+      "$oid": "698dc14d7a67e92f4f131108"
+    },
+    {
+      "$oid": "698df5fbf4e55614ee88bcaf"
+    },
+    {
+      "$oid": "698e1ec6456b80d9538f8f75"
+    },
+    {
+      "$oid": "698f11034ab5678834687670"
+    },
+    {
+      "$oid": "698f4b08812ac2316cc75f53"
+    },
+    {
+      "$oid": "69924b7ae3f6c646cec57747"
+    },
+    {
+      "$oid": "6992ca4682b4dfa2024606f7"
+    },
+    {
+      "$oid": "6993478d3f252e7c77fc849c"
+    },
+    {
+      "$oid": "69943ffbc3c685e7870d07dc"
+    },
+    {
+      "$oid": "69944ea261309e6daf6c5c61"
+    },
+    {
+      "$oid": "69944ee061309e6daf6c5c6f"
+    },
+    {
+      "$oid": "6994607f1bae3690dc604721"
+    },
+    {
+      "$oid": "69956469dc7c4072b5ed2ee0"
+    },
+    {
+      "$oid": "6995712aa590d0df6c6422ae"
+    },
+    {
+      "$oid": "699598f0e6b20f27a0b161b4"
+    },
+    {
+      "$oid": "6996b2cc6c6570a8a8e169ef"
+    },
+    {
+      "$oid": "6996eb872eeb6c83728f87df"
+    },
+    {
+      "$oid": "6996efe1e2c37e6d2a474c03"
+    },
+    {
+      "$oid": "69982216b87c968f1176ff7c"
+    },
+    {
+      "$oid": "699838a4f4b48acb2e199743"
+    },
+    {
+      "$oid": "699868fb5e923a84f3663488"
+    },
+    {
+      "$oid": "69988b0ad4894b60a653062e"
+    },
+    {
+      "$oid": "6999c899e381c490c82eb0e5"
+    },
+    {
+      "$oid": "6999d75d0c3e75c5fddbb7fb"
+    },
+    {
+      "$oid": "6999ed29cd92054e70d9b15a"
+    }
+  ],
+  "referralChain": [],
+  "lockedCoinsEntries": [
+    {
+      "amount": 1000,
+      "lockStartDate": {
+        "$date": "2026-02-05T16:44:36.093Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-05T16:44:36.093Z"
+      },
+      "status": "active",
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "createdAt": {
+        "$date": "2026-02-05T16:44:36.093Z"
+      },
+      "_id": {
+        "$oid": "6984c8f48d634f90e5917222"
+      },
+      "lastClaimDate": {
+        "$date": "2026-02-19T15:10:38.924Z"
+      },
+      "totalClaimedProfit": 25.333333333333332,
+      "unclaimedProfit": 0
+    },
+    {
+      "amount": 50,
+      "lockStartDate": {
+        "$date": "2026-02-07T22:10:45.805Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-07T22:10:45.805Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 6,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": {
+        "$date": "2026-02-19T15:10:38.924Z"
+      },
+      "totalClaimedProfit": 1.0666666666666667,
+      "createdAt": {
+        "$date": "2026-02-07T22:10:45.805Z"
+      },
+      "_id": {
+        "$oid": "6987b865f156ccd5ba5b92cc"
+      }
+    },
+    {
+      "amount": 950,
+      "lockStartDate": {
+        "$date": "2026-02-12T16:44:35.767Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-12T16:44:35.767Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 6,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": {
+        "$date": "2026-02-19T15:10:38.924Z"
+      },
+      "totalClaimedProfit": 12.666666666666666,
+      "createdAt": {
+        "$date": "2026-02-12T16:44:35.767Z"
+      },
+      "_id": {
+        "$oid": "698e03731cbbbc4a81e33b90"
+      }
+    },
+    {
+      "amount": 51,
+      "lockStartDate": {
+        "$date": "2026-02-22T15:24:58.261Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-22T15:24:58.261Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": null,
+      "totalClaimedProfit": 0,
+      "createdAt": {
+        "$date": "2026-02-22T15:24:58.261Z"
+      },
+      "_id": {
+        "$oid": "699b1fca8350f8de55770a26"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-05T14:25:43.936Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-22T15:24:58.264Z"
+  },
+  "__v": 4,
+  "totalBonusEarned": 439.86,
+  "totalProfitShareEarned": 3.4626666666666663,
+  "p2pWallet": 20.08999999999999,
+  "lastProfitShareClaimDates": {
+    "6984b34824d3f3d534eaed07_6984cf3bd34804d589b137b6": {
+      "$date": "2026-02-19T18:28:24.227Z"
+    },
+    "6984b34824d3f3d534eaed07_6986c3d3af0acbad26e0af4f": {
+      "$date": "2026-02-19T18:28:24.227Z"
+    },
+    "6984b4f624d3f3d534eaed33_698e28616fed3467659f3a1e": {
+      "$date": "2026-02-19T18:28:24.227Z"
+    },
+    "69899715c4e3ebda7a0cb36a_69899a53c4e3ebda7a0cb3fe": {
+      "$date": "2026-02-20T09:26:38.921Z"
+    },
+    "698df5fbf4e55614ee88bcaf_698df674f4e55614ee88bced": {
+      "$date": "2026-02-19T18:28:24.227Z"
+    },
+    "698f4b08812ac2316cc75f53_698f4cbb205c2833d94f9508": {
+      "$date": "2026-02-19T18:28:24.227Z"
+    }
+  },
+  "p2pSystemFees": 2.44,
+  "withdrawalSystemFees": 5.45
+},
+{
+  "_id": {
+    "$oid": "6984b34824d3f3d534eaed07"
+  },
+  "fullName": "umer",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770304328/transactions/cyxramsnsauo54wpkrfo.jpg",
+  "email": "umeralialvi1@gmail.com",
+  "phoneNumber": "+923108739483",
+  "password": "$2b$10$BobdK.V8hcVQ66I/QQCbWeC1owvWY180AZNqhRvN66TlvggebxzhO",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 15,
+  "accountBalance": 34.610000000000014,
+  "lockedApexCoins": 100,
+  "lockStartDate": {
+    "$date": "2026-02-07T04:47:15.002Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-07T04:47:15.002Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-07T04:47:15.002Z"
+  },
+  "totalRoiEarned": 2.3666666666666663,
+  "isVerified": true,
+  "referralCode": "92986902",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "6984b4f624d3f3d534eaed33"
+    },
+    {
+      "$oid": "6984d4128b8a6a356dd48d0b"
+    },
+    {
+      "$oid": "6984d7d4377d11385ffaca18"
+    },
+    {
+      "$oid": "6985d609e6ee8e5e4c246c9e"
+    },
+    {
+      "$oid": "6993478d3f252e7c77fc849c"
+    },
+    {
+      "$oid": "6996b2cc6c6570a8a8e169ef"
+    },
+    {
+      "$oid": "6996efe1e2c37e6d2a474c03"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 50,
+      "lockStartDate": {
+        "$date": "2026-02-05T17:11:23.199Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-05T17:11:23.199Z"
+      },
+      "status": "active",
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "createdAt": {
+        "$date": "2026-02-05T17:11:23.199Z"
+      },
+      "_id": {
+        "$oid": "6984cf3bd34804d589b137b6"
+      },
+      "lastClaimDate": {
+        "$date": "2026-02-19T10:22:41.886Z"
+      },
+      "totalClaimedProfit": 1.2333333333333332,
+      "unclaimedProfit": 0
+    },
+    {
+      "amount": 50,
+      "lockStartDate": {
+        "$date": "2026-02-07T04:47:15.002Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-07T04:47:15.002Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 6,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": {
+        "$date": "2026-02-19T10:22:41.886Z"
+      },
+      "totalClaimedProfit": 1.1333333333333333,
+      "createdAt": {
+        "$date": "2026-02-07T04:47:15.002Z"
+      },
+      "_id": {
+        "$oid": "6986c3d3af0acbad26e0af4f"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-05T15:12:08.784Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T08:37:40.407Z"
+  },
+  "__v": 2,
+  "p2pWallet": 0.3500000000000001,
+  "totalBonusEarned": 4.5,
+  "totalProfitShareEarned": 0.09333333333333332,
+  "lastProfitShareClaimDates": {
+    "6984b4f624d3f3d534eaed33_698e28616fed3467659f3a1e": {
+      "$date": "2026-02-19T10:22:35.433Z"
+    }
+  },
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 7.499999999999999
+},
+{
+  "_id": {
+    "$oid": "6984b4f624d3f3d534eaed33"
+  },
+  "fullName": "chaudary wasif ali",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770304757/transactions/mrcgc4gs18mczot0ixqu.jpg",
+  "email": "chwasifali202034et1st@gmail.com",
+  "phoneNumber": "+923152175540",
+  "password": "$2b$10$gts6xt/4XQ29aqOBcRolEeqbHe1ccBM9cQPx6WiwCb75SyI8BWllK",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 1.0666666666666669,
+  "lockedApexCoins": 50,
+  "lockStartDate": {
+    "$date": "2026-02-12T19:22:09.266Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-12T19:22:09.266Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-12T19:22:09.266Z"
+  },
+  "totalRoiEarned": 1.0666666666666669,
+  "isVerified": true,
+  "referralCode": "4c913952",
+  "referredBy": {
+    "$oid": "6984b34824d3f3d534eaed07"
+  },
+  "referrals": [
+    {
+      "$oid": "6984d4128b8a6a356dd48d0b"
+    },
+    {
+      "$oid": "6984d7d4377d11385ffaca18"
+    },
+    {
+      "$oid": "6985d609e6ee8e5e4c246c9e"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 50,
+      "lockStartDate": {
+        "$date": "2026-02-12T19:22:09.266Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-12T19:22:09.266Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": {
+        "$date": "2026-02-22T16:34:29.485Z"
+      },
+      "totalClaimedProfit": 1.0666666666666669,
+      "createdAt": {
+        "$date": "2026-02-12T19:22:09.266Z"
+      },
+      "_id": {
+        "$oid": "698e28616fed3467659f3a1e"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-05T15:19:18.430Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-22T16:34:29.488Z"
+  },
+  "__v": 1,
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "6984d4128b8a6a356dd48d0b"
+  },
+  "fullName": "Azhar Hameed",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770312722/transactions/jtbgdjmrpgsjgauswt3j.jpg",
+  "email": "honeybie461@gmail.com",
+  "phoneNumber": "+923419346811",
+  "password": "$2b$10$X3nTpiVpnH1C/95QKAevQuAzJ//JFMGjFDs/rzayuXsAvFBsGRfCm",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "8f3ea740",
+  "referredBy": {
+    "$oid": "6984b4f624d3f3d534eaed33"
+  },
+  "referrals": [
+    {
+      "$oid": "6984d7d4377d11385ffaca18"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984b4f624d3f3d534eaed33"
+    },
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-05T17:32:02.913Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:15:30.225Z"
+  },
+  "__v": 0,
+  "lastProfitShareClaimDates": {},
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0
+},
+{
+  "_id": {
+    "$oid": "6984d79b377d11385ffac9fa"
+  },
+  "fullName": "sohail Abbas",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770313626/transactions/dusvnu3h9jiebpziuor4.jpg",
+  "email": "maliksohailabbas484@gmail.com",
+  "phoneNumber": "+923135433933",
+  "password": "$2b$10$yWH9sCa.aCOPImTGj0WFGea/72vGmJlsKxV5qQVoREmbznPk16z7O",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "4cf5a21c",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-05T17:47:07.561Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:15:50.899Z"
+  },
+  "__v": 0,
+  "lastProfitShareClaimDates": {},
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0
+},
+{
+  "_id": {
+    "$oid": "6984d7d4377d11385ffaca18"
+  },
+  "fullName": "Arshad Nawaz",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770313684/transactions/jz4pxwt1i6uxangyuyqu.jpg",
+  "email": "arshad.nawaz572@gmail.com",
+  "phoneNumber": "+923215750141",
+  "password": "$2b$10$dwnxNA90goc3zSS8/.nEn.MhuyvnuSc0vw0fKT/VlJoPdhVrsgVF.",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "b1576f73",
+  "referredBy": {
+    "$oid": "6984d4128b8a6a356dd48d0b"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984d4128b8a6a356dd48d0b"
+    },
+    {
+      "$oid": "6984b4f624d3f3d534eaed33"
+    },
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-05T17:48:04.926Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:16:38.708Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6984e3e942d623e893785968"
+  },
+  "fullName": "Liaqat Mahmood Mailk",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770316776/transactions/hpn5yeqmrcqcapkoyfsu.jpg",
+  "email": "malikonecoin@gmail.com",
+  "phoneNumber": "+923321580928",
+  "password": "$2b$10$q7L4mY87Q0rYL0jVkAyV9OX47suPJE33sDxCbXRB7KSPAXqaXDRIq",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "f2b8168a",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "698512aa8d9e7d3be5d170e5"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-05T18:39:37.602Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:15:52.555Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698512aa8d9e7d3be5d170e5"
+  },
+  "fullName": "Muhammad Nadeem",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770328745/transactions/gsvtyltryn7lzxuyw1f0.jpg",
+  "email": "ng232724@gmail.com",
+  "phoneNumber": "+923417556040",
+  "password": "$2b$10$3NZzi9Teaj1X3yD0Kh0Y5ecan4InYxruITqCjeg10e8oRL1/iGHrm",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "ffc36940",
+  "referredBy": {
+    "$oid": "6984e3e942d623e893785968"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984e3e942d623e893785968"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-05T21:59:06.087Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:15:57.536Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69853c6d29e609ec6aa764d5"
+  },
+  "fullName": "Muhammad Azeem",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770339436/transactions/xhcro1jom0kaktqnuc5h.jpg",
+  "email": "malikazeem.leo@gmail.com",
+  "phoneNumber": "+923489614480",
+  "password": "$2b$10$1V2GSZ7NDr94vaD1xWCNDOJ64mDe2YDetfYr7Xmg1RK2uqKhueilC",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "8c8077be",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "699868fb5e923a84f3663488"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-06T00:57:17.081Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-20T14:00:27.801Z"
+  },
+  "__v": 0,
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "6985496a8ce566fb1cfac3cb"
+  },
+  "fullName": "Muhammad Ejaz Shahid",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770342762/transactions/skt3uzudr53t2vsgkc7n.jpg",
+  "email": "jani4149@gmail.com",
+  "phoneNumber": "+923016094099",
+  "password": "$2b$10$O1z3q4CpPz9om1elNNvkQuIrL9xWluMkjKKdjvpOATnF83/jAVU3W",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 50,
+  "lockStartDate": {
+    "$date": "2026-02-21T09:16:38.739Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-21T09:16:38.739Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-21T09:16:38.739Z"
+  },
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "b13b3d55",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "6995712aa590d0df6c6422ae"
+    },
+    {
+      "$oid": "6999c899e381c490c82eb0e5"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 50,
+      "lockStartDate": {
+        "$date": "2026-02-21T09:16:38.739Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-21T09:16:38.739Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": null,
+      "totalClaimedProfit": 0,
+      "createdAt": {
+        "$date": "2026-02-21T09:16:38.739Z"
+      },
+      "_id": {
+        "$oid": "699977f664abf238c424efdf"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-06T01:52:42.990Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T15:00:42.218Z"
+  },
+  "__v": 1,
+  "lastProfitShareClaimDates": {},
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "6985ae8cb52512e349ec7995"
+  },
+  "fullName": "shahidimran",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770368651/transactions/dajeclc9320fbb4xohnx.jpg",
+  "email": "azaanawan9@gmail.com",
+  "phoneNumber": "+923125562424",
+  "password": "$2b$10$t6oq1fLpPhuzK72BdRgsSuIl7itGmhUkLYh0B3dVjfgzN2rpio.nm",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "c6773f6e",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-06T09:04:12.262Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:16:39.110Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6985d609e6ee8e5e4c246c9e"
+  },
+  "fullName": "sadaqat aziz",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770378760/transactions/mhedkkynaiktyamkb1js.jpg",
+  "email": "wa992193@gmail.com",
+  "phoneNumber": "+923390074359",
+  "password": "$2b$10$GJtoE83WMS0r3G0Anf308.IZ1idVnLt/MzQ5LbPSYfkCxM0k30Q1O",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "d6a34b4f",
+  "referredBy": {
+    "$oid": "6984b4f624d3f3d534eaed33"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984b4f624d3f3d534eaed33"
+    },
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-06T11:52:41.219Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:16:38.740Z"
+  },
+  "__v": 0,
+  "lastProfitShareClaimDates": {},
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0
+},
+{
+  "_id": {
+    "$oid": "6986eb20c3835618985b16ea"
+  },
+  "fullName": "gulzada",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770449695/transactions/flj2tdf12aumiegsjkec.jpg",
+  "email": "gulzadakhanswb@gmail.com",
+  "phoneNumber": "+923338630307",
+  "password": "$2b$10$1lk5JuYr70zhnooGynHyyu.DMJduQx03.U8gHzKgRwLRLTLG/zNdu",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "9e65a2e4",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-07T07:34:56.576Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:16:02.692Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6986f43061c03172bd5ca0b6"
+  },
+  "fullName": "Gustasib",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770452015/transactions/sp9ee9bxqpgthdwoofrx.jpg",
+  "email": "gustasibk48@gmail.com",
+  "phoneNumber": "+923169719797",
+  "password": "$2b$10$i3mkfuj/MdEQkp5ZEcuVguchBXKQXkv.fILXv.siodGbC79JdEZh.",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "8df7f6b7",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-07T08:13:36.452Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:16:04.835Z"
+  },
+  "__v": 0,
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0
+},
+{
+  "_id": {
+    "$oid": "6986fb60ead120264d248c3f"
+  },
+  "fullName": "Hanzala",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770453855/transactions/yohxkujgn79gfxzsxnfd.png",
+  "email": "m.hanzala2022@uop.edu.pk",
+  "phoneNumber": "03450987655",
+  "password": "$2b$10$PBWq9YWXmG2i.8ZpOO3TmufKJztpk8as1nlNLNAcWOlnluveiv4ga",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 200,
+  "accountBalance": 3780,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "9f9d6450",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "69899651c4e3ebda7a0cb358"
+    },
+    {
+      "$oid": "69899715c4e3ebda7a0cb36a"
+    },
+    {
+      "$oid": "69899825c4e3ebda7a0cb389"
+    },
+    {
+      "$oid": "69899876c4e3ebda7a0cb395"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-07T08:44:16.945Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-20T11:19:37.917Z"
+  },
+  "__v": 0,
+  "lastProfitShareClaimDates": {},
+  "p2pWallet": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 40
+},
+{
+  "_id": {
+    "$oid": "698713befff7f7ca1d6a2844"
+  },
+  "fullName": "Khan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770460094/transactions/xw6iatriw3ykzdyv5mgl.jpg",
+  "email": "zindigiprizeuop@gmail.com",
+  "phoneNumber": "+928484848488",
+  "password": "$2b$10$YIDdZSSW5HbGQPwMQ2kpOeRs6t03h4tYPgDZPkYbjQWCLq8yak7aS",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 500,
+  "accountBalance": 2000,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "e5afe7ad",
+  "referredBy": {
+    "$oid": "6984db1e8b8a6a356dd48deb"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984db1e8b8a6a356dd48deb"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-07T10:28:14.556Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-07T10:39:43.651Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69899651c4e3ebda7a0cb358"
+  },
+  "fullName": "Hanniiii Kahn",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771243880/transactions/byikrnksupjc73udh3yt.jpg",
+  "email": "muhammadhanzalahkhan1@gmail.com",
+  "phoneNumber": "03125478956",
+  "password": "$2b$10$hyO4i.Gl87sv2d8g3xINzORncpqpj4Rh7rkhZfKaMbqXHGHVydgnS",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 9.226666666666667,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 9,
+  "totalProfitShareEarned": 0.22666666666666668,
+  "isVerified": true,
+  "referralCode": "1475f7dc",
+  "referredBy": {
+    "$oid": "6986fb60ead120264d248c3f"
+  },
+  "referrals": [
+    {
+      "$oid": "69899715c4e3ebda7a0cb36a"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6986fb60ead120264d248c3f"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-09T08:09:53.867Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-19T14:34:54.068Z"
+  },
+  "__v": 0,
+  "lastProfitShareClaimDates": {
+    "69899715c4e3ebda7a0cb36a_69899a53c4e3ebda7a0cb3fe": {
+      "$date": "2026-02-16T12:05:59.542Z"
+    }
+  },
+  "p2pWallet": 4.85,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "69899715c4e3ebda7a0cb36a"
+  },
+  "fullName": "Hanzala Khattak 1",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770624787/transactions/ylknrbbmadnhsmamzkbo.png",
+  "email": "m.hanzalakhattak47@gmail.com",
+  "phoneNumber": "03450987659",
+  "password": "$2b$10$9ZtTZvmH1IobSUc/hEJwKupq0EroUBx.8j7lMHOmKMn05Y0CZ6j4K",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 100,
+  "accountBalance": 9782.266666666668,
+  "lockedApexCoins": 100,
+  "lockStartDate": {
+    "$date": "2026-02-09T08:26:59.668Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-09T08:26:59.668Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-09T08:26:59.668Z"
+  },
+  "totalRoiEarned": 2.2666666666666666,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "isVerified": true,
+  "referralCode": "05a4384b",
+  "referredBy": {
+    "$oid": "69899651c4e3ebda7a0cb358"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "69899651c4e3ebda7a0cb358"
+    },
+    {
+      "$oid": "6986fb60ead120264d248c3f"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 100,
+      "lockStartDate": {
+        "$date": "2026-02-09T08:26:59.668Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-09T08:26:59.668Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 6,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": {
+        "$date": "2026-02-20T06:20:12.300Z"
+      },
+      "totalClaimedProfit": 2.2666666666666666,
+      "createdAt": {
+        "$date": "2026-02-09T08:26:59.668Z"
+      },
+      "_id": {
+        "$oid": "69899a53c4e3ebda7a0cb3fe"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-09T08:13:09.561Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-20T06:20:12.350Z"
+  },
+  "__v": 1,
+  "lastProfitShareClaimDates": {},
+  "p2pWallet": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "69899825c4e3ebda7a0cb389"
+  },
+  "fullName": "amir",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770625059/transactions/xobxb6jxohd2niuiiolw.png",
+  "email": "amirshah98760@gmail.com",
+  "phoneNumber": "03450987651",
+  "password": "$2b$10$aDYwxy33mLR3tVEV7jP5UO.naqkcfVq6XUrg.avF3N/dH95wq/l4G",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "isVerified": true,
+  "referralCode": "065d7f65",
+  "referredBy": {
+    "$oid": "6986fb60ead120264d248c3f"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6986fb60ead120264d248c3f"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-09T08:17:41.826Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T08:18:16.570Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69899876c4e3ebda7a0cb395"
+  },
+  "fullName": "rehmat",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770625141/transactions/jfnxuldzftobefrjkmkn.png",
+  "email": "ru36771@gmail.com",
+  "phoneNumber": "03450987652",
+  "password": "$2b$10$sJ4soD9qqzZFGS.1qh6fquSWQeZlQu4AgtNvAl9T/wn1fWSPE3uXW",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "isVerified": true,
+  "referralCode": "d75e9c88",
+  "referredBy": {
+    "$oid": "6986fb60ead120264d248c3f"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6986fb60ead120264d248c3f"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-09T08:19:02.926Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T08:19:45.627Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698c7bc33253fd74ec0079be"
+  },
+  "fullName": "Syed Sajid shah gillani",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770814402/transactions/vc5zhiezletnrwe9grcq.jpg",
+  "email": "syed5048690@gmail.com",
+  "phoneNumber": "+923335365156",
+  "password": "$2b$10$bYoHuWvyQN70wfh.ztL2ROR/fFzASm9sYSb0jCCFihvxIc74fk9qy",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "isVerified": true,
+  "referralCode": "6c6e709c",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-11T12:53:23.224Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-11T12:54:39.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698df5fbf4e55614ee88bcaf"
+  },
+  "fullName": "sayed Osama",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770911227/transactions/vkrzg74x3b57vf4uhuj9.jpg",
+  "email": "sayyedmuhammadosama@gmail.com",
+  "phoneNumber": "+924949494949",
+  "password": "$2b$10$A3030LX6MX50uZoNLBnb6euG7AMVmA3mzPPxZa6Nbnaak/U/Uw/we",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 20,
+  "accountBalance": 980.7499999999999,
+  "p2pWallet": 40.32,
+  "lockedApexCoins": 1000,
+  "lockStartDate": {
+    "$date": "2026-02-12T15:49:08.434Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-12T15:49:08.434Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-12T15:49:08.434Z"
+  },
+  "totalRoiEarned": 26.666666666666664,
+  "totalBonusEarned": 270,
+  "totalProfitShareEarned": 2.4000000000000004,
+  "isVerified": true,
+  "referralCode": "89395be4",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "698e1ec6456b80d9538f8f75"
+    },
+    {
+      "$oid": "698f4b08812ac2316cc75f53"
+    },
+    {
+      "$oid": "6996eb872eeb6c83728f87df"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 1000,
+      "lockStartDate": {
+        "$date": "2026-02-12T15:49:08.434Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-12T15:49:08.434Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 6,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": {
+        "$date": "2026-02-23T23:08:28.320Z"
+      },
+      "totalClaimedProfit": 26.666666666666664,
+      "createdAt": {
+        "$date": "2026-02-12T15:49:08.434Z"
+      },
+      "_id": {
+        "$oid": "698df674f4e55614ee88bced"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-12T15:47:07.774Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-24T16:14:55.744Z"
+  },
+  "__v": 1,
+  "lastProfitShareClaimDates": {
+    "698f4b08812ac2316cc75f53_698f4cbb205c2833d94f9508": {
+      "$date": "2026-02-24T16:14:55.113Z"
+    }
+  },
+  "p2pSystemFees": 0.6599999999999999,
+  "withdrawalSystemFees": 11.85
+},
+{
+  "_id": {
+    "$oid": "698f11034ab5678834687670"
+  },
+  "fullName": "dhruv",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770983682/transactions/j49onmufevq6lud3hu6g.jpg",
+  "email": "kdev90639@gmail.com",
+  "phoneNumber": "+919824111837",
+  "password": "$2b$10$zxIz48SCNgRzu20P00jYNe/l33c5xEjIrakmoONVdxMmTRrYGLkVy",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "isVerified": true,
+  "referralCode": "048c8269",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-13T11:54:43.509Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-13T11:55:13.103Z"
+  },
+  "__v": 0,
+  "lastProfitShareClaimDates": {}
+},
+{
+  "_id": {
+    "$oid": "698f4b08812ac2316cc75f53"
+  },
+  "fullName": "Osama Khan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1770998536/transactions/w8qsmpmrlvukdxqkuop3.jpg",
+  "email": "p233075@pwr.nu.edu.pk",
+  "phoneNumber": "+924747474747",
+  "password": "$2b$10$l3qf6xZ9UlGX26sjfnej3uf9iDG6gFkz/kvy6XSpdxfhoQ2hR5dbq",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 1005.3333333333334,
+  "p2pWallet": 0,
+  "lockedApexCoins": 1000,
+  "lockStartDate": {
+    "$date": "2026-02-13T16:09:31.243Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-13T16:09:31.243Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-13T16:09:31.243Z"
+  },
+  "totalRoiEarned": 5.333333333333333,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "isVerified": true,
+  "referralCode": "329c110b",
+  "referredBy": {
+    "$oid": "698df5fbf4e55614ee88bcaf"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "698df5fbf4e55614ee88bcaf"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 1000,
+      "lockStartDate": {
+        "$date": "2026-02-13T16:09:31.243Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-13T16:09:31.243Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": {
+        "$date": "2026-02-16T01:51:10.811Z"
+      },
+      "totalClaimedProfit": 5.333333333333333,
+      "createdAt": {
+        "$date": "2026-02-13T16:09:31.243Z"
+      },
+      "_id": {
+        "$oid": "698f4cbb205c2833d94f9508"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-13T16:02:16.930Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-16T01:51:10.813Z"
+  },
+  "__v": 1,
+  "lastProfitShareClaimDates": {}
+},
+{
+  "_id": {
+    "$oid": "6992ca4682b4dfa2024606f7"
+  },
+  "fullName": "Ali abbas",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771227717/transactions/mo3h0xuh3fbbepynydgn.jpg",
+  "email": "alliabbas883.1@gmail.com",
+  "phoneNumber": "+923115247408",
+  "password": "$2b$10$guGemmVFYuc5blk8ew.MWuNeezaO2vwbR2qyoXrvpIeAxclHF1zC.",
+  "role": "user",
+  "isActive": false,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": false,
+  "otp": "496032",
+  "otpExpiry": {
+    "$date": "2026-02-16T07:51:58.508Z"
+  },
+  "referralCode": "aebda160",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-16T07:41:58.699Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T07:38:56.352Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6993478d3f252e7c77fc849c"
+  },
+  "fullName": "ShahAwais Bukhari",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771259789/transactions/rj6g1spfawttlypvo37h.jpg",
+  "email": "shahawaisbukhari@gmail.com",
+  "phoneNumber": "+923021550501",
+  "password": "$2b$10$e6t6TmEUuX3H5g.oxh4cYeVmwIcyzRQe.phsyox3xZT/SDNk87G4S",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "e5a86cdb",
+  "referredBy": {
+    "$oid": "6984b34824d3f3d534eaed07"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-16T16:36:29.642Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-16T16:36:56.626Z"
+  },
+  "__v": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "69944ea261309e6daf6c5c61"
+  },
+  "fullName": "Hanzala Khan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771327137/transactions/wjutq3ena6co4pjjuowy.png",
+  "email": "m.hanzala@encovasolutions.com",
+  "phoneNumber": "03189550125",
+  "password": "$2b$10$cAFlymwsLhB2PH2O2bj0du9nFy6eDYH3ct.zDfnkFsZj9h5K9ecQ2",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": false,
+  "otp": "903379",
+  "otpExpiry": {
+    "$date": "2026-02-17T11:28:58.385Z"
+  },
+  "referralCode": "093e6b13",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-17T11:18:58.545Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-17T11:18:58.545Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69944ee061309e6daf6c5c6f"
+  },
+  "fullName": "Hanzala Khan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771327199/transactions/qnhruvd9cr2u1tfpcxqo.png",
+  "email": "m.hanzala@encovasolutions.co",
+  "phoneNumber": "03189505125",
+  "password": "$2b$10$no1U/hOS/ITRXN8n7FamWuCPPJSa.2SX5RydXY6F/xWl11/U/JIg6",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": false,
+  "otp": "335538",
+  "otpExpiry": {
+    "$date": "2026-02-17T11:30:00.279Z"
+  },
+  "referralCode": "f13ea458",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-17T11:20:00.407Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-17T11:20:00.407Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6994607f1bae3690dc604721"
+  },
+  "fullName": "raja noman",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771331710/transactions/ntaduvzcmmrm6rekkk0p.jpg",
+  "email": "un4getableraja302@gmail.com",
+  "phoneNumber": "+923045326254",
+  "password": "$2b$10$BaDxInh5JekbWoviThC/K./aZLIqltnG2OMwuhYsDVD0XG.JbjnxS",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "d2887d44",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-17T12:35:11.113Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-17T12:41:04.963Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69956469dc7c4072b5ed2ee0"
+  },
+  "fullName": "Ali Abbas",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771398249/transactions/jbylljw5cpd877tloewx.jpg",
+  "email": "aliabbas786u4@gmail.com",
+  "phoneNumber": "+923461918883",
+  "password": "$2b$10$9rQtplr8XKbbJv4R.1krCeLUB1vKDxDDkCoO2isBrjkTxeUd/2aue",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "14f5726c",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-18T07:04:09.738Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-18T07:05:01.025Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6995712aa590d0df6c6422ae"
+  },
+  "fullName": "Sami Ullah Khan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771401514/transactions/qscvtnlk9zbiou1dbmoz.jpg",
+  "email": "samikhan8034@gmail.com",
+  "phoneNumber": "+923066368130",
+  "password": "$2b$10$9mWkA3aaQ1LQKG4m5R4OcuOiXpAqiQz5jDLqf9p07pQhbHIF7J4Ki",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "c7d3057f",
+  "referredBy": {
+    "$oid": "6985496a8ce566fb1cfac3cb"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6985496a8ce566fb1cfac3cb"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-18T07:58:34.778Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-18T07:59:08.877Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "699598f0e6b20f27a0b161b4"
+  },
+  "fullName": "Abdul rauf",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771411695/transactions/pizosobn4alturuuqwoo.jpg",
+  "email": "humtum7862002@yahoo.com",
+  "phoneNumber": "+923139860803",
+  "password": "$2b$10$jSirdHW7CiINk87sYWfe7ug4HAJXy/zVXH01ybu10b/Bk1qRJyVnG",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "b8f7d2d0",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-18T10:48:16.419Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-18T10:53:28.038Z"
+  },
+  "__v": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "6996b2cc6c6570a8a8e169ef"
+  },
+  "fullName": "M Rizwan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771483851/transactions/snqrtmqj5nfvqlaimwed.jpg",
+  "email": "mrazi3397@gmail.com",
+  "phoneNumber": "+923479491648",
+  "password": "$2b$10$DzLFuURLKOxhUt8ZfGx0cexcd5mzS/7/RqCApY2N3btqs0lTarE62",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "90037698",
+  "referredBy": {
+    "$oid": "6984b34824d3f3d534eaed07"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-19T06:50:52.471Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-19T06:51:13.173Z"
+  },
+  "__v": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "6996eb872eeb6c83728f87df"
+  },
+  "fullName": "Muhammadosama",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771498374/transactions/uqofcx4wmdicm985gbt0.jpg",
+  "email": "sayyedmuhammadsama@gmail.com",
+  "phoneNumber": "+923388388383",
+  "password": "$2b$10$raIzhjFrbFWN0bGp/XPA0eSo5VSxaxQ0rxWQFFuozTkTOY0cYXXlG",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": false,
+  "otp": "804789",
+  "otpExpiry": {
+    "$date": "2026-02-19T11:02:55.059Z"
+  },
+  "referralCode": "086b42d0",
+  "referredBy": {
+    "$oid": "698df5fbf4e55614ee88bcaf"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "698df5fbf4e55614ee88bcaf"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-19T10:52:55.252Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-19T10:52:55.252Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6996efe1e2c37e6d2a474c03"
+  },
+  "fullName": "ali",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771499489/transactions/d77twwoku6cbgp5fqefs.jpg",
+  "email": "guriabeckett@gmail.com",
+  "phoneNumber": "+923298648609",
+  "password": "$2b$10$Tx/A1LbqPC9WpHW.ultRSeUMJOPoIMCZamEne2.r3TOcVFnI34q2q",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": false,
+  "otp": "362582",
+  "otpExpiry": {
+    "$date": "2026-02-19T11:21:29.632Z"
+  },
+  "referralCode": "892c815e",
+  "referredBy": {
+    "$oid": "6984b34824d3f3d534eaed07"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984b34824d3f3d534eaed07"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-19T11:11:29.820Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-19T11:11:29.820Z"
+  },
+  "__v": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0
+},
+{
+  "_id": {
+    "$oid": "69982216b87c968f1176ff7c"
+  },
+  "fullName": "Jahan zaib",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771577877/transactions/vvi3ihcdsfs50stoosih.jpg",
+  "email": "jahanzaib75075@gmail.com",
+  "phoneNumber": "+923189505125",
+  "password": "$2b$10$LRoAQPp2T0Gd9cVkRNR.JuiMZEKEn7C0uQrx8CfRLVBGWMjoC1Ls.",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0.8100000000000005,
+  "lockedApexCoins": 54,
+  "lockStartDate": {
+    "$date": "2026-02-20T09:17:52.594Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-20T09:17:52.594Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-20T09:17:52.594Z"
+  },
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "7b134ceb",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 54,
+      "lockStartDate": {
+        "$date": "2026-02-20T09:17:52.594Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-20T09:17:52.594Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": null,
+      "totalClaimedProfit": 0,
+      "createdAt": {
+        "$date": "2026-02-20T09:17:52.594Z"
+      },
+      "_id": {
+        "$oid": "699826c01de93384fa29b565"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-20T08:57:58.607Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-20T09:17:52.596Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "699838a4f4b48acb2e199743"
+  },
+  "fullName": "Alijan34",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771583651/transactions/eoup5ir8nww71agxvegz.jpg",
+  "email": "alih15021@gmail.com",
+  "phoneNumber": "+923063452836",
+  "password": "$2b$10$aLiTO6PC5A0jevFhceoFW.x2zth.7WktryX8s/XXJeIpcxFrwJQ/O",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0.25,
+  "lockedApexCoins": 50,
+  "lockStartDate": {
+    "$date": "2026-02-21T08:37:49.653Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-21T08:37:49.653Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-21T08:37:49.653Z"
+  },
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 1.2,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "a58bdb26",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "6999d75d0c3e75c5fddbb7fb"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 50,
+      "lockStartDate": {
+        "$date": "2026-02-21T08:37:49.653Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-21T08:37:49.653Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": null,
+      "totalClaimedProfit": 0,
+      "createdAt": {
+        "$date": "2026-02-21T08:37:49.653Z"
+      },
+      "_id": {
+        "$oid": "69996eddb2d80ddca976957e"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-20T10:34:12.282Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T16:03:41.533Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "699868fb5e923a84f3663488"
+  },
+  "fullName": "Malik Mohammad Azam",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771596025/transactions/oitv20ip8fe4wl77bcr6.jpg",
+  "email": "aajokot1@hotmail.com",
+  "phoneNumber": "+923101508702",
+  "password": "$2b$10$1vyg0TImUZIKY.apuqOK/e5cukAtvwmZ71f0bmLY.81zwki1M.gNq",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "9d6e8e32",
+  "referredBy": {
+    "$oid": "69853c6d29e609ec6aa764d5"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "69853c6d29e609ec6aa764d5"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-20T14:00:27.481Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-20T14:01:30.712Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69988b0ad4894b60a653062e"
+  },
+  "fullName": "arshad khan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771604739/transactions/raieslufjtkansxndyf4.jpg",
+  "email": "arshad5027002@gmail.com",
+  "phoneNumber": "+923225027002",
+  "password": "$2b$10$Gm7eO57pK1w5MWhjjEwidu9fzJ9D2xzaJr9HJHkdvzszggkh.xrk2",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 1100,
+  "lockStartDate": {
+    "$date": "2026-02-22T13:25:24.516Z"
+  },
+  "lockEndDate": {
+    "$date": "2027-04-22T13:25:24.516Z"
+  },
+  "lastLockDate": {
+    "$date": "2026-02-22T13:25:24.516Z"
+  },
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "78cac349",
+  "referredBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "referrals": [
+    {
+      "$oid": "6999ed29cd92054e70d9b15a"
+    }
+  ],
+  "referralChain": [
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [
+    {
+      "amount": 100,
+      "lockStartDate": {
+        "$date": "2026-02-21T10:10:31.015Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-21T10:10:31.015Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": null,
+      "totalClaimedProfit": 0,
+      "createdAt": {
+        "$date": "2026-02-21T10:10:31.015Z"
+      },
+      "_id": {
+        "$oid": "6999849799e4f960d24429ed"
+      }
+    },
+    {
+      "amount": 1000,
+      "lockStartDate": {
+        "$date": "2026-02-22T13:25:24.516Z"
+      },
+      "lockEndDate": {
+        "$date": "2027-04-22T13:25:24.516Z"
+      },
+      "status": "active",
+      "roiRateAtLock": 8,
+      "unlockRequest": {
+        "requestedAt": null,
+        "processAfter": null,
+        "penaltyPercentage": 0,
+        "penaltyAmount": 0,
+        "amountAfterPenalty": 0,
+        "daysElapsedAtRequest": 0,
+        "approvedAt": null,
+        "approvedBy": null
+      },
+      "unclaimedProfit": 0,
+      "lastClaimDate": null,
+      "totalClaimedProfit": 0,
+      "createdAt": {
+        "$date": "2026-02-22T13:25:24.516Z"
+      },
+      "_id": {
+        "$oid": "699b03c4e789ec4ebc33ff78"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2026-02-20T16:25:46.029Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-22T13:25:24.521Z"
+  },
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "6999c899e381c490c82eb0e5"
+  },
+  "fullName": "Muhammad Adnan Shakir",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771686041/transactions/go0w7gabajctye4mceif.jpg",
+  "email": "adnanshakir077@gmail.com",
+  "phoneNumber": "+923457868739",
+  "password": "$2b$10$clDuz0OyTOuurCCXCxelJeQU1MvNAuHkzfDm2HciRF4CmlhwnbhkK",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "bffe4e3b",
+  "referredBy": {
+    "$oid": "6985496a8ce566fb1cfac3cb"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "6985496a8ce566fb1cfac3cb"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-21T15:00:41.919Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T15:01:02.863Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6999d75d0c3e75c5fddbb7fb"
+  },
+  "fullName": "Muhammad Imran",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771689820/transactions/n5zmayfzui1nubgttpq8.jpg",
+  "email": "iawan4637@gmail.com",
+  "phoneNumber": "+923015462601",
+  "password": "$2b$10$ySYBbv9Dows/PSQ2.Mb.hunBxuRDa.Dp8pWzNDeFWQ/OzRBVyVW2G",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "f6fc1fc4",
+  "referredBy": {
+    "$oid": "699838a4f4b48acb2e199743"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "699838a4f4b48acb2e199743"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-21T16:03:41.226Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T16:04:37.383Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6999ed29cd92054e70d9b15a"
+  },
+  "fullName": "ajaz khan",
+  "profilePictureUrl": "https://res.cloudinary.com/dokprjahz/image/upload/v1771695400/transactions/i3o7h25ab3anyajx9rpp.jpg",
+  "email": "ajazkhan1531@gmail.com",
+  "phoneNumber": "+923038407432",
+  "password": "$2b$10$mb8vD50wnFsL3oIEbhNpA.6v1h4ukBibMbOLHS4bjB1xP8FMcOTYW",
+  "role": "user",
+  "isActive": true,
+  "apexCoins": 0,
+  "accountBalance": 0,
+  "p2pWallet": 0,
+  "lockedApexCoins": 0,
+  "lockStartDate": null,
+  "lockEndDate": null,
+  "lastLockDate": null,
+  "totalRoiEarned": 0,
+  "totalBonusEarned": 0,
+  "totalProfitShareEarned": 0,
+  "p2pSystemFees": 0,
+  "withdrawalSystemFees": 0,
+  "lastProfitShareClaimDates": {},
+  "isVerified": true,
+  "referralCode": "146b1673",
+  "referredBy": {
+    "$oid": "69988b0ad4894b60a653062e"
+  },
+  "referrals": [],
+  "referralChain": [
+    {
+      "$oid": "69988b0ad4894b60a653062e"
+    },
+    {
+      "$oid": "6984a86799a9708a6b9f0688"
+    }
+  ],
+  "lockedCoinsEntries": [],
+  "createdAt": {
+    "$date": "2026-02-21T17:36:41.883Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T17:37:20.917Z"
+  },
+  "__v": 0
+}]

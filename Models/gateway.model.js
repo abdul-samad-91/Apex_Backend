@@ -6,8 +6,8 @@ class Gateway extends Model {}
 Gateway.init(
     {
         id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            autoIncrement: true,
+            type: DataTypes.STRING(36),
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
         image: {
@@ -23,7 +23,7 @@ Gateway.init(
             allowNull: true
         },
         created_by: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: true,
             references: {
                 model: 'users',

@@ -1,0 +1,34 @@
+[{
+  "_id": {
+    "$oid": "6984b86924d3f3d534eaeda7"
+  },
+  "rate": 6,
+  "isActive": true,
+  "createdBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "createdAt": {
+    "$date": "2026-02-05T15:34:01.318Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-05T15:34:01.318Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698e241f3dd262578add1e65"
+  },
+  "rate": 8,
+  "isActive": true,
+  "createdBy": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "createdAt": {
+    "$date": "2026-02-12T19:03:59.827Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T19:03:59.827Z"
+  },
+  "__v": 0
+}]

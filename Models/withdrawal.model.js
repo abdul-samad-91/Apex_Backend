@@ -6,8 +6,8 @@ class Withdrawal extends Model {}
 Withdrawal.init(
     {
         id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            autoIncrement: true,
+            type: DataTypes.STRING(36),
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
         withdrawal_id: {
@@ -16,7 +16,7 @@ Withdrawal.init(
             unique: true
         },
         user_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',
@@ -66,7 +66,7 @@ Withdrawal.init(
             defaultValue: null
         },
         processed_by: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: true,
             references: {
                 model: 'users',

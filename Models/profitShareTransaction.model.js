@@ -6,13 +6,13 @@ class ProfitShareTransaction extends Model {}
 ProfitShareTransaction.init(
     {
         id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            autoIncrement: true,
+            type: DataTypes.STRING(36),
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
         // Who receives the profit share (upline user)
         user_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',
@@ -22,7 +22,7 @@ ProfitShareTransaction.init(
         },
         // Who earned the ROI (downline user)
         from_user_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',

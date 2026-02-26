@@ -6,8 +6,8 @@ class Transaction extends Model {}
 Transaction.init(
     {
         id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            autoIncrement: true,
+            type: DataTypes.STRING(36),
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
         transaction_id: {
@@ -16,7 +16,7 @@ Transaction.init(
             unique: true
         },
         user_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',

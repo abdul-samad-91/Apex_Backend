@@ -6,8 +6,8 @@ class P2PTransfer extends Model {}
 P2PTransfer.init(
     {
         id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            autoIncrement: true,
+            type: DataTypes.STRING(36),
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
         transfer_id: {
@@ -16,7 +16,7 @@ P2PTransfer.init(
             unique: true
         },
         sender_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',
@@ -25,7 +25,7 @@ P2PTransfer.init(
             onDelete: 'CASCADE'
         },
         recipient_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',

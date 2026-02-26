@@ -1,0 +1,512 @@
+[{
+  "_id": {
+    "$oid": "69899a54c4e3ebda7a0cb406"
+  },
+  "userId": {
+    "$oid": "69899651c4e3ebda7a0cb358"
+  },
+  "fromUserId": {
+    "$oid": "69899715c4e3ebda7a0cb36a"
+  },
+  "stakeEntryId": {
+    "$oid": "69899a53c4e3ebda7a0cb3fe"
+  },
+  "investmentAmount": 100,
+  "bonusPercentage": 9,
+  "bonusAmount": 9,
+  "level": 1,
+  "activeDirectReferralsAtTime": 1,
+  "createdAt": {
+    "$date": "2026-02-09T08:27:00.440Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T08:27:00.440Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69899a55c4e3ebda7a0cb413"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "69899715c4e3ebda7a0cb36a"
+  },
+  "stakeEntryId": {
+    "$oid": "69899a53c4e3ebda7a0cb3fe"
+  },
+  "investmentAmount": 100,
+  "bonusPercentage": 3,
+  "bonusAmount": 3,
+  "level": 3,
+  "activeDirectReferralsAtTime": 3,
+  "createdAt": {
+    "$date": "2026-02-09T08:27:01.451Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T08:27:01.451Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698dc0d5e4bb06cd97470460"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "698dc05068938b83eefbda73"
+  },
+  "stakeEntryId": {
+    "$oid": "698dc0d4e4bb06cd97470454"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 9,
+  "bonusAmount": 90,
+  "level": 1,
+  "activeDirectReferralsAtTime": 3,
+  "createdAt": {
+    "$date": "2026-02-12T12:00:21.884Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T12:00:21.884Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698dc1eed07a02f01f4eed6e"
+  },
+  "userId": {
+    "$oid": "698dc05068938b83eefbda73"
+  },
+  "fromUserId": {
+    "$oid": "698dc14d7a67e92f4f131108"
+  },
+  "stakeEntryId": {
+    "$oid": "698dc1edd07a02f01f4eed64"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 9,
+  "bonusAmount": 90,
+  "level": 1,
+  "activeDirectReferralsAtTime": 1,
+  "createdAt": {
+    "$date": "2026-02-12T12:05:02.743Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T12:05:02.743Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698dc1efd07a02f01f4eed78"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "698dc14d7a67e92f4f131108"
+  },
+  "stakeEntryId": {
+    "$oid": "698dc1edd07a02f01f4eed64"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 4,
+  "bonusAmount": 40,
+  "level": 2,
+  "activeDirectReferralsAtTime": 4,
+  "createdAt": {
+    "$date": "2026-02-12T12:05:03.685Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T12:05:03.685Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698df675f4e55614ee88bcf8"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "698df5fbf4e55614ee88bcaf"
+  },
+  "stakeEntryId": {
+    "$oid": "698df674f4e55614ee88bced"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 9,
+  "bonusAmount": 90,
+  "level": 1,
+  "activeDirectReferralsAtTime": 3,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-12T16:42:17.692Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-12T15:49:09.477Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T16:42:17.693Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698e1f45ee069bb4db18b228"
+  },
+  "userId": {
+    "$oid": "698df5fbf4e55614ee88bcaf"
+  },
+  "fromUserId": {
+    "$oid": "698e1ec6456b80d9538f8f75"
+  },
+  "stakeEntryId": {
+    "$oid": "698e1f44ee069bb4db18b21f"
+  },
+  "investmentAmount": 2000,
+  "bonusPercentage": 9,
+  "bonusAmount": 180,
+  "level": 1,
+  "activeDirectReferralsAtTime": 1,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-12T18:47:21.939Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-12T18:43:17.815Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T18:47:21.939Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698e1f46ee069bb4db18b233"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "698e1ec6456b80d9538f8f75"
+  },
+  "stakeEntryId": {
+    "$oid": "698e1f44ee069bb4db18b21f"
+  },
+  "investmentAmount": 2000,
+  "bonusPercentage": 4,
+  "bonusAmount": 80,
+  "level": 2,
+  "activeDirectReferralsAtTime": 4,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-12T18:44:10.814Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-12T18:43:18.617Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T18:44:10.814Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698e28626fed3467659f3a29"
+  },
+  "userId": {
+    "$oid": "6984b34824d3f3d534eaed07"
+  },
+  "fromUserId": {
+    "$oid": "6984b4f624d3f3d534eaed33"
+  },
+  "stakeEntryId": {
+    "$oid": "698e28616fed3467659f3a1e"
+  },
+  "investmentAmount": 50,
+  "bonusPercentage": 9,
+  "bonusAmount": 4.5,
+  "level": 1,
+  "activeDirectReferralsAtTime": 1,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-12T19:36:07.306Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-12T19:22:10.246Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T19:36:07.307Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698e28636fed3467659f3a34"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "6984b4f624d3f3d534eaed33"
+  },
+  "stakeEntryId": {
+    "$oid": "698e28616fed3467659f3a1e"
+  },
+  "investmentAmount": 50,
+  "bonusPercentage": 4,
+  "bonusAmount": 2,
+  "level": 2,
+  "activeDirectReferralsAtTime": 5,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-12T20:12:53.010Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-12T19:22:11.026Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-12T20:12:53.011Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698f4cbc205c2833d94f9511"
+  },
+  "userId": {
+    "$oid": "698df5fbf4e55614ee88bcaf"
+  },
+  "fromUserId": {
+    "$oid": "698f4b08812ac2316cc75f53"
+  },
+  "stakeEntryId": {
+    "$oid": "698f4cbb205c2833d94f9508"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 9,
+  "bonusAmount": 90,
+  "level": 1,
+  "activeDirectReferralsAtTime": 1,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-16T15:07:53.940Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-13T16:09:32.187Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-16T15:07:53.941Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "698f4cbc205c2833d94f951c"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "698f4b08812ac2316cc75f53"
+  },
+  "stakeEntryId": {
+    "$oid": "698f4cbb205c2833d94f9508"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 4,
+  "bonusAmount": 40,
+  "level": 2,
+  "activeDirectReferralsAtTime": 5,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-14T12:49:34.619Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-13T16:09:32.941Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-14T12:49:34.619Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69924bfa4876dfe683b380b7"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "69924b7ae3f6c646cec57747"
+  },
+  "stakeEntryId": {
+    "$oid": "69924bf94876dfe683b380ae"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 9,
+  "bonusAmount": 90,
+  "level": 1,
+  "activeDirectReferralsAtTime": 3,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-16T03:09:13.304Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-15T22:43:06.256Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-16T03:09:13.304Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "699826c11de93384fa29b56e"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "69982216b87c968f1176ff7c"
+  },
+  "stakeEntryId": {
+    "$oid": "699826c01de93384fa29b565"
+  },
+  "investmentAmount": 54,
+  "bonusPercentage": 9,
+  "bonusAmount": 4.86,
+  "level": 1,
+  "activeDirectReferralsAtTime": 3,
+  "isClaimed": true,
+  "claimedAt": {
+    "$date": "2026-02-20T10:32:30.467Z"
+  },
+  "createdAt": {
+    "$date": "2026-02-20T09:17:53.347Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-20T10:32:30.468Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69996edeb2d80ddca9769587"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "699838a4f4b48acb2e199743"
+  },
+  "stakeEntryId": {
+    "$oid": "69996eddb2d80ddca976957e"
+  },
+  "investmentAmount": 50,
+  "bonusPercentage": 9,
+  "bonusAmount": 4.5,
+  "level": 1,
+  "activeDirectReferralsAtTime": 4,
+  "isClaimed": false,
+  "claimedAt": null,
+  "createdAt": {
+    "$date": "2026-02-21T08:37:50.409Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T08:37:50.409Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "699977f764abf238c424efe8"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "6985496a8ce566fb1cfac3cb"
+  },
+  "stakeEntryId": {
+    "$oid": "699977f664abf238c424efdf"
+  },
+  "investmentAmount": 50,
+  "bonusPercentage": 9,
+  "bonusAmount": 4.5,
+  "level": 1,
+  "activeDirectReferralsAtTime": 5,
+  "isClaimed": false,
+  "claimedAt": null,
+  "createdAt": {
+    "$date": "2026-02-21T09:16:39.497Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T09:16:39.497Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6999849799e4f960d24429f6"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "69988b0ad4894b60a653062e"
+  },
+  "stakeEntryId": {
+    "$oid": "6999849799e4f960d24429ed"
+  },
+  "investmentAmount": 100,
+  "bonusPercentage": 9,
+  "bonusAmount": 9,
+  "level": 1,
+  "activeDirectReferralsAtTime": 6,
+  "isClaimed": false,
+  "claimedAt": null,
+  "createdAt": {
+    "$date": "2026-02-21T10:10:31.773Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-21T10:10:31.773Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "699b03c5e789ec4ebc33ff82"
+  },
+  "userId": {
+    "$oid": "6984a86799a9708a6b9f0688"
+  },
+  "fromUserId": {
+    "$oid": "69988b0ad4894b60a653062e"
+  },
+  "stakeEntryId": {
+    "$oid": "699b03c4e789ec4ebc33ff78"
+  },
+  "investmentAmount": 1000,
+  "bonusPercentage": 9,
+  "bonusAmount": 90,
+  "level": 1,
+  "activeDirectReferralsAtTime": 6,
+  "isClaimed": false,
+  "claimedAt": null,
+  "createdAt": {
+    "$date": "2026-02-22T13:25:25.277Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-22T13:25:25.277Z"
+  },
+  "__v": 0
+}]

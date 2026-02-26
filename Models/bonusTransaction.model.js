@@ -6,13 +6,13 @@ class BonusTransaction extends Model {}
 BonusTransaction.init(
     {
         id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            autoIncrement: true,
+            type: DataTypes.STRING(36),
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
         // Who receives the bonus (upline user)
         user_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',
@@ -22,7 +22,7 @@ BonusTransaction.init(
         },
         // Who made the investment (downline user)
         from_user_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',
@@ -32,7 +32,7 @@ BonusTransaction.init(
         },
         // Which stake entry triggered this bonus
         stake_entry_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'locked_coins_entries',

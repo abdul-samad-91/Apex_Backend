@@ -6,12 +6,12 @@ class LockedCoinsEntry extends Model {}
 LockedCoinsEntry.init(
     {
         id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            autoIncrement: true,
+            type: DataTypes.STRING(36),
+            defaultValue: DataTypes.UUIDV4,
             primaryKey: true
         },
         user_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: false,
             references: {
                 model: 'users',
@@ -73,7 +73,7 @@ LockedCoinsEntry.init(
             defaultValue: null
         },
         unlock_approved_by: {
-            type: DataTypes.INTEGER.UNSIGNED,
+            type: DataTypes.STRING(36),
             allowNull: true,
             references: {
                 model: 'users',
