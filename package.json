@@ -23,6 +23,6 @@
     "mysql2": "^3.11.0",
     "nodemailer": "^7.0.13",
     "nodemon": "^3.1.11",
-    "sequelize": "^6.37.0"
+    "sequelize": "^6.37.7"
   }
 }

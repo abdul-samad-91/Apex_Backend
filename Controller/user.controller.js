@@ -411,12 +411,14 @@ const getUserById = async (req, res) => {
 // Update user (fullName, phoneNumber, profilePicture)
 const updateUser = async (req, res) => {
     try {
-        const { fullName, phoneNumber } = req.body;
+        const { fullName, phoneNumber, isActive, role } = req.body;
         const userId = req.params.id;
 
         const updateData = {};
-        if (fullName) updateData.full_name = fullName;
-        if (phoneNumber) updateData.phone_number = phoneNumber;
+        if (fullName !== undefined) updateData.full_name = fullName;
+        if (phoneNumber !== undefined) updateData.phone_number = phoneNumber;
+        if (isActive !== undefined) updateData.is_active = isActive;
+        if (role !== undefined) updateData.role = role;
 
         // Handle profile picture upload if file is present
         if (req.file) {
