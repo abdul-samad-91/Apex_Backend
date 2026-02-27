@@ -48,6 +48,7 @@ const getApexCoinRate = async (req, res) => {
         if (!apexCoinRate) {
             return res.status(404).json({ message: 'No active apex coin rate found' });
         }
+        
 
         res.status(200).json({
             id: apexCoinRate.id,
