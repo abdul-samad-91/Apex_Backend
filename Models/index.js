@@ -39,7 +39,7 @@ User.hasMany(BonusTransaction, { as: 'receivedBonuses', foreignKey: 'user_id' })
 User.hasMany(BonusTransaction, { as: 'triggeredBonuses', foreignKey: 'from_user_id' });
 BonusTransaction.belongsTo(User, { as: 'recipient', foreignKey: 'user_id' });
 BonusTransaction.belongsTo(User, { as: 'fromUser', foreignKey: 'from_user_id' });
-BonusTransaction.belongsTo(LockedCoinsEntry, { as: 'stakeEntry', foreignKey: 'stake_entry_id' });
+BonusTransaction.belongsTo(LockedCoinsEntry, { as: 'stakeEntry', foreignKey: 'stake_entry_id', constraints: false });
 
 // User - ProfitShareTransaction
 User.hasMany(ProfitShareTransaction, { as: 'receivedProfitShares', foreignKey: 'user_id' });

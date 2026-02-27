@@ -31,14 +31,10 @@ BonusTransaction.init(
             onDelete: 'CASCADE'
         },
         // Which stake entry triggered this bonus
+        // NOTE: FK constraint removed because historical data has orphaned references
         stake_entry_id: {
             type: DataTypes.STRING(36),
-            allowNull: false,
-            references: {
-                model: 'locked_coins_entries',
-                key: 'id'
-            },
-            onDelete: 'CASCADE'
+            allowNull: false
         },
         // Original investment/stake amount
         investment_amount: {

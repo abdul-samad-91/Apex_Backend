@@ -37,6 +37,7 @@ const setRoi = async (req, res) => {
 // Public: get latest active ROI
 const getRoi = async (req, res) => {
     try {
+        console.log('Fetching active ROI...');
         const roi = await Roi.findOne({
             where: { is_active: true },
             order: [['created_at', 'DESC']]
@@ -45,7 +46,7 @@ const getRoi = async (req, res) => {
         if (!roi) {
             return res.status(404).json({ message: 'No active ROI found' });
         }
-        
+        console.log('ROI Data:', roi.toJSON());
         res.status(200).json({
             id: roi.id,
             _id: roi.id, // For backward compatibility

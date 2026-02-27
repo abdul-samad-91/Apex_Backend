@@ -27,8 +27,8 @@ const setApexCoinRate = async (req, res) => {
                 rate: parseFloat(apexCoinRate.rate),
                 isActive: apexCoinRate.is_active,
                 createdBy: apexCoinRate.created_by,
-                createdAt: apexCoinRate.created_at,
-                updatedAt: apexCoinRate.updated_at
+                createdAt: apexCoinRate.createdAt,
+                updatedAt: apexCoinRate.updatedAt
             }
         });
     } catch (error) {
@@ -55,8 +55,8 @@ const getApexCoinRate = async (req, res) => {
             rate: parseFloat(apexCoinRate.rate),
             isActive: apexCoinRate.is_active,
             createdBy: apexCoinRate.created_by,
-            createdAt: apexCoinRate.created_at,
-            updatedAt: apexCoinRate.updated_at
+            createdAt: apexCoinRate.createdAt,
+            updatedAt: apexCoinRate.updatedAt
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -76,8 +76,8 @@ const getAllApexCoinRates = async (req, res) => {
             rate: parseFloat(r.rate),
             isActive: r.is_active,
             createdBy: r.created_by,
-            createdAt: r.created_at,
-            updatedAt: r.updated_at
+            createdAt: r.createdAt,
+            updatedAt: r.updatedAt
         }));
 
         res.status(200).json(formattedRates);
