@@ -53,8 +53,8 @@ const getRoi = async (req, res) => {
             rate: parseFloat(roi.rate),
             isActive: roi.is_active,
             createdBy: roi.created_by,
-            createdAt: roi.created_at,
-            updatedAt: roi.updated_at
+            createdAt: roi.createdAt,
+            updatedAt: roi.updatedAt
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

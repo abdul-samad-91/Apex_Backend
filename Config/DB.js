@@ -11,7 +11,7 @@ console.log('password:', process.env.MYSQL_PASSWORD);
 const sequelize = new Sequelize(
     process.env.MYSQL_DATABASE || 'apex_db',
     process.env.MYSQL_USER || 'root',
-    process.env.MYSQL_PASSWORD || 'hanzalah@9940',
+    process.env.MYSQL_PASSWORD || '@bdul123',
     {
         host: process.env.MYSQL_HOST || 'localhost',
         dialect: 'mysql'
