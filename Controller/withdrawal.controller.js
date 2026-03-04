@@ -281,7 +281,7 @@ const getPendingWithdrawals = async (req, res) => {
 const updateWithdrawalStatus = async (req, res) => {
     try {
         const { withdrawalId } = req.params;
-        const { status, rejectionReason, transactionHash } = req.body;
+        const { status, rejectionReason, transactionHash, transactionID } = req.body;
         const adminId = req.user?._id;
 
         if (!adminId) {
@@ -302,11 +302,19 @@ const updateWithdrawalStatus = async (req, res) => {
             return res.status(404).json({ message: 'Withdrawal request not found' });
         }
 
+        // If completed, must provide transaction hash or ID
+        if (status === 'completed') {
+            if (!transactionID) {
+                return res.status(400).json({ message: 'Transaction ID is required for completed status' });
+            }
+        }
+
+
         // If rejecting, must provide reason and refund the user
         if (status === 'rejected') {
             if (!rejectionReason) {
                 return res.status(400).json({ message: 'Rejection reason is required' });
-            }
+            }        
 
             // Refund the amount to user's account balance and deduct fee from system
             const user = await User.findById(withdrawal.user._id);
@@ -340,6 +348,7 @@ const updateWithdrawalStatus = async (req, res) => {
         withdrawal.status = status;
         withdrawal.processedAt = new Date();
         withdrawal.processedBy = adminId;
+        withdrawal.transactionID = transactionID;
         
         if (transactionHash) {
             withdrawal.transactionHash = transactionHash;
@@ -357,6 +366,7 @@ const updateWithdrawalStatus = async (req, res) => {
                 walletAddress: withdrawal.walletAddress,
                 network: withdrawal.network,
                 status: withdrawal.status,
+                transactionID: withdrawal.transactionID,
                 transactionHash: withdrawal.transactionHash,
                 processedAt: withdrawal.processedAt,
                 user: {
