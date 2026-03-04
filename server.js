@@ -23,7 +23,7 @@
     console.log(`📌 URL: ${req.originalUrl}`);
     console.log(`📌 Time: ${new Date().toISOString()}`);
     console.log("----------------------------------");
-    res.status(200).send("Middleware executed successfully");
+    res.status(200).json("Middleware executed successfully");
 
 };
 
