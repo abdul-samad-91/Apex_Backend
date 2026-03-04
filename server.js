@@ -17,15 +17,25 @@
     const path = require("path")
 
 
+    const globalLogger = (req, res, next) => {
+    console.log("✅ Middleware called");
+    console.log(`📌 Method: ${req.method}`);
+    console.log(`📌 URL: ${req.originalUrl}`);
+    console.log(`📌 Time: ${new Date().toISOString()}`);
+    console.log("----------------------------------");
+    res.status(200).send("Middleware executed successfully");
+
+};
+
 
     const app = express();
     const PORT = process.env.PORT || 5000;
 
     // Middleware
-    
+    app.use(globalLogger);
     app.use(cors({
         origin: ['http://localhost:5173'
-            // ,'https://apex-admin-gules.vercel.app'
+            ,'https://apex-admin-gules.vercel.app'
         ],
         // origin: 'https://apex-admin-gules.vercel.app',
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
