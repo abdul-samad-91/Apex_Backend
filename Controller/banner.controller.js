@@ -20,34 +20,35 @@ const getActiveBanner = async (req, res) => {
                 },
             },
             order: [['priority', 'DESC']],
-            limit: 1,
         });
 
         if (!activeBanners || activeBanners.length === 0) {
             return res.status(200).json({
                 success: false,
-                message: 'No active banner at the moment',
-                data: null,
+                message: 'No active banners at the moment',
+                data: [],
             });
         }
 
-        const banner = activeBanners[0];
-
-        // Increment impression count
-        await banner.increment('impression_count');
+        // Increment impression count for all banners
+        await Promise.all(
+            activeBanners.map(banner => banner.increment('impression_count'))
+        );
 
         // Format response for mobile app
+        const formattedBanners = activeBanners.map(banner => ({
+            id: banner.id,
+            title: banner.title,
+            description: banner.description,
+            image: banner.image_url,
+            actionLink: banner.action_link,
+            actionType: banner.action_type,
+            duration: banner.duration_seconds,
+        }));
+
         res.status(200).json({
             success: true,
-            data: {
-                id: banner.id,
-                title: banner.title,
-                description: banner.description,
-                image: banner.image_url,
-                actionLink: banner.action_link,
-                actionType: banner.action_type,
-                duration: banner.duration_seconds,
-            },
+            data: formattedBanners,
         });
     } catch (error) {
         res.status(500).json({
