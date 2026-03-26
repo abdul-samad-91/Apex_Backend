@@ -11,6 +11,7 @@
     const apexCoinRateRoutes = require('./Routes/apexCoinRate.routes');
     const withdrawalRoutes = require('./Routes/withdrawal.routes');
     const p2pTransferRoutes = require('./Routes/p2pTransfer.routes');
+    const bannerRoutes = require('./Routes/banner.routes');
     const { 
         requestLogger, 
         errorHandler, 
@@ -67,6 +68,7 @@
     app.use('/api/apexcoinRate', apexCoinRateRoutes);
     app.use('/api/withdrawals', withdrawalRoutes);
     app.use('/api/p2p', p2pTransferRoutes);
+    app.use('/api/banners', bannerRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);

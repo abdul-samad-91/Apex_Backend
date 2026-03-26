@@ -9,6 +9,7 @@ const BonusTransaction = require('./bonusTransaction.model');
 const ProfitShareTransaction = require('./profitShareTransaction.model');
 const P2PTransfer = require('./p2pTransfer.model');
 const Withdrawal = require('./withdrawal.model');
+const Banner = require('./banner.model');
 
 // Define associations
 
@@ -33,6 +34,9 @@ Gateway.belongsTo(User, { as: 'creator', foreignKey: 'created_by' });
 
 // User - ApexCoinRate (created by)
 ApexCoinRate.belongsTo(User, { as: 'creator', foreignKey: 'created_by' });
+
+// User - Banner (created by)
+Banner.belongsTo(User, { as: 'creator', foreignKey: 'created_by', constraints: false });
 
 // User - BonusTransaction
 User.hasMany(BonusTransaction, { as: 'receivedBonuses', foreignKey: 'user_id' });
@@ -66,6 +70,7 @@ module.exports = {
     Gateway,
     ApexCoinRate,
     BonusTransaction,
+    Banner,
     ProfitShareTransaction,
     P2PTransfer,
     Withdrawal
