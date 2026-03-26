@@ -27,14 +27,24 @@
     // Middleware
     
     app.use(cors({
-        origin: ['http://localhost:5173',
-            'https://api.getapextoken.com',
-            'https://admin.getapextoken.com'
-            // ,'https://apex-admin-gules.vercel.app'
-        ],
-        // origin: 'https://apex-admin-gules.vercel.app',
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        allowedHeaders: ['Content-Type', 'Authorization']
+        origin: function (origin, callback) {
+            // Allow requests with no origin (like Postman)
+            const allowedOrigins = [
+                'http://localhost:5173',
+                'http://localhost:5000',
+                'https://api.getapextoken.com',
+                process.env.FRONTEND_URL
+            ];
+            
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(null, false);
+            }
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: true
     }));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
