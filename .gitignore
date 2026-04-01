@@ -21,7 +21,16 @@ Thumbs.db
 .vscode/
 .idea/
 
-all_data_mysql.sql/
+# Conversion scripts and generated files
+all_data_mysql.sql
+converted_data.sql
+objectid_to_uuid_mapping.json
+convertJsonToSql.js
+
+# Database dumps and test data
+Dump20260401/
+JsonData/
+
 
 
 
