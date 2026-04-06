@@ -217,6 +217,91 @@ User.init(
         last_login: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        // Rank fields
+        current_rank: {
+            type: DataTypes.ENUM(
+                'none',
+                'apex_associate',
+                'apex_manager',
+                'apex_sapphire',
+                'apex_crown',
+                'apex_diamond',
+                'apex_legend',
+                'global_partner'
+            ),
+            defaultValue: 'none'
+        },
+        current_rank_level: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0
+        },
+        rank_achieved_date: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        // Total sales from all legs combined
+        total_sales_amount: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
+        },
+        // Per-leg sales tracking
+        leg_1_sales: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
+        },
+        leg_2_sales: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
+        },
+        leg_3_sales: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
+        },
+        leg_4_sales: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
+        },
+        // Store leg assignments as JSON (user IDs in each leg)
+        leg_1_users: {
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: []
+        },
+        leg_2_users: {
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: []
+        },
+        leg_3_users: {
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: []
+        },
+        leg_4_users: {
+            type: DataTypes.JSON,
+            allowNull: false,
+            defaultValue: []
+        },
+        // Count of direct referrals with $50+ stake
+        direct_count: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0
+        },
+        // Flag: user has met minimum direct requirement (8 directs with $50+ stake)
+        min_direct_requirement_met: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        // Last notification date for rank downgrade warning
+        last_rank_notification_date: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        // Total rank rewards earned
+        total_rank_rewards_earned: {
+            type: DataTypes.DECIMAL(20, 8),
+            defaultValue: 0
         }
     },
     {

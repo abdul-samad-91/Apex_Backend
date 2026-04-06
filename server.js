@@ -12,6 +12,7 @@
     const withdrawalRoutes = require('./Routes/withdrawal.routes');
     const p2pTransferRoutes = require('./Routes/p2pTransfer.routes');
     const bannerRoutes = require('./Routes/banner.routes');
+    const rankRoutes = require('./Routes/rank.routes');
     const { 
         requestLogger, 
         errorHandler, 
@@ -81,6 +82,7 @@
     app.use('/api/withdrawals', withdrawalRoutes);
     app.use('/api/p2p', p2pTransferRoutes);
     app.use('/api/banners', bannerRoutes);
+    app.use('/api/ranks', rankRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);

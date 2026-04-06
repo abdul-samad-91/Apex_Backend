@@ -10,6 +10,9 @@ const ProfitShareTransaction = require('./profitShareTransaction.model');
 const P2PTransfer = require('./p2pTransfer.model');
 const Withdrawal = require('./withdrawal.model');
 const Banner = require('./banner.model');
+const Rank = require('./rank.model');
+const RankHistory = require('./rankHistory.model');
+const RankReward = require('./rankReward.model');
 
 // Define associations
 
@@ -62,6 +65,17 @@ User.hasMany(Withdrawal, { as: 'withdrawals', foreignKey: 'user_id' });
 Withdrawal.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
 Withdrawal.belongsTo(User, { as: 'processedByUser', foreignKey: 'processed_by' });
 
+// User - Rank Related Associations
+User.hasMany(RankHistory, { as: 'rankHistory', foreignKey: 'user_id' });
+RankHistory.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+
+User.hasMany(RankReward, { as: 'rankRewards', foreignKey: 'user_id' });
+RankReward.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+RankReward.belongsTo(User, { as: 'claimedByUser', foreignKey: 'claimed_by' });
+
+Rank.hasMany(RankReward, { as: 'rewards', foreignKey: 'rank_id' });
+RankReward.belongsTo(Rank, { as: 'rank', foreignKey: 'rank_id' });
+
 module.exports = {
     User,
     LockedCoinsEntry,
@@ -73,5 +87,8 @@ module.exports = {
     Banner,
     ProfitShareTransaction,
     P2PTransfer,
-    Withdrawal
+    Withdrawal,
+    Rank,
+    RankHistory,
+    RankReward
 };

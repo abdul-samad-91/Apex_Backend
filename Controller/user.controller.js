@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const { generateToken } = require('../utils/generateToken');
 const { generateOTP, sendOTPEmail } = require('../utils/sendEmail');
 const generateReferralCode = require('../utils/generateReferalCode');
+const { assignUserToLeg } = require('../utils/legAssignment');
 const {
     distributeStakingBonus,
     countActiveDirectReferrals,
@@ -175,6 +176,16 @@ const createUser = async (req, res) => {
         }
 
         await transaction.commit();
+
+        // Assign new user to one of parent's 4 legs (if they have a referrer)
+        if (referredByUser) {
+            try {
+                await assignUserToLeg(referredByUser.id, user.id);
+            } catch (error) {
+                console.error('Error assigning user to leg:', error);
+                // Don't fail registration if leg assignment fails, but log it
+            }
+        }
 
         // Send OTP email
         const emailResult = await sendOTPEmail(email, otp, fullName);
