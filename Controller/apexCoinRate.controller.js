@@ -1,7 +1,10 @@
 const ApexCoinRate = require('../Models/apexCoinRate.model');
+const { sequelize } = require('../Config/DB');
 
 // Admin: Set apex coin rate
 const setApexCoinRate = async (req, res) => {
+    let transaction;
+
     try {
         const { rate } = req.body;
 
@@ -14,11 +17,24 @@ const setApexCoinRate = async (req, res) => {
             return res.status(400).json({ message: 'Rate must be a valid positive number' });
         }
 
+        transaction = await sequelize.transaction();
+
+        // Keep exactly one active rate by deactivating existing active rows first.
+        await ApexCoinRate.update(
+            { is_active: false },
+            {
+                where: { is_active: true },
+                transaction
+            }
+        );
+
         const apexCoinRate = await ApexCoinRate.create({
             rate: rateValue,
             is_active: true,
             created_by: req.user ? req.user.id : null
-        });
+        }, { transaction });
+
+        await transaction.commit();
 
         res.status(201).json({
             message: 'Apex coin rate set successfully',
@@ -32,6 +48,9 @@ const setApexCoinRate = async (req, res) => {
             }
         });
     } catch (error) {
+        if (transaction && !transaction.finished) {
+            await transaction.rollback();
+        }
         console.error(error);
         res.status(500).json({ message: error.message });
     }
