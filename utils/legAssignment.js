@@ -1,6 +1,35 @@
 const User = require('../Models/user.model');
 const LockedCoinsEntry = require('../Models/lockedCoinsEntry.model');
 
+const normalizeLegUsers = (rawLegUsers) => {
+    if (Array.isArray(rawLegUsers)) {
+        return rawLegUsers.filter(Boolean);
+    }
+
+    if (typeof rawLegUsers === 'string') {
+        const trimmed = rawLegUsers.trim();
+        if (!trimmed) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(Boolean);
+            }
+        } catch (error) {
+            // Fall back to comma-separated parsing for malformed legacy values.
+        }
+
+        return trimmed
+            .split(',')
+            .map((item) => item.replace(/[\[\]"]+/g, '').trim())
+            .filter(Boolean);
+    }
+
+    return [];
+};
+
 /**
  * Get total staked amount for a user and their downline
  * Used to determine which leg a new member should join
@@ -30,13 +59,15 @@ const getTotalStakedAmount = async (userId) => {
  */
 const getLegTotalStake = async (legUserIds) => {
     try {
-        if (!legUserIds || legUserIds.length === 0) {
+        const normalizedLegUsers = normalizeLegUsers(legUserIds);
+
+        if (normalizedLegUsers.length === 0) {
             return 0;
         }
 
         let totalStake = 0;
 
-        for (const userId of legUserIds) {
+        for (const userId of normalizedLegUsers) {
             const stakes = await LockedCoinsEntry.sum('amount', {
                 where: {
                     user_id: userId,
@@ -71,10 +102,10 @@ const assignUserToLeg = async (rootUserId, newUserId) => {
 
         // Get current leg assignments
         const legsData = [
-            { legNumber: 1, users: rootUser.leg_1_users || [] },
-            { legNumber: 2, users: rootUser.leg_2_users || [] },
-            { legNumber: 3, users: rootUser.leg_3_users || [] },
-            { legNumber: 4, users: rootUser.leg_4_users || [] }
+            { legNumber: 1, users: normalizeLegUsers(rootUser.leg_1_users) },
+            { legNumber: 2, users: normalizeLegUsers(rootUser.leg_2_users) },
+            { legNumber: 3, users: normalizeLegUsers(rootUser.leg_3_users) },
+            { legNumber: 4, users: normalizeLegUsers(rootUser.leg_4_users) }
         ];
 
         // Calculate total stake for each leg
@@ -181,10 +212,11 @@ const rebalanceLegsByStake = async (rootUserId) => {
         const changes = [];
         for (let i = 1; i <= 4; i++) {
             const legKey = `leg_${i}_users`;
-            if (JSON.stringify(rootUser[legKey]) !== JSON.stringify(newLegs[legKey])) {
+            const oldLegUsers = normalizeLegUsers(rootUser[legKey]);
+            if (JSON.stringify(oldLegUsers) !== JSON.stringify(newLegs[legKey])) {
                 changes.push({
                     leg: i,
-                    oldUsers: rootUser[legKey],
+                    oldUsers: oldLegUsers,
                     newUsers: newLegs[legKey]
                 });
             }
@@ -220,7 +252,7 @@ const getLegDetails = async (rootUserId, legNumber) => {
             throw new Error('Invalid leg number. Must be 1-4');
         }
 
-        const legUserIds = rootUser[`leg_${legNumber}_users`] || [];
+        const legUserIds = normalizeLegUsers(rootUser[`leg_${legNumber}_users`]);
 
         // Get details for each user in the leg
         const legMembers = [];

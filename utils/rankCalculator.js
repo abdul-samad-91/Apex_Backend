@@ -3,6 +3,35 @@ const LockedCoinsEntry = require('../Models/lockedCoinsEntry.model');
 const Rank = require('../Models/rank.model');
 const RankHistory = require('../Models/rankHistory.model');
 
+const normalizeLegUsers = (rawLegUsers) => {
+    if (Array.isArray(rawLegUsers)) {
+        return rawLegUsers.filter(Boolean);
+    }
+
+    if (typeof rawLegUsers === 'string') {
+        const trimmed = rawLegUsers.trim();
+        if (!trimmed) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(Boolean);
+            }
+        } catch (error) {
+            // Fall back to comma-separated parsing for malformed legacy values.
+        }
+
+        return trimmed
+            .split(',')
+            .map((item) => item.replace(/[\[\]"]+/g, '').trim())
+            .filter(Boolean);
+    }
+
+    return [];
+};
+
 // Rank thresholds based on the image provided
 const RANK_THRESHOLDS = {
     apex_associate: 1000,
@@ -40,10 +69,10 @@ const calculateLegSales = async (userId) => {
         }
 
         // Get all 4 legs
-        const leg1Users = user.leg_1_users || [];
-        const leg2Users = user.leg_2_users || [];
-        const leg3Users = user.leg_3_users || [];
-        const leg4Users = user.leg_4_users || [];
+        const leg1Users = normalizeLegUsers(user.leg_1_users);
+        const leg2Users = normalizeLegUsers(user.leg_2_users);
+        const leg3Users = normalizeLegUsers(user.leg_3_users);
+        const leg4Users = normalizeLegUsers(user.leg_4_users);
 
         // Calculate sales for each leg
         const leg1Sales = await calculateLegTotalSales(leg1Users);
@@ -73,7 +102,9 @@ const calculateLegSales = async (userId) => {
  */
 const calculateLegTotalSales = async (userIds) => {
     try {
-        if (!userIds || userIds.length === 0) {
+        const normalizedUserIds = normalizeLegUsers(userIds);
+
+        if (normalizedUserIds.length === 0) {
             return 0;
         }
 
@@ -81,7 +112,7 @@ const calculateLegTotalSales = async (userIds) => {
         const traversedUsers = new Set();
 
         // BFS to traverse 8 levels deep
-        const queue = userIds.map((id, index) => ({ userId: id, level: 1 }));
+        const queue = normalizedUserIds.map((id) => ({ userId: id, level: 1 }));
 
         while (queue.length > 0) {
             const { userId, level } = queue.shift();
