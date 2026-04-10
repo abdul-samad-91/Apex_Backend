@@ -1,6 +1,7 @@
     const express = require('express');
     require('dotenv').config();
     const cors = require('cors');
+    const compression = require('compression');
     const { connectDB, sequelize } = require('./Config/DB');
     // Import models to initialize associations
     require('./Models/index');
@@ -13,6 +14,7 @@
     const p2pTransferRoutes = require('./Routes/p2pTransfer.routes');
     const bannerRoutes = require('./Routes/banner.routes');
     const rankRoutes = require('./Routes/rank.routes');
+    const walletLedgerRoutes = require('./Routes/walletLedger.routes');
     const { 
         requestLogger, 
         errorHandler, 
@@ -49,6 +51,17 @@
     }));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
+    app.use(compression({
+        level: 6,
+        threshold: 1024,
+        filter: (req, res) => {
+            if (req.headers['x-no-compression']) {
+                return false;
+            }
+
+            return compression.filter(req, res);
+        }
+    }));
     app.use(requestLogger);
     app.use(express.static(path.join(__dirname ,"public")))
 
@@ -83,6 +96,7 @@
     app.use('/api/p2p', p2pTransferRoutes);
     app.use('/api/banners', bannerRoutes);
     app.use('/api/ranks', rankRoutes);
+    app.use('/api/wallet-history', walletLedgerRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);

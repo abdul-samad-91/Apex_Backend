@@ -4,6 +4,7 @@ const User = require('../Models/user.model');
 const LockedCoinsEntry = require('../Models/lockedCoinsEntry.model');
 const BonusTransaction = require('../Models/bonusTransaction.model');
 const ProfitShareTransaction = require('../Models/profitShareTransaction.model');
+const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
 // Bonus percentages for each level (1-6)
 const BONUS_PERCENTAGES = {
@@ -112,14 +113,20 @@ const buildReferralPath = async (rootUserId, endUserId) => {
  * Count active DIRECT referrals for a user
  * Active = has locked_apex_coins > 0
  */
-const countActiveDirectReferrals = async (userId) => {
+const countActiveDirectReferrals = async (userId, transaction = null) => {
     try {
-        const activeDirectCount = await User.count({
+        const queryOptions = {
             where: {
                 referred_by: userId,
                 locked_apex_coins: { [Op.gt]: 0 }
             }
-        });
+        };
+
+        if (transaction) {
+            queryOptions.transaction = transaction;
+        }
+
+        const activeDirectCount = await User.count(queryOptions);
         return activeDirectCount;
     } catch (error) {
         console.error('Error counting active direct referrals:', error);
@@ -128,11 +135,39 @@ const countActiveDirectReferrals = async (userId) => {
 };
 
 /**
+ * Find users in a upline's downchain by parsing referral_chain safely.
+ * This avoids DB JSON/LIKE compatibility issues across environments.
+ */
+const findDownchainUsers = async (uplineUserId, transaction = null) => {
+    const queryOptions = {
+        attributes: ['id', 'full_name', 'email', 'referral_chain', 'referred_by'],
+        where: {
+            id: { [Op.ne]: uplineUserId },
+            referred_by: { [Op.ne]: null }
+        }
+    };
+
+    if (transaction) {
+        queryOptions.transaction = transaction;
+    }
+
+    const users = await User.findAll(queryOptions);
+
+    return users.filter((user) => {
+        const chain = user.getReferralChainArray();
+        return Array.isArray(chain) && chain.includes(uplineUserId);
+    });
+};
+
+/**
  * Distribute one-time bonus to upline when user stakes/locks coins
  */
-const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) => {
+const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId, transaction = null) => {
     try {
-        const stakingUser = await User.findByPk(stakingUserId);
+        const stakingUser = await User.findByPk(
+            stakingUserId,
+            transaction ? { transaction } : undefined
+        );
         if (!stakingUser) {
             console.log('Staking user not found');
             return { success: true, bonusesDistributed: 0, details: [] };
@@ -154,14 +189,17 @@ const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) 
             const uplineUserId = referralChain[level - 1];
 
             // Check if upline user exists
-            const uplineUser = await User.findByPk(uplineUserId);
+            const uplineUser = await User.findByPk(
+                uplineUserId,
+                transaction ? { transaction } : undefined
+            );
             if (!uplineUser) {
                 console.log(`Upline user not found at level ${level}`);
                 continue;
             }
 
             // Count active direct referrals for this upline
-            const activeDirectReferrals = await countActiveDirectReferrals(uplineUserId);
+            const activeDirectReferrals = await countActiveDirectReferrals(uplineUserId, transaction);
 
             // Check if upline has enough active referrals to unlock this level
             if (activeDirectReferrals < level) {
@@ -183,7 +221,7 @@ const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) 
                 bonus_amount: bonusAmount,
                 level: level,
                 active_direct_referrals_at_time: activeDirectReferrals
-            });
+            }, transaction ? { transaction } : undefined);
 
             bonusDetails.push({
                 uplineUserId: uplineUserId,
@@ -902,9 +940,12 @@ const claimBonuses = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const newP2pWallet = (parseFloat(user.p2p_wallet) || 0) + p2pAmount;
-        const newAccountBalance = (parseFloat(user.account_balance) || 0) + accountAmount;
+        const previousP2pWallet = parseFloat(user.p2p_wallet) || 0;
+        const previousAccountBalance = parseFloat(user.account_balance) || 0;
+        const newP2pWallet = previousP2pWallet + p2pAmount;
+        const newAccountBalance = previousAccountBalance + accountAmount;
         const newTotalBonusEarned = (parseFloat(user.total_bonus_earned) || 0) + totalAmount;
+        const claimedAt = new Date();
 
         await user.update({
             p2p_wallet: newP2pWallet,
@@ -912,8 +953,43 @@ const claimBonuses = async (req, res) => {
             total_bonus_earned: newTotalBonusEarned
         }, { transaction });
 
+        const bonusClaimSourceId = `BONUS-CLAIM-${claimedAt.getTime()}`;
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'p2p_wallet',
+            entryType: 'credit',
+            amount: p2pAmount,
+            balanceBefore: previousP2pWallet,
+            balanceAfter: newP2pWallet,
+            sourceType: 'bonus_claim',
+            sourceId: bonusClaimSourceId,
+            description: 'Bonus claim credited to P2P wallet',
+            metadata: {
+                claimedBonusCount: unclaimedBonuses.length,
+                totalClaimedAmount: totalAmount
+            },
+            transaction
+        });
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'account_balance',
+            entryType: 'credit',
+            amount: accountAmount,
+            balanceBefore: previousAccountBalance,
+            balanceAfter: newAccountBalance,
+            sourceType: 'bonus_claim',
+            sourceId: bonusClaimSourceId,
+            description: 'Bonus claim credited to main wallet',
+            metadata: {
+                claimedBonusCount: unclaimedBonuses.length,
+                totalClaimedAmount: totalAmount
+            },
+            transaction
+        });
+
         // Mark bonuses as claimed
-        const claimedAt = new Date();
         await BonusTransaction.update(
             { is_claimed: true, claimed_at: claimedAt },
             { where: whereClause, transaction }
@@ -965,7 +1041,7 @@ const getAvailableDownchainProfitShares = async (req, res) => {
                 details: result.details,
                 activeDirectReferrals: result.activeDirectReferrals,
                 unlockedLevels: result.unlockedLevels,
-                downchainUsersCount: result.details.length
+                downchainUsersCount: result.totalDownchainUsers
             }
         });
     } catch (error) {
@@ -1006,24 +1082,17 @@ const calculateDownchainProfitShares = async (uplineUserId) => {
         const now = new Date();
         const millisecondsPerDay = 1000 * 60 * 60 * 24;
 
-        // Find all users who have this upline user in their referral chain
-        // We need to search users where their referral_chain JSON contains this userId
-        const allUsers = await User.findAll({
-            where: {
-                referral_chain: {
-                    [Op.like]: `%${uplineUserId}%`
-                }
-            }
-        });
-
-        // Filter to get actual downchain users
-        const downchainUsers = allUsers.filter(u => {
-            const chain = u.getReferralChainArray();
-            return chain.includes(uplineUserId);
-        });
+        const downchainUsers = await findDownchainUsers(uplineUserId);
+        const totalDownchainUsers = downchainUsers.length;
 
         if (!downchainUsers || downchainUsers.length === 0) {
-            return { success: true, totalClaimable: 0, details: [], message: 'No downchain users found' };
+            return {
+                success: true,
+                totalClaimable: 0,
+                details: [],
+                totalDownchainUsers,
+                message: 'No downchain users found'
+            };
         }
 
         let totalClaimableShare = 0;
@@ -1095,6 +1164,7 @@ const calculateDownchainProfitShares = async (uplineUserId) => {
             success: true,
             totalClaimable: parseFloat(totalClaimableShare.toFixed(2)),
             details: shareDetails,
+            totalDownchainUsers,
             activeDirectReferrals: activeDirectReferrals,
             unlockedLevels: Math.min(activeDirectReferrals, 12)
         };
@@ -1153,20 +1223,7 @@ const claimDownchainProfitShares = async (req, res) => {
         const now = new Date();
         const millisecondsPerDay = 1000 * 60 * 60 * 24;
 
-        // Find all downchain users
-        const allUsers = await User.findAll({
-            where: {
-                referral_chain: {
-                    [Op.like]: `%${userId}%`
-                }
-            },
-            transaction
-        });
-
-        const downchainUsers = allUsers.filter(u => {
-            const chain = u.getReferralChainArray();
-            return chain.includes(userId);
-        });
+        const downchainUsers = await findDownchainUsers(userId, transaction);
 
         if (!downchainUsers || downchainUsers.length === 0) {
             await transaction.rollback();
@@ -1281,8 +1338,10 @@ const claimDownchainProfitShares = async (req, res) => {
         const accountAmount = parseFloat((totalClaimedShare * 0.70).toFixed(2));
 
         // Update user's balances and total profit share earned
-        const newP2PWallet = (parseFloat(user.p2p_wallet) || 0) + p2pAmount;
-        const newAccountBalance = (parseFloat(user.account_balance) || 0) + accountAmount;
+        const previousP2PWallet = parseFloat(user.p2p_wallet) || 0;
+        const previousAccountBalance = parseFloat(user.account_balance) || 0;
+        const newP2PWallet = previousP2PWallet + p2pAmount;
+        const newAccountBalance = previousAccountBalance + accountAmount;
         const newTotalProfitShareEarned = (parseFloat(user.total_profit_share_earned) || 0) + totalClaimedShare;
 
         user.setLastProfitShareClaimDatesMap(lastClaimDates);
@@ -1293,6 +1352,42 @@ const claimDownchainProfitShares = async (req, res) => {
             total_profit_share_earned: newTotalProfitShareEarned,
             last_profit_share_claim_dates: user.last_profit_share_claim_dates
         }, { transaction });
+
+        const profitShareClaimSourceId = `PROFIT-SHARE-CLAIM-${now.getTime()}`;
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'p2p_wallet',
+            entryType: 'credit',
+            amount: p2pAmount,
+            balanceBefore: previousP2PWallet,
+            balanceAfter: newP2PWallet,
+            sourceType: 'profit_share_claim',
+            sourceId: profitShareClaimSourceId,
+            description: 'Profit share claim credited to P2P wallet',
+            metadata: {
+                downchainUsersProcessed: claimDetails.length,
+                totalClaimedShare: totalClaimedShare
+            },
+            transaction
+        });
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'account_balance',
+            entryType: 'credit',
+            amount: accountAmount,
+            balanceBefore: previousAccountBalance,
+            balanceAfter: newAccountBalance,
+            sourceType: 'profit_share_claim',
+            sourceId: profitShareClaimSourceId,
+            description: 'Profit share claim credited to main wallet',
+            metadata: {
+                downchainUsersProcessed: claimDetails.length,
+                totalClaimedShare: totalClaimedShare
+            },
+            transaction
+        });
 
         await transaction.commit();
 

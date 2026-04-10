@@ -25,14 +25,14 @@ async function activateInactiveUsers() {
       { $set: { isActive: true } }
     );
     
-    console.log(`\n✅ Successfully activated ${result.modifiedCount} user(s)`);
+    console.log(`\n Successfully activated ${result.modifiedCount} user(s)`);
     console.log(`   Total users matched: ${result.matchedCount}`);
     
     // Close connection
     await mongoose.connection.close();
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('Error:', error.message);
     process.exit(1);
   }
 }

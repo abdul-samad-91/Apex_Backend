@@ -2,6 +2,7 @@ const { sequelize } = require('../Config/DB');
 const P2PTransfer = require('../Models/p2pTransfer.model');
 const User = require('../Models/user.model');
 const { Op } = require('sequelize');
+const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
 // Generate unique transfer ID
 const generateTransferId = () => {
@@ -86,6 +87,9 @@ const transferP2P = async (req, res) => {
         const amountAfterFee = parseFloat((transferAmount - systemFeeAmount).toFixed(2));
 
         // Perform transfer (sender pays full amount, recipient gets amount after fee)
+        const senderPreviousBalance = parseFloat(sender.p2p_wallet) || 0;
+        const recipientPreviousBalance = parseFloat(recipient.p2p_wallet) || 0;
+
         sender.p2p_wallet = parseFloat(sender.p2p_wallet) - transferAmount;
         recipient.p2p_wallet = (parseFloat(recipient.p2p_wallet) || 0) + amountAfterFee;
         
@@ -108,6 +112,44 @@ const transferP2P = async (req, res) => {
             note: note || null,
             status: 'completed'
         }, { transaction });
+
+        await createWalletLedgerEntry({
+            userId: senderId,
+            walletType: 'p2p_wallet',
+            entryType: 'debit',
+            amount: transferAmount,
+            balanceBefore: senderPreviousBalance,
+            balanceAfter: parseFloat(sender.p2p_wallet),
+            sourceType: 'p2p_transfer_sent',
+            sourceId: transfer.transfer_id,
+            counterpartyUserId: recipient.id,
+            description: 'P2P transfer sent',
+            metadata: {
+                transferAmount,
+                systemFeeAmount,
+                amountAfterFee
+            },
+            transaction
+        });
+
+        await createWalletLedgerEntry({
+            userId: recipient.id,
+            walletType: 'p2p_wallet',
+            entryType: 'credit',
+            amount: amountAfterFee,
+            balanceBefore: recipientPreviousBalance,
+            balanceAfter: parseFloat(recipient.p2p_wallet),
+            sourceType: 'p2p_transfer_received',
+            sourceId: transfer.transfer_id,
+            counterpartyUserId: senderId,
+            description: 'P2P transfer received',
+            metadata: {
+                transferAmount,
+                systemFeeAmount,
+                amountAfterFee
+            },
+            transaction
+        });
 
         // Commit transaction
         await transaction.commit();

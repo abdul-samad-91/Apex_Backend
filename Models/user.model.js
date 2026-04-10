@@ -12,7 +12,21 @@ class User extends Model {
     getReferralChainArray() {
         if (!this.referral_chain) return [];
         try {
-            return JSON.parse(this.referral_chain);
+            if (Array.isArray(this.referral_chain)) return this.referral_chain;
+
+            if (typeof this.referral_chain === 'string') {
+                const parsed = JSON.parse(this.referral_chain);
+
+                if (Array.isArray(parsed)) return parsed;
+
+                // Handle legacy double-encoded JSON strings safely
+                if (typeof parsed === 'string') {
+                    const parsedAgain = JSON.parse(parsed);
+                    if (Array.isArray(parsedAgain)) return parsedAgain;
+                }
+            }
+
+            return [];
         } catch {
             return [];
         }
@@ -20,7 +34,7 @@ class User extends Model {
 
     // Set referral chain from array
     setReferralChainArray(chainArray) {
-        this.referral_chain = JSON.stringify(chainArray || []);
+        this.referral_chain = Array.isArray(chainArray) ? chainArray : [];
     }
 
     // Get direct referrals as array of IDs

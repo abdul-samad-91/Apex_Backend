@@ -16,6 +16,7 @@ const {
     PROFIT_SHARE_PERCENTAGES
 } = require('./referralBonus.controller');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
+const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
 // Create new user
 const createUser = async (req, res) => {
@@ -140,7 +141,7 @@ const createUser = async (req, res) => {
             is_verified: isVerified || false,
             referral_code: uniqueReferralCode,
             referred_by: referredByUser ? referredByUser.id : null,
-            referral_chain: JSON.stringify(referralChain),
+            referral_chain: referralChain,
             otp,
             otp_expiry: otpExpiry
         }, { transaction });
@@ -804,13 +805,16 @@ const purchaseApexCoins = async (req, res) => {
         // Check balance based on payment source
         let currentBalance;
         let balanceField;
+        let walletType;
         
         if (paymentSource === 'accountBalance') {
             currentBalance = parseFloat(user.account_balance) || 0;
             balanceField = 'account_balance';
+            walletType = 'account_balance';
         } else if (paymentSource === 'p2pWallet') {
             currentBalance = parseFloat(user.p2p_wallet) || 0;
             balanceField = 'p2p_wallet';
+            walletType = 'p2p_wallet';
         }
 
         // Check if user has sufficient balance
@@ -836,6 +840,24 @@ const purchaseApexCoins = async (req, res) => {
         updateData[balanceField] = newBalance;
 
         await user.update(updateData, { transaction });
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType,
+            entryType: 'debit',
+            amount: dollarAmount,
+            balanceBefore: currentBalance,
+            balanceAfter: newBalance,
+            sourceType: 'apex_coin_purchase',
+            sourceId: `APEX-BUY-${Date.now()}`,
+            description: 'Apex coins purchased using wallet balance',
+            metadata: {
+                apexCoinsPurchased: coinsAmount,
+                rate: parseFloat(currentRate.rate),
+                paymentSource
+            },
+            transaction
+        });
 
         await transaction.commit();
 
@@ -984,11 +1006,20 @@ const lockApexCoins = async (req, res) => {
             last_lock_date: lockStartDate
         }, { transaction });
 
-        await transaction.commit();
-
-        // Distribute one-time bonus to upline (6 levels) - outside transaction
-        const bonusResult = await distributeStakingBonus(userId, lockAmount, newLockEntry.id);
+        // Distribute one-time bonus to upline (6 levels) in the same transaction.
+        // If this fails, staking is rolled back to prevent missing bonus allocations.
+        const bonusResult = await distributeStakingBonus(userId, lockAmount, newLockEntry.id, transaction);
         console.log('Bonus distribution result:', bonusResult);
+
+        if (!bonusResult.success) {
+            await transaction.rollback();
+            return res.status(500).json({
+                message: 'Error allocating staking bonuses. Stake operation rolled back.',
+                error: bonusResult.error || 'Bonus distribution failed'
+            });
+        }
+
+        await transaction.commit();
 
         // Calculate monthly profit in apex coins then convert to dollars
         const monthlyProfitInCoins = (lockAmount * parseFloat(currentRoi.rate)) / 100;
@@ -1393,13 +1424,33 @@ const claimDailyProfits = async (req, res) => {
         }
 
         // Transfer profits to accountBalance
-        const newAccountBalance = (parseFloat(user.account_balance) || 0) + totalClaimableAmount;
+        const previousAccountBalance = parseFloat(user.account_balance) || 0;
+        const newAccountBalance = previousAccountBalance + totalClaimableAmount;
         const newTotalRoiEarned = (parseFloat(user.total_roi_earned) || 0) + totalClaimableAmount;
 
         await user.update({
             account_balance: newAccountBalance,
             total_roi_earned: newTotalRoiEarned
         }, { transaction });
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'account_balance',
+            entryType: 'credit',
+            amount: totalClaimableAmount,
+            balanceBefore: previousAccountBalance,
+            balanceAfter: newAccountBalance,
+            sourceType: 'daily_roi_claim',
+            sourceId: `ROI-CLAIM-${now.getTime()}`,
+            description: 'Daily ROI profits claimed to main wallet',
+            metadata: {
+                activeEntriesCount: activeEntries.length,
+                claimDetailsCount: claimDetails.length,
+                roiRate: currentRoiRate,
+                apexRate: apexCoinToDollarRate
+            },
+            transaction
+        });
 
         await transaction.commit();
 

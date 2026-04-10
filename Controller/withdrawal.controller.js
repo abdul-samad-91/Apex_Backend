@@ -2,6 +2,7 @@ const { sequelize } = require('../Config/DB');
 const Withdrawal = require('../Models/withdrawal.model');
 const User = require('../Models/user.model');
 const { Op } = require('sequelize');
+const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
 // Generate unique withdrawal ID
 const generateWithdrawalId = () => {
@@ -76,6 +77,7 @@ const requestWithdrawal = async (req, res) => {
         const amountAfterFee = parseFloat((withdrawalAmount - systemFeeAmount).toFixed(2));
 
         // Deduct amount from account balance
+        const previousBalance = parseFloat(user.account_balance) || 0;
         user.account_balance = parseFloat(user.account_balance) - withdrawalAmount;
         
         // Track system fees collected from withdrawals
@@ -96,6 +98,27 @@ const requestWithdrawal = async (req, res) => {
             network,
             status: 'pending'
         }, { transaction });
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'account_balance',
+            entryType: 'debit',
+            amount: withdrawalAmount,
+            balanceBefore: previousBalance,
+            balanceAfter: parseFloat(user.account_balance),
+            sourceType: 'withdrawal_request',
+            sourceId: withdrawal.withdrawal_id,
+            status: 'pending',
+            description: 'Withdrawal request submitted',
+            metadata: {
+                network,
+                walletAddress,
+                systemFeePercentage,
+                systemFeeAmount,
+                amountAfterFee
+            },
+            transaction
+        });
 
         await transaction.commit();
 
@@ -453,10 +476,30 @@ const updateWithdrawalStatus = async (req, res) => {
             // Refund the amount to user's account balance and deduct fee from system
             const user = await User.findByPk(withdrawal.user_id, { transaction });
             if (user) {
+                const previousBalance = parseFloat(user.account_balance) || 0;
                 user.account_balance = (parseFloat(user.account_balance) || 0) + parseFloat(withdrawal.amount);
                 // Deduct the fee from withdrawalSystemFees since withdrawal didn't happen
                 user.withdrawal_system_fees = Math.max(0, (parseFloat(user.withdrawal_system_fees) || 0) - (parseFloat(withdrawal.system_fee_amount) || 0));
                 await user.save({ transaction });
+
+                await createWalletLedgerEntry({
+                    userId: user.id,
+                    walletType: 'account_balance',
+                    entryType: 'credit',
+                    amount: parseFloat(withdrawal.amount),
+                    balanceBefore: previousBalance,
+                    balanceAfter: parseFloat(user.account_balance),
+                    sourceType: 'withdrawal_refund',
+                    sourceId: withdrawal.withdrawal_id,
+                    status: 'completed',
+                    description: 'Withdrawal rejected and amount refunded',
+                    metadata: {
+                        rejectionReason,
+                        rejectedBy: adminId,
+                        originalStatus: withdrawal.status
+                    },
+                    transaction
+                });
             }
 
             withdrawal.status = 'rejected';

@@ -13,6 +13,7 @@ const Banner = require('./banner.model');
 const Rank = require('./rank.model');
 const RankHistory = require('./rankHistory.model');
 const RankReward = require('./rankReward.model');
+const WalletLedger = require('./walletLedger.model');
 
 // Define associations
 
@@ -65,6 +66,11 @@ User.hasMany(Withdrawal, { as: 'withdrawals', foreignKey: 'user_id' });
 Withdrawal.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
 Withdrawal.belongsTo(User, { as: 'processedByUser', foreignKey: 'processed_by' });
 
+// User - WalletLedger
+User.hasMany(WalletLedger, { as: 'walletLedgerEntries', foreignKey: 'user_id' });
+WalletLedger.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+WalletLedger.belongsTo(User, { as: 'counterpartyUser', foreignKey: 'counterparty_user_id', constraints: false });
+
 // User - Rank Related Associations
 User.hasMany(RankHistory, { as: 'rankHistory', foreignKey: 'user_id' });
 RankHistory.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
@@ -88,6 +94,7 @@ module.exports = {
     ProfitShareTransaction,
     P2PTransfer,
     Withdrawal,
+    WalletLedger,
     Rank,
     RankHistory,
     RankReward

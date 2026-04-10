@@ -1,6 +1,8 @@
 const User = require('../Models/user.model');
 const LockedCoinsEntry = require('../Models/lockedCoinsEntry.model');
 
+const LEG_BALANCE_DEPTH = 8;
+
 const normalizeLegUsers = (rawLegUsers) => {
     if (Array.isArray(rawLegUsers)) {
         return rawLegUsers.filter(Boolean);
@@ -31,10 +33,9 @@ const normalizeLegUsers = (rawLegUsers) => {
 };
 
 /**
- * Get total staked amount for a user and their downline
- * Used to determine which leg a new member should join
+ * Get total active staked amount for a single user
  * @param {string} userId - User ID
- * @returns {Promise<number>} Total staked amount
+ * @returns {Promise<number>} User's active staked amount
  */
 const getTotalStakedAmount = async (userId) => {
     try {
@@ -53,9 +54,10 @@ const getTotalStakedAmount = async (userId) => {
 };
 
 /**
- * Get total stake amount for a leg (including all downline members in that leg)
+ * Get total active stake amount for users currently listed in a leg
+ * This helper counts only the listed users (not their downline).
  * @param {Array} legUserIds - Array of user IDs in the leg
- * @returns {Promise<number>} Total staked amount for the leg
+ * @returns {Promise<number>} Total active staked amount for listed users
  */
 const getLegTotalStake = async (legUserIds) => {
     try {
@@ -85,6 +87,57 @@ const getLegTotalStake = async (legUserIds) => {
 };
 
 /**
+ * Get total active stake from root users and their downline up to maxDepth.
+ * Traversal is deduplicated to avoid counting the same user twice.
+ * @param {Array|string} rootUserIds - Root user IDs to start traversal from
+ * @param {number} maxDepth - Maximum referral depth to include
+ * @returns {Promise<number>} Total active stake across the traversed network
+ */
+const getNetworkStakeFromRoots = async (rootUserIds, maxDepth = LEG_BALANCE_DEPTH) => {
+    try {
+        const normalizedRootIds = normalizeLegUsers(rootUserIds);
+
+        if (normalizedRootIds.length === 0) {
+            return 0;
+        }
+
+        let totalStake = 0;
+        const traversedUsers = new Set();
+        const queue = normalizedRootIds.map((userId) => ({ userId, level: 1 }));
+
+        while (queue.length > 0) {
+            const { userId, level } = queue.shift();
+
+            if (level > maxDepth || traversedUsers.has(userId)) {
+                continue;
+            }
+
+            traversedUsers.add(userId);
+
+            totalStake += await getTotalStakedAmount(userId);
+
+            if (level < maxDepth) {
+                const referredUsers = await User.findAll({
+                    where: {
+                        referred_by: userId
+                    },
+                    attributes: ['id']
+                });
+
+                referredUsers.forEach((refUser) => {
+                    queue.push({ userId: refUser.id, level: level + 1 });
+                });
+            }
+        }
+
+        return totalStake;
+    } catch (error) {
+        console.error('Error calculating network stake from roots:', error);
+        return 0;
+    }
+};
+
+/**
  * Assign a new user to a leg based on current staking amounts
  * User is assigned to the leg with the lowest total stake
  * This ensures balanced distribution based on stake amounts
@@ -108,10 +161,10 @@ const assignUserToLeg = async (rootUserId, newUserId) => {
             { legNumber: 4, users: normalizeLegUsers(rootUser.leg_4_users) }
         ];
 
-        // Calculate total stake for each leg
+        // Calculate total network stake (directs + downline up to 8 levels) for each leg.
         let legStakes = [];
         for (const leg of legsData) {
-            const totalStake = await getLegTotalStake(leg.users);
+            const totalStake = await getNetworkStakeFromRoots(leg.users, LEG_BALANCE_DEPTH);
             legStakes.push({
                 legNumber: leg.legNumber,
                 totalStake,
@@ -176,10 +229,10 @@ const rebalanceLegsByStake = async (rootUserId) => {
             };
         }
 
-        // Calculate stake for each direct member
+        // Calculate network stake for each direct (self + downline up to 8 levels).
         const directStakes = [];
         for (const direct of directs) {
-            const totalStake = await getTotalStakedAmount(direct.id);
+            const totalStake = await getNetworkStakeFromRoots([direct.id], LEG_BALANCE_DEPTH);
             directStakes.push({
                 userId: direct.id,
                 stake: totalStake
@@ -338,6 +391,7 @@ const getAllLegsSummary = async (rootUserId) => {
 module.exports = {
     getTotalStakedAmount,
     getLegTotalStake,
+    getNetworkStakeFromRoots,
     assignUserToLeg,
     rebalanceLegsByStake,
     getLegDetails,

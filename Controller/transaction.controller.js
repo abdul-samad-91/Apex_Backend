@@ -2,6 +2,7 @@ const { sequelize } = require('../Config/DB');
 const Transaction = require('../Models/transaction.model');
 const User = require('../Models/user.model');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
+const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
 // Create new transaction
 const createTransaction = async (req, res) => {
@@ -224,8 +225,28 @@ const updateTransactionStatus = async (req, res) => {
             });
             
             if (user) {
-                const newBalance = (parseFloat(user.account_balance) || 0) + amountToAdd;
+                const previousBalance = parseFloat(user.account_balance) || 0;
+                const newBalance = previousBalance + amountToAdd;
                 await user.update({ account_balance: newBalance }, { transaction: dbTransaction });
+
+                await createWalletLedgerEntry({
+                    userId: user.id,
+                    walletType: 'account_balance',
+                    entryType: 'credit',
+                    amount: amountToAdd,
+                    balanceBefore: previousBalance,
+                    balanceAfter: newBalance,
+                    sourceType: 'deposit_approved',
+                    sourceId: transaction.transaction_id,
+                    description: 'Deposit approved and credited to main wallet',
+                    metadata: {
+                        transactionDbId: transaction.id,
+                        statusFrom: transaction.status,
+                        statusTo: status
+                    },
+                    transaction: dbTransaction
+                });
+
                 console.log(`Added ${amountToAdd} to user ${user.id} accountBalance. New balance: ${newBalance}`);
             } else {
                 await dbTransaction.rollback();

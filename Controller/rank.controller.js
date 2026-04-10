@@ -8,14 +8,93 @@ const {
     updateUserRank,
     checkRankDowngradeWarning,
     getUsersForRankRecalculation,
+    checkMinimumDirectRequirement,
     RANK_LEVELS
 } = require('../utils/rankCalculator');
 const {
     rebalanceLegsByStake,
     getAllLegsSummary
 } = require('../utils/legAssignment');
+const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
 const isSelfOrAdmin = (req, userId) => req.user && (req.user.role === 'admin' || req.user.id === userId);
+
+const normalizeLegUsers = (rawLegUsers) => {
+    if (Array.isArray(rawLegUsers)) {
+        return rawLegUsers.filter(Boolean);
+    }
+
+    if (typeof rawLegUsers === 'string') {
+        const trimmed = rawLegUsers.trim();
+        if (!trimmed) {
+            return [];
+        }
+
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(Boolean);
+            }
+        } catch (error) {
+            // Fall back to comma-separated parsing for malformed legacy values.
+        }
+
+        return trimmed
+            .split(',')
+            .map((item) => item.replace(/[\[\]"]+/g, '').trim())
+            .filter(Boolean);
+    }
+
+    return [];
+};
+
+const getEmptyLegWiseBreakdown = () => ({
+    leg1: { qualifyingCount: 0, nonQualifyingCount: 0, qualifyingUsers: [], nonQualifyingUsers: [] },
+    leg2: { qualifyingCount: 0, nonQualifyingCount: 0, qualifyingUsers: [], nonQualifyingUsers: [] },
+    leg3: { qualifyingCount: 0, nonQualifyingCount: 0, qualifyingUsers: [], nonQualifyingUsers: [] },
+    leg4: { qualifyingCount: 0, nonQualifyingCount: 0, qualifyingUsers: [], nonQualifyingUsers: [] },
+    unassigned: { qualifyingCount: 0, nonQualifyingCount: 0, qualifyingUsers: [], nonQualifyingUsers: [] }
+});
+
+const buildLegWiseDirectBreakdown = (rootUser, minimumDirectRequirement) => {
+    if (!minimumDirectRequirement) {
+        return getEmptyLegWiseBreakdown();
+    }
+
+    const legWise = getEmptyLegWiseBreakdown();
+    const legSets = {
+        leg1: new Set(normalizeLegUsers(rootUser?.leg_1_users).map((id) => String(id))),
+        leg2: new Set(normalizeLegUsers(rootUser?.leg_2_users).map((id) => String(id))),
+        leg3: new Set(normalizeLegUsers(rootUser?.leg_3_users).map((id) => String(id))),
+        leg4: new Set(normalizeLegUsers(rootUser?.leg_4_users).map((id) => String(id)))
+    };
+
+    const getBucketKey = (userId) => {
+        const normalizedUserId = String(userId);
+        if (legSets.leg1.has(normalizedUserId)) return 'leg1';
+        if (legSets.leg2.has(normalizedUserId)) return 'leg2';
+        if (legSets.leg3.has(normalizedUserId)) return 'leg3';
+        if (legSets.leg4.has(normalizedUserId)) return 'leg4';
+        return 'unassigned';
+    };
+
+    const qualifyingUsers = minimumDirectRequirement.qualifyingDirectUsers || [];
+    const nonQualifyingUsers = minimumDirectRequirement.nonQualifyingDirectUsers || [];
+
+    qualifyingUsers.forEach((directUser) => {
+        const bucketKey = getBucketKey(directUser.userId);
+        legWise[bucketKey].qualifyingUsers.push(directUser);
+        legWise[bucketKey].qualifyingCount += 1;
+    });
+
+    nonQualifyingUsers.forEach((directUser) => {
+        const bucketKey = getBucketKey(directUser.userId);
+        legWise[bucketKey].nonQualifyingUsers.push(directUser);
+        legWise[bucketKey].nonQualifyingCount += 1;
+    });
+
+    return legWise;
+};
 
 const getCurrentRewardPeriod = () => {
     const now = new Date();
@@ -75,6 +154,10 @@ const getUserRank = async (req, res) => {
                 'leg_2_sales',
                 'leg_3_sales',
                 'leg_4_sales',
+                'leg_1_users',
+                'leg_2_users',
+                'leg_3_users',
+                'leg_4_users',
                 'direct_count',
                 'min_direct_requirement_met',
                 'total_rank_rewards_earned'
@@ -92,6 +175,10 @@ const getUserRank = async (req, res) => {
                 where: { rank_name: user.current_rank }
             });
         }
+
+        // Get current direct requirement breakdown including the qualifying user list.
+        const minimumDirectRequirement = await checkMinimumDirectRequirement(userId);
+        const legWiseDirectBreakdown = buildLegWiseDirectBreakdown(user, minimumDirectRequirement);
 
         // Calculate next rank and progress information
         let nextRankData = null;
@@ -166,6 +253,20 @@ const getUserRank = async (req, res) => {
                 directCount: user.direct_count,
                 meetsMinDirectRequirement: user.min_direct_requirement_met,
                 totalRewardsEarned: parseFloat(user.total_rank_rewards_earned) || 0
+            },
+            minimumDirectRequirement: {
+                requiredDirects: minimumDirectRequirement.requiredDirects,
+                minStakePerDirect: minimumDirectRequirement.minStakePerDirect,
+                totalDirects: minimumDirectRequirement.totalDirects,
+                qualifyingDirects: minimumDirectRequirement.qualifyingDirects,
+                remainingNeeded: Math.max(
+                    0,
+                    minimumDirectRequirement.requiredDirects - minimumDirectRequirement.qualifyingDirects
+                ),
+                meetsRequirement: minimumDirectRequirement.meetsRequirement,
+                qualifyingDirectUsers: minimumDirectRequirement.qualifyingDirectUsers,
+                nonQualifyingDirectUsers: minimumDirectRequirement.nonQualifyingDirectUsers,
+                legWise: legWiseDirectBreakdown
             },
             rankDetails: rankDetails
                 ? {
@@ -263,9 +364,16 @@ const recalculateUserRank = async (req, res) => {
                 'leg_1_sales',
                 'leg_2_sales',
                 'leg_3_sales',
-                'leg_4_sales'
+                'leg_4_sales',
+                'leg_1_users',
+                'leg_2_users',
+                'leg_3_users',
+                'leg_4_users'
             ]
         });
+
+        const minimumDirectRequirement = await checkMinimumDirectRequirement(userId);
+        const legWiseDirectBreakdown = buildLegWiseDirectBreakdown(updatedUser, minimumDirectRequirement);
 
         return res.status(200).json({
             success: true,
@@ -273,6 +381,20 @@ const recalculateUserRank = async (req, res) => {
             rankUpdate,
             rewardIssued,
             warning,
+            minimumDirectRequirement: {
+                requiredDirects: minimumDirectRequirement.requiredDirects,
+                minStakePerDirect: minimumDirectRequirement.minStakePerDirect,
+                totalDirects: minimumDirectRequirement.totalDirects,
+                qualifyingDirects: minimumDirectRequirement.qualifyingDirects,
+                remainingNeeded: Math.max(
+                    0,
+                    minimumDirectRequirement.requiredDirects - minimumDirectRequirement.qualifyingDirects
+                ),
+                meetsRequirement: minimumDirectRequirement.meetsRequirement,
+                qualifyingDirectUsers: minimumDirectRequirement.qualifyingDirectUsers,
+                nonQualifyingDirectUsers: minimumDirectRequirement.nonQualifyingDirectUsers,
+                legWise: legWiseDirectBreakdown
+            },
             userInfo: {
                 currentRank: updatedUser.current_rank,
                 rankLevel: updatedUser.current_rank_level,
@@ -480,8 +602,10 @@ const claimRankReward = async (req, res) => {
         const p2pAmount = parseFloat((rewardAmount * 0.3).toFixed(8));
         const accountAmount = parseFloat((rewardAmount * 0.7).toFixed(8));
 
-        const newAccountBalance = parseFloat(user.account_balance) + accountAmount;
-        const newP2PBalance = parseFloat(user.p2p_wallet) + p2pAmount;
+        const previousAccountBalance = parseFloat(user.account_balance) || 0;
+        const previousP2PBalance = parseFloat(user.p2p_wallet) || 0;
+        const newAccountBalance = previousAccountBalance + accountAmount;
+        const newP2PBalance = previousP2PBalance + p2pAmount;
         const newTotalEarned = parseFloat(user.total_rank_rewards_earned) + rewardAmount;
 
         await user.update({
@@ -489,6 +613,44 @@ const claimRankReward = async (req, res) => {
             p2p_wallet: newP2PBalance,
             total_rank_rewards_earned: newTotalEarned
         }, { transaction });
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'account_balance',
+            entryType: 'credit',
+            amount: accountAmount,
+            balanceBefore: previousAccountBalance,
+            balanceAfter: newAccountBalance,
+            sourceType: 'rank_reward_claim',
+            sourceId: reward.id,
+            description: 'Rank reward claimed to main wallet',
+            metadata: {
+                rankId: reward.rank_id,
+                rewardPeriod: reward.reward_period,
+                rewardAmount,
+                split: '70_account_30_p2p'
+            },
+            transaction
+        });
+
+        await createWalletLedgerEntry({
+            userId,
+            walletType: 'p2p_wallet',
+            entryType: 'credit',
+            amount: p2pAmount,
+            balanceBefore: previousP2PBalance,
+            balanceAfter: newP2PBalance,
+            sourceType: 'rank_reward_claim',
+            sourceId: reward.id,
+            description: 'Rank reward claimed to P2P wallet',
+            metadata: {
+                rankId: reward.rank_id,
+                rewardPeriod: reward.reward_period,
+                rewardAmount,
+                split: '70_account_30_p2p'
+            },
+            transaction
+        });
 
         await transaction.commit();
 

@@ -1,0 +1,32 @@
+CREATE TABLE IF NOT EXISTS `wallet_ledger` (
+  `id` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `wallet_type` ENUM('account_balance', 'p2p_wallet') NOT NULL,
+  `entry_type` ENUM('credit', 'debit') NOT NULL,
+  `amount` DECIMAL(20,8) NOT NULL DEFAULT 0,
+  `balance_before` DECIMAL(20,8) NOT NULL DEFAULT 0,
+  `balance_after` DECIMAL(20,8) NOT NULL DEFAULT 0,
+  `source_type` VARCHAR(100) NOT NULL,
+  `source_id` VARCHAR(100) NULL,
+  `counterparty_user_id` varchar(36) COLLATE utf8mb4_unicode_ci NULL,
+  `status` ENUM('pending', 'completed', 'failed', 'reversed') NOT NULL DEFAULT 'completed',
+  `description` VARCHAR(500) NULL,
+  `metadata` JSON NOT NULL,
+  `happened_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_wallet_ledger_user_id` (`user_id`),
+  KEY `idx_wallet_ledger_wallet_type` (`wallet_type`),
+  KEY `idx_wallet_ledger_entry_type` (`entry_type`),
+  KEY `idx_wallet_ledger_source_type` (`source_type`),
+  KEY `idx_wallet_ledger_source_id` (`source_id`),
+  KEY `idx_wallet_ledger_counterparty_user_id` (`counterparty_user_id`),
+  KEY `idx_wallet_ledger_status` (`status`),
+  KEY `idx_wallet_ledger_happened_at` (`happened_at`),
+  KEY `idx_wallet_ledger_user_wallet_happened` (`user_id`, `wallet_type`, `happened_at`),
+  CONSTRAINT `fk_wallet_ledger_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wallet_ledger_counterparty`
+    FOREIGN KEY (`counterparty_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

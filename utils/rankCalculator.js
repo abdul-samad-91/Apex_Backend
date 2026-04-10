@@ -172,11 +172,13 @@ const checkMinimumDirectRequirement = async (userId) => {
             where: {
                 referred_by: userId
             },
-            attributes: ['id']
+            attributes: ['id', 'full_name', 'email']
         });
 
         // Check if at least 8 of them have $50+ active stakes
         let qualifyingDirects = 0;
+        const qualifyingDirectUsers = [];
+        const nonQualifyingDirectUsers = [];
 
         for (const direct of directs) {
             const totalStake = await LockedCoinsEntry.sum('amount', {
@@ -186,22 +188,41 @@ const checkMinimumDirectRequirement = async (userId) => {
                 }
             });
 
-            if ((totalStake || 0) >= 50) {
+            const normalizedStake = parseFloat(totalStake) || 0;
+            const directInfo = {
+                userId: direct.id,
+                name: direct.full_name,
+                email: direct.email,
+                activeStake: normalizedStake
+            };
+
+            if (normalizedStake >= 50) {
                 qualifyingDirects++;
+                qualifyingDirectUsers.push(directInfo);
+            } else {
+                nonQualifyingDirectUsers.push(directInfo);
             }
         }
 
         return {
             totalDirects: directs.length,
             qualifyingDirects,
-            meetsRequirement: qualifyingDirects >= 8
+            meetsRequirement: qualifyingDirects >= 8,
+            qualifyingDirectUsers,
+            nonQualifyingDirectUsers,
+            requiredDirects: 8,
+            minStakePerDirect: 50
         };
     } catch (error) {
         console.error('Error checking minimum direct requirement:', error);
         return {
             totalDirects: 0,
             qualifyingDirects: 0,
-            meetsRequirement: false
+            meetsRequirement: false,
+            qualifyingDirectUsers: [],
+            nonQualifyingDirectUsers: [],
+            requiredDirects: 8,
+            minStakePerDirect: 50
         };
     }
 };
@@ -307,6 +328,11 @@ const calculateUserRank = async (userId) => {
             newRankLevel,
             meetsRequirement,
             directCount: requirementData.qualifyingDirects,
+            totalDirectCount: requirementData.totalDirects,
+            requiredDirects: requirementData.requiredDirects,
+            minStakePerDirect: requirementData.minStakePerDirect,
+            qualifyingDirectUsers: requirementData.qualifyingDirectUsers,
+            nonQualifyingDirectUsers: requirementData.nonQualifyingDirectUsers,
             totalSales
         };
     } catch (error) {
