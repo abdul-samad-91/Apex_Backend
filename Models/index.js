@@ -14,6 +14,7 @@ const Rank = require('./rank.model');
 const RankHistory = require('./rankHistory.model');
 const RankReward = require('./rankReward.model');
 const WalletLedger = require('./walletLedger.model');
+const KycRequest = require('./kycRequest.model');
 
 // Define associations
 
@@ -71,6 +72,11 @@ User.hasMany(WalletLedger, { as: 'walletLedgerEntries', foreignKey: 'user_id' })
 WalletLedger.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
 WalletLedger.belongsTo(User, { as: 'counterpartyUser', foreignKey: 'counterparty_user_id', constraints: false });
 
+// User - KYC
+User.hasOne(KycRequest, { as: 'kycRequest', foreignKey: 'user_id' });
+KycRequest.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+KycRequest.belongsTo(User, { as: 'reviewedByUser', foreignKey: 'reviewed_by', constraints: false });
+
 // User - Rank Related Associations
 User.hasMany(RankHistory, { as: 'rankHistory', foreignKey: 'user_id' });
 RankHistory.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
@@ -95,6 +101,7 @@ module.exports = {
     P2PTransfer,
     Withdrawal,
     WalletLedger,
+    KycRequest,
     Rank,
     RankHistory,
     RankReward

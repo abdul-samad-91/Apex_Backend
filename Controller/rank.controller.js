@@ -96,30 +96,56 @@ const buildLegWiseDirectBreakdown = (rootUser, minimumDirectRequirement) => {
     return legWise;
 };
 
-const getCurrentRewardPeriod = () => {
+const getPreviousRewardPeriodMeta = () => {
     const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${now.getFullYear()}-${month}`;
+    const previousMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const month = String(previousMonthDate.getMonth() + 1).padStart(2, '0');
+
+    return {
+        period: `${previousMonthDate.getFullYear()}-${month}`,
+        periodStart: new Date(previousMonthDate.getFullYear(), previousMonthDate.getMonth(), 1)
+    };
 };
 
-const ensureRankRewardForUpgrade = async (userId, rankName) => {
+const ensureRankRewardForCompletedPeriod = async (userId) => {
+    const user = await User.findByPk(userId, {
+        attributes: ['id', 'current_rank', 'rank_achieved_date']
+    });
+
+    if (!user || !user.current_rank || user.current_rank === 'none') {
+        return { reward: null, created: false, eligible: false, reason: 'No active rank' };
+    }
+
     const rank = await Rank.findOne({
         where: {
-            rank_name: rankName,
+            rank_name: user.current_rank,
             status: 'active'
         }
     });
 
     if (!rank) {
-        return { reward: null, created: false };
+        return { reward: null, created: false, eligible: false, reason: 'Active rank config not found' };
     }
 
-    const rewardPeriod = getCurrentRewardPeriod();
+    const { period, periodStart } = getPreviousRewardPeriodMeta();
+    const achievedAt = user.rank_achieved_date ? new Date(user.rank_achieved_date) : null;
+
+    // Reward is created only after the full reward period is completed at this rank.
+    if (!achievedAt || achievedAt > periodStart) {
+        return {
+            reward: null,
+            created: false,
+            eligible: false,
+            reason: 'Rank period not yet fully completed',
+            rewardPeriod: period
+        };
+    }
+
     const [reward, created] = await RankReward.findOrCreate({
         where: {
             user_id: userId,
             rank_id: rank.id,
-            reward_period: rewardPeriod
+            reward_period: period
         },
         defaults: {
             reward_amount: rank.monthly_reward,
@@ -127,7 +153,7 @@ const ensureRankRewardForUpgrade = async (userId, rankName) => {
         }
     });
 
-    return { reward, created };
+    return { reward, created, eligible: true, rewardPeriod: period };
 };
 
 /**
@@ -259,6 +285,7 @@ const getUserRank = async (req, res) => {
                 minStakePerDirect: minimumDirectRequirement.minStakePerDirect,
                 totalDirects: minimumDirectRequirement.totalDirects,
                 qualifyingDirects: minimumDirectRequirement.qualifyingDirects,
+                countingDepth: minimumDirectRequirement.countingDepth,
                 remainingNeeded: Math.max(
                     0,
                     minimumDirectRequirement.requiredDirects - minimumDirectRequirement.qualifyingDirects
@@ -339,17 +366,15 @@ const recalculateUserRank = async (req, res) => {
         const rankUpdate = await updateUserRank(userId);
 
         let rewardIssued = null;
-        if (rankUpdate.changed && rankUpdate.changeType === 'upgrade') {
-            const rewardResult = await ensureRankRewardForUpgrade(userId, rankUpdate.newRank);
-            if (rewardResult.reward) {
-                rewardIssued = {
-                    id: rewardResult.reward.id,
-                    rewardPeriod: rewardResult.reward.reward_period,
-                    amount: parseFloat(rewardResult.reward.reward_amount),
-                    status: rewardResult.reward.status,
-                    created: rewardResult.created
-                };
-            }
+        const rewardResult = await ensureRankRewardForCompletedPeriod(userId);
+        if (rewardResult.reward) {
+            rewardIssued = {
+                id: rewardResult.reward.id,
+                rewardPeriod: rewardResult.reward.reward_period,
+                amount: parseFloat(rewardResult.reward.reward_amount),
+                status: rewardResult.reward.status,
+                created: rewardResult.created
+            };
         }
 
         // Check for downgrade warning
@@ -386,6 +411,7 @@ const recalculateUserRank = async (req, res) => {
                 minStakePerDirect: minimumDirectRequirement.minStakePerDirect,
                 totalDirects: minimumDirectRequirement.totalDirects,
                 qualifyingDirects: minimumDirectRequirement.qualifyingDirects,
+                countingDepth: minimumDirectRequirement.countingDepth,
                 remainingNeeded: Math.max(
                     0,
                     minimumDirectRequirement.requiredDirects - minimumDirectRequirement.qualifyingDirects
@@ -425,7 +451,17 @@ const getUserLegs = async (req, res) => {
             return res.status(403).json({ message: 'Unauthorized' });
         }
 
-        const user = await User.findByPk(userId);
+        const user = await User.findByPk(userId, {
+            attributes: [
+                'id',
+                'current_rank',
+                'current_rank_level',
+                'leg_1_sales',
+                'leg_2_sales',
+                'leg_3_sales',
+                'leg_4_sales'
+            ]
+        });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -433,9 +469,79 @@ const getUserLegs = async (req, res) => {
         // Get all legs summary
         const legsSummary = await getAllLegsSummary(userId);
 
+        // Target the next rank for progression; if already top rank, target current rank for maintenance.
+        const currentRankName = user.current_rank || 'none';
+        const currentRankLevel = RANK_LEVELS[currentRankName] || 0;
+        const nextRankName = Object.keys(RANK_LEVELS).find(
+            (rankName) => RANK_LEVELS[rankName] === currentRankLevel + 1
+        );
+        const targetRankName = nextRankName || currentRankName;
+
+        let targetRank = null;
+        if (targetRankName && targetRankName !== 'none') {
+            targetRank = await Rank.findOne({
+                where: {
+                    rank_name: targetRankName,
+                    status: 'active'
+                }
+            });
+        }
+
+        const requiredByLeg = targetRank
+            ? [
+                  parseFloat(targetRank.leg_1_min) || 0,
+                  parseFloat(targetRank.leg_2_min) || 0,
+                  parseFloat(targetRank.leg_3_min) || 0,
+                  parseFloat(targetRank.leg_4_min) || 0
+              ]
+            : [0, 0, 0, 0];
+
+        const countedSalesByLeg = [
+            parseFloat(user.leg_1_sales) || 0,
+            parseFloat(user.leg_2_sales) || 0,
+            parseFloat(user.leg_3_sales) || 0,
+            parseFloat(user.leg_4_sales) || 0
+        ];
+
+        const legsWithCompletion = legsSummary.legs.map((leg, index) => {
+            const requiredAmount = requiredByLeg[index] || 0;
+            const currentAmount = countedSalesByLeg[index] || 0;
+            const remainingAmount = Math.max(0, requiredAmount - currentAmount);
+            const isCompleted = requiredAmount === 0 ? true : currentAmount >= requiredAmount;
+
+            return {
+                ...leg,
+                completion: {
+                    metric: 'counted_leg_sales',
+                    requiredAmount,
+                    currentAmount,
+                    remainingAmount,
+                    isCompleted,
+                    completionRule: 'Leg is complete when currentAmount >= requiredAmount'
+                }
+            };
+        });
+
+        const completedLegs = legsWithCompletion.filter((leg) => leg.completion.isCompleted).length;
+
         return res.status(200).json({
             success: true,
-            legs: legsSummary
+            targetRankForLegCompletion: targetRank
+                ? {
+                      rankName: targetRank.rank_name,
+                      rankLevel: targetRank.rank_level,
+                      basedOn: nextRankName ? 'next_rank_progression' : 'current_rank_maintenance'
+                  }
+                : null,
+            legCompletionSummary: {
+                totalLegs: 4,
+                completedLegs,
+                allLegsCompleted: completedLegs === 4
+            },
+            legs: {
+                ...legsSummary,
+                legs: legsWithCompletion
+            }
         });
     } catch (error) {
         console.error('Error getting user legs:', error);
@@ -718,12 +824,10 @@ const processWeeklyRankRecalculation = async (req, res) => {
                     // Recalculate rank.
                     const rankUpdate = await updateUserRank(user.id);
 
-                    // Create pending reward when user upgrades to a new rank.
-                    if (rankUpdate.changed && rankUpdate.changeType === 'upgrade') {
-                        const rewardResult = await ensureRankRewardForUpgrade(user.id, rankUpdate.newRank);
-                        if (rewardResult.created) {
-                            results.rewardsCreated++;
-                        }
+                    // Create pending reward only after a full reward period at the current rank is completed.
+                    const rewardResult = await ensureRankRewardForCompletedPeriod(user.id);
+                    if (rewardResult.created) {
+                        results.rewardsCreated++;
                     }
 
                     // Check for downgrade warning.
@@ -799,7 +903,7 @@ const initializeRanks = async (req, res) => {
                 leg_3_min: 150,
                 leg_4_min: 150,
                 monthly_reward: 100,
-                min_direct_requirement: 8,
+                min_direct_requirement: 4,
                 min_stake_per_direct: 50,
                 description: 'Entry level rank'
             },
@@ -812,7 +916,7 @@ const initializeRanks = async (req, res) => {
                 leg_3_min: 900,
                 leg_4_min: 900,
                 monthly_reward: 360,
-                min_direct_requirement: 8,
+                min_direct_requirement: 4,
                 min_stake_per_direct: 50,
                 description: 'Manager level rank'
             },
@@ -825,7 +929,7 @@ const initializeRanks = async (req, res) => {
                 leg_3_min: 2250,
                 leg_4_min: 2250,
                 monthly_reward: 900,
-                min_direct_requirement: 8,
+                min_direct_requirement: 4,
                 min_stake_per_direct: 50,
                 description: 'Sapphire level rank'
             },
@@ -838,7 +942,7 @@ const initializeRanks = async (req, res) => {
                 leg_3_min: 4500,
                 leg_4_min: 4500,
                 monthly_reward: 1800,
-                min_direct_requirement: 8,
+                min_direct_requirement: 4,
                 min_stake_per_direct: 50,
                 description: 'Crown level rank'
             },
@@ -851,7 +955,7 @@ const initializeRanks = async (req, res) => {
                 leg_3_min: 7500,
                 leg_4_min: 7500,
                 monthly_reward: 3000,
-                min_direct_requirement: 8,
+                min_direct_requirement: 4,
                 min_stake_per_direct: 50,
                 description: 'Diamond level rank'
             },
@@ -864,7 +968,7 @@ const initializeRanks = async (req, res) => {
                 leg_3_min: 15000,
                 leg_4_min: 15000,
                 monthly_reward: 6000,
-                min_direct_requirement: 8,
+                min_direct_requirement: 4,
                 min_stake_per_direct: 50,
                 description: 'Legend level rank'
             },
@@ -877,7 +981,7 @@ const initializeRanks = async (req, res) => {
                 leg_3_min: 37500,
                 leg_4_min: 37500,
                 monthly_reward: 15000,
-                min_direct_requirement: 8,
+                min_direct_requirement: 4,
                 min_stake_per_direct: 50,
                 description: 'Highest level rank'
             }

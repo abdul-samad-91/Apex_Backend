@@ -1,6 +1,7 @@
 const { sequelize } = require('../Config/DB');
 const Withdrawal = require('../Models/withdrawal.model');
 const User = require('../Models/user.model');
+const KycRequest = require('../Models/kycRequest.model');
 const { Op } = require('sequelize');
 const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
@@ -48,6 +49,29 @@ const requestWithdrawal = async (req, res) => {
         if (!user) {
             await transaction.rollback();
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // KYC verification is required for withdrawals.
+        if (!user.is_kyc_verified) {
+            const kycRequest = await KycRequest.findOne({
+                where: { user_id: userId },
+                transaction
+            });
+
+            const kycStatus = kycRequest ? kycRequest.status : 'pending';
+            const statusMessages = {
+                pending: 'KYC status is pending. Submit KYC to enable withdrawals.',
+                under_review: 'KYC is under review. Withdrawal is not allowed yet.',
+                rejected: 'KYC was rejected. Please resubmit your KYC details.',
+                verified: 'KYC not verified yet. Withdrawal is not allowed.'
+            };
+
+            await transaction.rollback();
+            return res.status(403).json({
+                message: statusMessages[kycStatus] || statusMessages.pending,
+                kycStatus,
+                rejectionReason: kycStatus === 'rejected' ? kycRequest?.rejection_reason : null
+            });
         }
 
         // Check if user has sufficient balance

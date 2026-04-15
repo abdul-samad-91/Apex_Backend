@@ -15,6 +15,7 @@
     const bannerRoutes = require('./Routes/banner.routes');
     const rankRoutes = require('./Routes/rank.routes');
     const walletLedgerRoutes = require('./Routes/walletLedger.routes');
+    const kycRoutes = require('./Routes/kyc.routes');
     const { 
         requestLogger, 
         errorHandler, 
@@ -97,6 +98,7 @@
     app.use('/api/banners', bannerRoutes);
     app.use('/api/ranks', rankRoutes);
     app.use('/api/wallet-history', walletLedgerRoutes);
+    app.use('/api/kyc', kycRoutes);
 
     // Error handling middleware (must be after routes)
     app.use(notFound);

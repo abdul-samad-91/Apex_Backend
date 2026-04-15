@@ -398,6 +398,7 @@ const getUserById = async (req, res) => {
                 totalProfitShareEarned: parseFloat(userObj.total_profit_share_earned),
                 lastProfitShareClaimDates: userObj.last_profit_share_claim_dates || {},
                 isVerified: userObj.is_verified,
+                isKycVerified: userObj.is_kyc_verified,
                 referralCode: userObj.referral_code,
                 referredBy: userObj.referred_by,
                 referrals: userObj.referrals || [],
@@ -1265,6 +1266,105 @@ const approveUnlockRequest = async (req, res) => {
     }
 };
 
+// Admin: Reject unlock request after processing period and resume original lock cycle
+const rejectUnlockRequest = async (req, res) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const { userId, entryId, reason } = req.body;
+        const adminId = req.user?.id;
+
+        if (!adminId) {
+            await transaction.rollback();
+            return res.status(401).json({ message: 'Admin not authenticated' });
+        }
+
+        if (!userId || !entryId) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'User ID and Entry ID are required' });
+        }
+
+        const user = await User.findByPk(userId, { transaction, lock: true });
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const entry = await LockedCoinsEntry.findOne({
+            where: { id: entryId, user_id: userId },
+            transaction,
+            lock: true
+        });
+
+        if (!entry) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Locked entry not found' });
+        }
+
+        if (entry.status !== 'unlock-pending') {
+            await transaction.rollback();
+            return res.status(400).json({
+                message: `Cannot reject. Entry status is: ${entry.status}`,
+                currentStatus: entry.status
+            });
+        }
+
+        // Reject only after processing period is completed.
+        const now = new Date();
+        const processAfter = new Date(entry.unlock_process_after);
+        if (now < processAfter) {
+            await transaction.rollback();
+            const hoursRemaining = Math.ceil((processAfter - now) / (1000 * 60 * 60));
+            return res.status(400).json({
+                message: `Processing period not completed. ${hoursRemaining} hours remaining.`,
+                processAfter,
+                hoursRemaining
+            });
+        }
+
+        // Preserve original lock cycle: first lock start date + 14 months.
+        const originalLockStartDate = entry.lock_start_date ? new Date(entry.lock_start_date) : null;
+        const originalLockEndDate = originalLockStartDate ? new Date(originalLockStartDate) : null;
+        if (originalLockEndDate) {
+            originalLockEndDate.setMonth(originalLockEndDate.getMonth() + 14);
+        }
+
+        await entry.update({
+            status: 'active',
+            lock_start_date: originalLockStartDate,
+            lock_end_date: originalLockEndDate,
+            unlock_requested_at: null,
+            unlock_process_after: null,
+            penalty_percentage: 0,
+            penalty_amount: 0,
+            amount_after_penalty: 0,
+            days_elapsed_at_request: 0,
+            unlock_approved_at: null,
+            unlock_approved_by: null
+        }, { transaction });
+
+        await transaction.commit();
+
+        res.status(200).json({
+            message: 'Unlock request rejected successfully',
+            data: {
+                entryId: entry.id,
+                userId,
+                status: 'active',
+                lockStartDate: originalLockStartDate,
+                lockEndDate: originalLockEndDate,
+                rejectedAt: now,
+                rejectedBy: adminId,
+                reason: reason || null
+            }
+        });
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error rejecting unstake request:', error);
+        res.status(500).json({ message: 'Error rejecting unstake request', error: error.message });
+    }
+};
+
 // Admin: Get all pending unlock requests
 const getPendingUnlockRequests = async (req, res) => {
     try {
@@ -1310,6 +1410,70 @@ const getPendingUnlockRequests = async (req, res) => {
     } catch (error) {
         console.error('Error fetching pending unstake requests:', error);
         res.status(500).json({ message: 'Error fetching pending unstake requests', error: error.message });
+    }
+};
+
+// User: Get unlock request processing status with remaining time
+const getMyUnlockRequestStatus = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        const now = new Date();
+        const millisecondsPerHour = 1000 * 60 * 60;
+        const millisecondsPerDay = millisecondsPerHour * 24;
+
+        const pendingEntries = await LockedCoinsEntry.findAll({
+            where: {
+                user_id: userId,
+                status: 'unlock-pending'
+            },
+            order: [['unlock_requested_at', 'DESC']]
+        });
+
+        const unlockRequests = pendingEntries.map((entry) => {
+            const processAfter = entry.unlock_process_after ? new Date(entry.unlock_process_after) : null;
+            const requestedAt = entry.unlock_requested_at ? new Date(entry.unlock_requested_at) : null;
+            const remainingMs = processAfter ? processAfter.getTime() - now.getTime() : 0;
+
+            const isProcessingComplete = remainingMs <= 0;
+            const hoursRemaining = isProcessingComplete ? 0 : Math.ceil(remainingMs / millisecondsPerHour);
+            const daysRemaining = isProcessingComplete ? 0 : Math.ceil(remainingMs / millisecondsPerDay);
+
+            return {
+                entryId: entry.id,
+                originalAmount: parseFloat(entry.amount),
+                penaltyPercentage: parseFloat(entry.penalty_percentage),
+                penaltyAmount: parseFloat(entry.penalty_amount),
+                amountAfterPenalty: parseFloat(entry.amount_after_penalty),
+                requestedAt,
+                processAfter,
+                processingPeriodDays: 7,
+                daysRemaining,
+                hoursRemaining,
+                isProcessingComplete,
+                status: entry.status,
+                statusMessage: isProcessingComplete
+                    ? 'Processing period completed. Waiting for admin action.'
+                    : `${daysRemaining} day(s) remaining for processing period`
+            };
+        });
+
+        return res.status(200).json({
+            message:
+                unlockRequests.length > 0
+                    ? 'Unlock request status retrieved successfully'
+                    : 'No pending unlock requests found',
+            hasPendingRequests: unlockRequests.length > 0,
+            pendingCount: unlockRequests.length,
+            data: unlockRequests
+        });
+    } catch (error) {
+        console.error('Error getting unlock request status:', error);
+        return res.status(500).json({ message: 'Error getting unlock request status', error: error.message });
     }
 };
 
@@ -1618,7 +1782,9 @@ module.exports = {
     lockApexCoins,
     requestUnlockApexCoins,
     approveUnlockRequest,
+    rejectUnlockRequest,
     getPendingUnlockRequests,
+    getMyUnlockRequestStatus,
     claimDailyProfits,
     getReferralLevels,
     getSystemFeeHistory

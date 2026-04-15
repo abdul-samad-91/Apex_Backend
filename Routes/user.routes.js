@@ -14,7 +14,9 @@ const {
     lockApexCoins,
     requestUnlockApexCoins,
     approveUnlockRequest,
+    rejectUnlockRequest,
     getPendingUnlockRequests,
+    getMyUnlockRequestStatus,
     claimDailyProfits,
     getReferralLevels,
     getSystemFeeHistory
@@ -59,6 +61,9 @@ router.post('/lockApexCoins', protect, lockApexCoins);
 // Request unlock of locked ApexCoins (user only)
 router.post('/requestUnlock', protect, requestUnlockApexCoins);
 
+// User: Get pending unlock request status and processing time remaining
+router.get('/myUnlockRequestStatus', protect, getMyUnlockRequestStatus);
+
 // Claim accumulated daily profits (user only)
 router.post('/claimDailyProfits', protect, claimDailyProfits);
 
@@ -67,6 +72,9 @@ router.get('/pendingUnlocks', protect, isAdmin, getPendingUnlockRequests);
 
 // Admin: Approve unlock request
 router.post('/approveUnlock', protect, isAdmin, approveUnlockRequest);
+
+// Admin: Reject unlock request
+router.post('/rejectUnlock', protect, isAdmin, rejectUnlockRequest);
 
 // ============ REFERRAL BONUS SYSTEM ROUTES ============
 

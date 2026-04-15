@@ -3,6 +3,42 @@ const LockedCoinsEntry = require('../Models/lockedCoinsEntry.model');
 const Rank = require('../Models/rank.model');
 const RankHistory = require('../Models/rankHistory.model');
 
+const DEFAULT_MIN_QUALIFYING_DIRECTS_FOR_RANK = 4;
+const DEFAULT_MIN_STAKE_PER_DIRECT_FOR_RANK = 50;
+const MAX_RANK_COUNTING_DEPTH = 8;
+
+const getRankDirectRequirementConfig = async () => {
+    try {
+        const baseRank = await Rank.findOne({
+            where: { status: 'active' },
+            attributes: ['min_direct_requirement', 'min_stake_per_direct'],
+            order: [['rank_level', 'ASC']]
+        });
+
+        if (!baseRank) {
+            return {
+                requiredDirects: DEFAULT_MIN_QUALIFYING_DIRECTS_FOR_RANK,
+                minStakePerDirect: DEFAULT_MIN_STAKE_PER_DIRECT_FOR_RANK
+            };
+        }
+
+        return {
+            requiredDirects:
+                parseInt(baseRank.min_direct_requirement, 10) ||
+                DEFAULT_MIN_QUALIFYING_DIRECTS_FOR_RANK,
+            minStakePerDirect:
+                parseFloat(baseRank.min_stake_per_direct) ||
+                DEFAULT_MIN_STAKE_PER_DIRECT_FOR_RANK
+        };
+    } catch (error) {
+        console.error('Error reading rank direct requirement config:', error);
+        return {
+            requiredDirects: DEFAULT_MIN_QUALIFYING_DIRECTS_FOR_RANK,
+            minStakePerDirect: DEFAULT_MIN_STAKE_PER_DIRECT_FOR_RANK
+        };
+    }
+};
+
 const normalizeLegUsers = (rawLegUsers) => {
     if (Array.isArray(rawLegUsers)) {
         return rawLegUsers.filter(Boolean);
@@ -56,12 +92,13 @@ const RANK_LEVELS = {
 };
 
 /**
- * Calculate total sales from all 4 legs (8 levels deep per leg)
+ * Calculate total sales from all 4 legs (dynamic depth per leg, capped at 8)
  * User must have met minimum direct requirement to count sales
  * @param {string} userId - Root user ID
+ * @param {number} maxDepth - Maximum traversal depth for each leg
  * @returns {Promise<Object>} Sales data for all 4 legs and total
  */
-const calculateLegSales = async (userId) => {
+const calculateLegSales = async (userId, maxDepth = MAX_RANK_COUNTING_DEPTH) => {
     try {
         const user = await User.findByPk(userId);
         if (!user) {
@@ -74,11 +111,11 @@ const calculateLegSales = async (userId) => {
         const leg3Users = normalizeLegUsers(user.leg_3_users);
         const leg4Users = normalizeLegUsers(user.leg_4_users);
 
-        // Calculate sales for each leg
-        const leg1Sales = await calculateLegTotalSales(leg1Users);
-        const leg2Sales = await calculateLegTotalSales(leg2Users);
-        const leg3Sales = await calculateLegTotalSales(leg3Users);
-        const leg4Sales = await calculateLegTotalSales(leg4Users);
+        // Calculate sales for each leg using dynamic depth (max 8)
+        const leg1Sales = await calculateLegTotalSales(leg1Users, maxDepth);
+        const leg2Sales = await calculateLegTotalSales(leg2Users, maxDepth);
+        const leg3Sales = await calculateLegTotalSales(leg3Users, maxDepth);
+        const leg4Sales = await calculateLegTotalSales(leg4Users, maxDepth);
 
         const totalSales = leg1Sales + leg2Sales + leg3Sales + leg4Sales;
 
@@ -96,13 +133,18 @@ const calculateLegSales = async (userId) => {
 };
 
 /**
- * Calculate total sales from a list of user IDs (8 levels deep)
+ * Calculate total sales from a list of user IDs (dynamic depth, max 8)
  * @param {Array} userIds - Array of direct leg member IDs
+ * @param {number} maxDepth - Maximum traversal depth for this leg
  * @returns {Promise<number>} Total sales accumulated
  */
-const calculateLegTotalSales = async (userIds) => {
+const calculateLegTotalSales = async (userIds, maxDepth = MAX_RANK_COUNTING_DEPTH) => {
     try {
         const normalizedUserIds = normalizeLegUsers(userIds);
+        const normalizedDepth = Math.min(
+            Math.max(parseInt(maxDepth, 10) || 1, 1),
+            MAX_RANK_COUNTING_DEPTH
+        );
 
         if (normalizedUserIds.length === 0) {
             return 0;
@@ -111,14 +153,14 @@ const calculateLegTotalSales = async (userIds) => {
         let totalSales = 0;
         const traversedUsers = new Set();
 
-        // BFS to traverse 8 levels deep
+        // BFS to traverse requested depth (capped at 8 levels)
         const queue = normalizedUserIds.map((id) => ({ userId: id, level: 1 }));
 
         while (queue.length > 0) {
             const { userId, level } = queue.shift();
 
-            // Don't exceed 8 levels
-            if (level > 8 || traversedUsers.has(userId)) {
+            // Don't exceed dynamic depth (hard-capped at 8 levels)
+            if (level > normalizedDepth || traversedUsers.has(userId)) {
                 continue;
             }
 
@@ -139,7 +181,7 @@ const calculateLegTotalSales = async (userIds) => {
             });
 
             // Get user's direct referrals and add to queue for next level
-            if (level < 8) {
+            if (level < normalizedDepth) {
                 const referredUsers = await User.findAll({
                     where: {
                         referred_by: userId
@@ -161,12 +203,16 @@ const calculateLegTotalSales = async (userIds) => {
 };
 
 /**
- * Check if user has met minimum direct requirement (8 directs with $50+ stake each)
+ * Check if user has met minimum direct requirement
+ * Direct requirement and minimum stake are read from active rank configuration.
+ * Team counting depth equals qualifying directs, capped at 8.
  * @param {string} userId - User ID
  * @returns {Promise<Object>} Requirement details
  */
 const checkMinimumDirectRequirement = async (userId) => {
     try {
+        const requirementConfig = await getRankDirectRequirementConfig();
+
         // Get all direct referrals
         const directs = await User.findAll({
             where: {
@@ -175,7 +221,7 @@ const checkMinimumDirectRequirement = async (userId) => {
             attributes: ['id', 'full_name', 'email']
         });
 
-        // Check if at least 8 of them have $50+ active stakes
+        // Count directs that meet the minimum active stake condition.
         let qualifyingDirects = 0;
         const qualifyingDirectUsers = [];
         const nonQualifyingDirectUsers = [];
@@ -196,7 +242,7 @@ const checkMinimumDirectRequirement = async (userId) => {
                 activeStake: normalizedStake
             };
 
-            if (normalizedStake >= 50) {
+            if (normalizedStake >= requirementConfig.minStakePerDirect) {
                 qualifyingDirects++;
                 qualifyingDirectUsers.push(directInfo);
             } else {
@@ -204,14 +250,17 @@ const checkMinimumDirectRequirement = async (userId) => {
             }
         }
 
+        const countingDepth = Math.min(qualifyingDirects, MAX_RANK_COUNTING_DEPTH);
+
         return {
             totalDirects: directs.length,
             qualifyingDirects,
-            meetsRequirement: qualifyingDirects >= 8,
+            meetsRequirement: qualifyingDirects >= requirementConfig.requiredDirects,
             qualifyingDirectUsers,
             nonQualifyingDirectUsers,
-            requiredDirects: 8,
-            minStakePerDirect: 50
+            requiredDirects: requirementConfig.requiredDirects,
+            minStakePerDirect: requirementConfig.minStakePerDirect,
+            countingDepth
         };
     } catch (error) {
         console.error('Error checking minimum direct requirement:', error);
@@ -221,8 +270,9 @@ const checkMinimumDirectRequirement = async (userId) => {
             meetsRequirement: false,
             qualifyingDirectUsers: [],
             nonQualifyingDirectUsers: [],
-            requiredDirects: 8,
-            minStakePerDirect: 50
+            requiredDirects: DEFAULT_MIN_QUALIFYING_DIRECTS_FOR_RANK,
+            minStakePerDirect: DEFAULT_MIN_STAKE_PER_DIRECT_FOR_RANK,
+            countingDepth: 0
         };
     }
 };
@@ -287,8 +337,8 @@ const calculateUserRank = async (userId) => {
         let totalSales = 0;
 
         if (meetsRequirement) {
-            // Calculate sales from all legs
-            const legSales = await calculateLegSales(userId);
+            // Calculate sales from all legs using dynamic depth based on qualifying directs.
+            const legSales = await calculateLegSales(userId, requirementData.countingDepth);
             totalSales = legSales.total_sales;
 
             // Determine rank based on per-leg minimums
@@ -331,6 +381,7 @@ const calculateUserRank = async (userId) => {
             totalDirectCount: requirementData.totalDirects,
             requiredDirects: requirementData.requiredDirects,
             minStakePerDirect: requirementData.minStakePerDirect,
+            countingDepth: requirementData.countingDepth,
             qualifyingDirectUsers: requirementData.qualifyingDirectUsers,
             nonQualifyingDirectUsers: requirementData.nonQualifyingDirectUsers,
             totalSales

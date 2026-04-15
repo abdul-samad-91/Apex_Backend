@@ -66,8 +66,23 @@ class User extends Model {
     getLastProfitShareClaimDatesMap() {
         if (!this.last_profit_share_claim_dates) return new Map();
         try {
-            const obj = JSON.parse(this.last_profit_share_claim_dates);
-            return new Map(Object.entries(obj).map(([k, v]) => [k, new Date(v)]));
+            const rawValue = this.last_profit_share_claim_dates;
+            const parsed = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
+            const normalizedParsed =
+                typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+
+            if (!normalizedParsed || typeof normalizedParsed !== 'object' || Array.isArray(normalizedParsed)) {
+                return new Map();
+            }
+
+            const entries = Object.entries(normalizedParsed)
+                .map(([key, value]) => {
+                    const date = new Date(value);
+                    return [key, date];
+                })
+                .filter(([, date]) => !Number.isNaN(date.getTime()));
+
+            return new Map(entries);
         } catch {
             return new Map();
         }
@@ -76,8 +91,16 @@ class User extends Model {
     // Set last profit share claim dates from Map
     setLastProfitShareClaimDatesMap(dateMap) {
         if (dateMap instanceof Map) {
-            const obj = Object.fromEntries(dateMap);
-            this.last_profit_share_claim_dates = JSON.stringify(obj);
+            const normalized = {};
+
+            for (const [key, value] of dateMap.entries()) {
+                const date = value instanceof Date ? value : new Date(value);
+                if (!Number.isNaN(date.getTime())) {
+                    normalized[key] = date.toISOString();
+                }
+            }
+
+            this.last_profit_share_claim_dates = normalized;
         }
     }
 }
@@ -192,6 +215,10 @@ User.init(
             defaultValue: {}
         },
         is_verified: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        is_kyc_verified: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
