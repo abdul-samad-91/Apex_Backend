@@ -19,6 +19,13 @@ const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
 
 const isSelfOrAdmin = (req, userId) => req.user && (req.user.role === 'admin' || req.user.id === userId);
 
+const LEG_PROGRESS_WEIGHTS = {
+    leg1: 40,
+    leg2: 30,
+    leg3: 15,
+    leg4: 15
+};
+
 const normalizeLegUsers = (rawLegUsers) => {
     if (Array.isArray(rawLegUsers)) {
         return rawLegUsers.filter(Boolean);
@@ -104,6 +111,70 @@ const getPreviousRewardPeriodMeta = () => {
     return {
         period: `${previousMonthDate.getFullYear()}-${month}`,
         periodStart: new Date(previousMonthDate.getFullYear(), previousMonthDate.getMonth(), 1)
+    };
+};
+
+const roundToTwo = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+const getLegCompletionRatio = (currentAmount, requiredAmount) => {
+    if (requiredAmount <= 0) return 1;
+    const ratio = currentAmount / requiredAmount;
+    return Math.min(Math.max(ratio, 0), 1);
+};
+
+const calculateWeightedLegProgress = ({ legSales, legMins }) => {
+    const legs = [
+        {
+            key: 'leg1',
+            displayName: 'Leg 1',
+            weight: LEG_PROGRESS_WEIGHTS.leg1,
+            currentAmount: legSales.leg1,
+            requiredAmount: legMins.leg1
+        },
+        {
+            key: 'leg2',
+            displayName: 'Leg 2',
+            weight: LEG_PROGRESS_WEIGHTS.leg2,
+            currentAmount: legSales.leg2,
+            requiredAmount: legMins.leg2
+        },
+        {
+            key: 'leg3',
+            displayName: 'Leg 3',
+            weight: LEG_PROGRESS_WEIGHTS.leg3,
+            currentAmount: legSales.leg3,
+            requiredAmount: legMins.leg3
+        },
+        {
+            key: 'leg4',
+            displayName: 'Leg 4',
+            weight: LEG_PROGRESS_WEIGHTS.leg4,
+            currentAmount: legSales.leg4,
+            requiredAmount: legMins.leg4
+        }
+    ].map((leg) => {
+        const completionRatio = getLegCompletionRatio(leg.currentAmount, leg.requiredAmount);
+        const weightedContribution = roundToTwo(completionRatio * leg.weight);
+        const remainingAmount = Math.max(0, leg.requiredAmount - leg.currentAmount);
+
+        return {
+            ...leg,
+            completionPercentage: roundToTwo(completionRatio * 100),
+            weightedContribution,
+            remainingAmount: roundToTwo(remainingAmount)
+        };
+    });
+
+    const progressPercentage = roundToTwo(
+        Math.min(
+            legs.reduce((sum, leg) => sum + leg.weightedContribution, 0),
+            100
+        )
+    );
+
+    return {
+        progressPercentage,
+        legs
     };
 };
 
@@ -224,38 +295,38 @@ const getUserRank = async (req, res) => {
                 });
 
                 if (nextRank) {
-                    const leg1Sales = parseFloat(user.leg_1_sales) || 0;
-                    const leg2Sales = parseFloat(user.leg_2_sales) || 0;
-                    const leg3Sales = parseFloat(user.leg_3_sales) || 0;
-                    const leg4Sales = parseFloat(user.leg_4_sales) || 0;
+                    const legSales = {
+                        leg1: parseFloat(user.leg_1_sales) || 0,
+                        leg2: parseFloat(user.leg_2_sales) || 0,
+                        leg3: parseFloat(user.leg_3_sales) || 0,
+                        leg4: parseFloat(user.leg_4_sales) || 0
+                    };
 
-                    const leg1Min = parseFloat(nextRank.leg_1_min) || 0;
-                    const leg2Min = parseFloat(nextRank.leg_2_min) || 0;
-                    const leg3Min = parseFloat(nextRank.leg_3_min) || 0;
-                    const leg4Min = parseFloat(nextRank.leg_4_min) || 0;
+                    const legMins = {
+                        leg1: parseFloat(nextRank.leg_1_min) || 0,
+                        leg2: parseFloat(nextRank.leg_2_min) || 0,
+                        leg3: parseFloat(nextRank.leg_3_min) || 0,
+                        leg4: parseFloat(nextRank.leg_4_min) || 0
+                    };
 
                     // Calculate how much each leg needs
-                    const leg1Remaining = Math.max(0, leg1Min - leg1Sales);
-                    const leg2Remaining = Math.max(0, leg2Min - leg2Sales);
-                    const leg3Remaining = Math.max(0, leg3Min - leg3Sales);
-                    const leg4Remaining = Math.max(0, leg4Min - leg4Sales);
+                    const leg1Remaining = Math.max(0, legMins.leg1 - legSales.leg1);
+                    const leg2Remaining = Math.max(0, legMins.leg2 - legSales.leg2);
+                    const leg3Remaining = Math.max(0, legMins.leg3 - legSales.leg3);
+                    const leg4Remaining = Math.max(0, legMins.leg4 - legSales.leg4);
 
                     // Total remaining across all legs
                     const totalRemaining = leg1Remaining + leg2Remaining + leg3Remaining + leg4Remaining;
-                    const requiredTotal = leg1Min + leg2Min + leg3Min + leg4Min;
-                    const currentTotal = leg1Sales + leg2Sales + leg3Sales + leg4Sales;
-
-                    // Calculate overall progress percentage
-                    const overallProgressPercentage = Math.min(
-                        Math.round(((currentTotal / requiredTotal) * 100) * 100) / 100,
-                        100
-                    );
+                    const weightedProgress = calculateWeightedLegProgress({ legSales, legMins });
 
                     nextRankData = {
                         name: nextRankName,
-                        progressPercentage: overallProgressPercentage,
+                        progressPercentage: weightedProgress.progressPercentage,
                         remainingNeeded: parseFloat(totalRemaining.toFixed(8)),
-                        progressLabel: `$${totalRemaining.toFixed(2)} more Team Volume needed`
+                        progressLabel: `$${totalRemaining.toFixed(2)} more Team Volume needed`,
+                        calculationMethod: 'weighted_leg_completion',
+                        legWeights: LEG_PROGRESS_WEIGHTS,
+                        legProgress: weightedProgress.legs
                     };
                 }
             }
