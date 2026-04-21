@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
     requestWithdrawal,
+    verifyWithdrawalOTP,
+    resendWithdrawalOTP,
     getUserWithdrawals,
     getAllWithdrawals,
     getPendingWithdrawals,
@@ -12,6 +14,12 @@ const { protect, isAdmin } = require('../Middleware/authorization.middleware');
 // User routes
 // Request a new withdrawal
 router.post('/requestWithdrawal', protect, requestWithdrawal);
+
+// Verify withdrawal request OTP
+router.post('/verify-otp', protect, verifyWithdrawalOTP);
+
+// Resend withdrawal request OTP
+router.post('/resend-otp', protect, resendWithdrawalOTP);
 
 // Get user's withdrawal history
 router.get('/myWithdrawals', protect, getUserWithdrawals);

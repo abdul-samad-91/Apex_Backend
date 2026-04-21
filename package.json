@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js",
-    "convert:json-to-sql": "node convertJsonToSql.js"
+    "convert:json-to-sql": "node convertJsonToSql.js",
+    "migrate:rank-rewards-one-time": "node scripts/migrate_rank_rewards_one_time.js"
   },
   "keywords": [],
   "author": "",

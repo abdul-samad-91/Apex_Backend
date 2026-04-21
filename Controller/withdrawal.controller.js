@@ -3,7 +3,19 @@ const Withdrawal = require('../Models/withdrawal.model');
 const User = require('../Models/user.model');
 const KycRequest = require('../Models/kycRequest.model');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
+const { generateOTP, sendWithdrawalOTPEmail } = require('../utils/sendEmail');
 const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
+
+const WITHDRAWAL_MIN_AMOUNT = 10;
+const WITHDRAWAL_SYSTEM_FEE_PERCENTAGE = 5;
+const WITHDRAWAL_OTP_EXPIRY_MS = 10 * 60 * 1000;
+const WITHDRAWAL_OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+const WITHDRAWAL_OTP_MAX_ATTEMPTS = 5;
+
+const hashOtp = (otp) => crypto.createHash('sha256').update(String(otp)).digest('hex');
+
+const getOtpExpirySeconds = () => Math.floor(WITHDRAWAL_OTP_EXPIRY_MS / 1000);
 
 // Generate unique withdrawal ID
 const generateWithdrawalId = () => {
@@ -86,28 +98,23 @@ const requestWithdrawal = async (req, res) => {
         }
 
         // Set minimum withdrawal amount
-        const MIN_WITHDRAWAL = 10; // $10 minimum
-        if (withdrawalAmount < MIN_WITHDRAWAL) {
+        if (withdrawalAmount < WITHDRAWAL_MIN_AMOUNT) {
             await transaction.rollback();
             return res.status(400).json({ 
-                message: `Minimum withdrawal amount is $${MIN_WITHDRAWAL}`,
-                minAmount: MIN_WITHDRAWAL
+                message: `Minimum withdrawal amount is $${WITHDRAWAL_MIN_AMOUNT}`,
+                minAmount: WITHDRAWAL_MIN_AMOUNT
             });
         }
 
         // Calculate 5% system fee
-        const systemFeePercentage = 5;
+        const systemFeePercentage = WITHDRAWAL_SYSTEM_FEE_PERCENTAGE;
         const systemFeeAmount = parseFloat((withdrawalAmount * systemFeePercentage / 100).toFixed(2));
         const amountAfterFee = parseFloat((withdrawalAmount - systemFeeAmount).toFixed(2));
 
-        // Deduct amount from account balance
-        const previousBalance = parseFloat(user.account_balance) || 0;
-        user.account_balance = parseFloat(user.account_balance) - withdrawalAmount;
-        
-        // Track system fees collected from withdrawals
-        user.withdrawal_system_fees = (parseFloat(user.withdrawal_system_fees) || 0) + systemFeeAmount;
-        
-        await user.save({ transaction });
+        const otp = generateOTP();
+        const otpHash = hashOtp(otp);
+        const otpExpiry = new Date(Date.now() + WITHDRAWAL_OTP_EXPIRY_MS);
+        const now = new Date();
 
         // Create withdrawal request
         const withdrawalId = generateWithdrawalId();
@@ -120,8 +127,147 @@ const requestWithdrawal = async (req, res) => {
             amount_after_fee: amountAfterFee,
             wallet_address: walletAddress,
             network,
-            status: 'pending'
+            status: 'pending',
+            verification_status: 'otp_pending',
+            user_otp_hash: otpHash,
+            user_otp_expiry: otpExpiry,
+            otp_attempts: 0,
+            otp_last_sent_at: now,
+            user_otp_verified_at: null
         }, { transaction });
+
+        const emailResult = await sendWithdrawalOTPEmail(user.email, otp, user.full_name, {
+            withdrawalId: withdrawal.withdrawal_id,
+            amount: withdrawalAmount.toFixed(2),
+            network
+        });
+
+        if (!emailResult.success) {
+            await transaction.rollback();
+            return res.status(500).json({ message: 'Failed to send withdrawal OTP', error: emailResult.error });
+        }
+
+        await transaction.commit();
+
+        res.status(202).json({
+            message: 'Withdrawal request created. Verify OTP sent to your email to continue processing.',
+            data: {
+                withdrawalId: withdrawal.withdrawal_id,
+                amount: withdrawalAmount,
+                systemFee: systemFeeAmount,
+                amountToReceive: amountAfterFee,
+                walletAddress: walletAddress,
+                network: network,
+                status: withdrawal.status,
+                verificationStatus: withdrawal.verification_status,
+                requestedAt: withdrawal.created_at,
+                otpExpiresInSeconds: getOtpExpirySeconds()
+            }
+        });
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error requesting withdrawal:', error);
+        res.status(500).json({ message: 'Error processing withdrawal request', error: error.message });
+    }
+};
+
+// User: Verify withdrawal OTP and finalize request submission
+const verifyWithdrawalOTP = async (req, res) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const { withdrawalId, otp } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            await transaction.rollback();
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        if (!withdrawalId || !otp) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'withdrawalId and otp are required' });
+        }
+
+        const withdrawal = await Withdrawal.findOne({
+            where: { withdrawal_id: withdrawalId, user_id: userId },
+            transaction,
+            lock: true
+        });
+
+        if (!withdrawal) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Withdrawal request not found' });
+        }
+
+        if (withdrawal.status !== 'pending') {
+            await transaction.rollback();
+            return res.status(400).json({ message: `Cannot verify OTP for withdrawal with status ${withdrawal.status}` });
+        }
+
+        if (withdrawal.verification_status === 'otp_verified') {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'Withdrawal OTP already verified' });
+        }
+
+        if (!withdrawal.user_otp_hash || !withdrawal.user_otp_expiry) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'No OTP found. Please resend OTP.' });
+        }
+
+        if (new Date(withdrawal.user_otp_expiry) < new Date()) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'OTP has expired. Please resend OTP.' });
+        }
+
+        if ((withdrawal.otp_attempts || 0) >= WITHDRAWAL_OTP_MAX_ATTEMPTS) {
+            await transaction.rollback();
+            return res.status(429).json({ message: 'Maximum OTP attempts reached. Please resend OTP.' });
+        }
+
+        const isOtpValid = hashOtp(otp) === withdrawal.user_otp_hash;
+        if (!isOtpValid) {
+            withdrawal.otp_attempts = (withdrawal.otp_attempts || 0) + 1;
+            await withdrawal.save({ transaction });
+            await transaction.commit();
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+
+        // Validate balance and complete the debit only after OTP verification.
+        const user = await User.findByPk(userId, { transaction, lock: true });
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.is_kyc_verified) {
+            await transaction.rollback();
+            return res.status(403).json({ message: 'KYC verification is required to complete withdrawal verification' });
+        }
+
+        const withdrawalAmount = parseFloat(withdrawal.amount);
+        const currentBalance = parseFloat(user.account_balance) || 0;
+        if (withdrawalAmount > currentBalance) {
+            await transaction.rollback();
+            return res.status(400).json({
+                message: 'Insufficient balance at verification time',
+                availableBalance: parseFloat(currentBalance.toFixed(2)),
+                requestedAmount: withdrawalAmount
+            });
+        }
+
+        const previousBalance = currentBalance;
+        user.account_balance = currentBalance - withdrawalAmount;
+        user.withdrawal_system_fees = (parseFloat(user.withdrawal_system_fees) || 0) + (parseFloat(withdrawal.system_fee_amount) || 0);
+        await user.save({ transaction });
+
+        withdrawal.verification_status = 'otp_verified';
+        withdrawal.user_otp_verified_at = new Date();
+        withdrawal.user_otp_hash = null;
+        withdrawal.user_otp_expiry = null;
+        withdrawal.otp_attempts = 0;
+        withdrawal.otp_last_sent_at = null;
+        await withdrawal.save({ transaction });
 
         await createWalletLedgerEntry({
             userId,
@@ -133,37 +279,125 @@ const requestWithdrawal = async (req, res) => {
             sourceType: 'withdrawal_request',
             sourceId: withdrawal.withdrawal_id,
             status: 'pending',
-            description: 'Withdrawal request submitted',
+            description: 'Withdrawal request submitted after OTP verification',
             metadata: {
-                network,
-                walletAddress,
-                systemFeePercentage,
-                systemFeeAmount,
-                amountAfterFee
+                network: withdrawal.network,
+                walletAddress: withdrawal.wallet_address,
+                systemFeePercentage: parseFloat(withdrawal.system_fee_percentage) || WITHDRAWAL_SYSTEM_FEE_PERCENTAGE,
+                systemFeeAmount: parseFloat(withdrawal.system_fee_amount) || 0,
+                amountAfterFee: parseFloat(withdrawal.amount_after_fee) || 0
             },
             transaction
         });
 
         await transaction.commit();
 
-        res.status(201).json({
-            message: 'Withdrawal request submitted successfully. Please allow 6-12 hours for processing.',
+        return res.status(200).json({
+            message: 'Withdrawal OTP verified successfully. Request moved for admin processing.',
             data: {
                 withdrawalId: withdrawal.withdrawal_id,
-                amount: withdrawalAmount,
-                systemFee: systemFeeAmount,
-                amountToReceive: amountAfterFee,
-                walletAddress: walletAddress,
-                network: network,
                 status: withdrawal.status,
-                requestedAt: withdrawal.created_at,
-                newAccountBalance: parseFloat(user.account_balance.toFixed(2))
+                verificationStatus: withdrawal.verification_status,
+                amount: parseFloat(withdrawal.amount),
+                systemFee: parseFloat(withdrawal.system_fee_amount) || 0,
+                amountToReceive: parseFloat(withdrawal.amount_after_fee) || 0,
+                newAccountBalance: parseFloat(parseFloat(user.account_balance).toFixed(2)),
+                verifiedAt: withdrawal.user_otp_verified_at
             }
         });
     } catch (error) {
         await transaction.rollback();
-        console.error('Error requesting withdrawal:', error);
-        res.status(500).json({ message: 'Error processing withdrawal request', error: error.message });
+        console.error('Error verifying withdrawal OTP:', error);
+        return res.status(500).json({ message: 'Error verifying withdrawal OTP', error: error.message });
+    }
+};
+
+// User: Resend withdrawal OTP
+const resendWithdrawalOTP = async (req, res) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const { withdrawalId } = req.body;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            await transaction.rollback();
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        if (!withdrawalId) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'withdrawalId is required' });
+        }
+
+        const withdrawal = await Withdrawal.findOne({
+            where: { withdrawal_id: withdrawalId, user_id: userId },
+            transaction,
+            lock: true
+        });
+
+        if (!withdrawal) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Withdrawal request not found' });
+        }
+
+        if (withdrawal.status !== 'pending') {
+            await transaction.rollback();
+            return res.status(400).json({ message: `Cannot resend OTP for withdrawal with status ${withdrawal.status}` });
+        }
+
+        if (withdrawal.verification_status === 'otp_verified') {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'Withdrawal is already OTP verified' });
+        }
+
+        if (withdrawal.otp_last_sent_at) {
+            const elapsedMs = Date.now() - new Date(withdrawal.otp_last_sent_at).getTime();
+            if (elapsedMs < WITHDRAWAL_OTP_RESEND_COOLDOWN_MS) {
+                const waitSeconds = Math.ceil((WITHDRAWAL_OTP_RESEND_COOLDOWN_MS - elapsedMs) / 1000);
+                await transaction.rollback();
+                return res.status(429).json({ message: `Please wait ${waitSeconds} seconds before resending OTP` });
+            }
+        }
+
+        const user = await User.findByPk(userId, { transaction });
+        if (!user) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const otp = generateOTP();
+        withdrawal.user_otp_hash = hashOtp(otp);
+        withdrawal.user_otp_expiry = new Date(Date.now() + WITHDRAWAL_OTP_EXPIRY_MS);
+        withdrawal.otp_attempts = 0;
+        withdrawal.otp_last_sent_at = new Date();
+
+        await withdrawal.save({ transaction });
+
+        const emailResult = await sendWithdrawalOTPEmail(user.email, otp, user.full_name, {
+            withdrawalId: withdrawal.withdrawal_id,
+            amount: parseFloat(withdrawal.amount).toFixed(2),
+            network: withdrawal.network
+        });
+
+        if (!emailResult.success) {
+            await transaction.rollback();
+            return res.status(500).json({ message: 'Failed to resend withdrawal OTP', error: emailResult.error });
+        }
+
+        await transaction.commit();
+
+        return res.status(200).json({
+            message: 'Withdrawal OTP resent successfully',
+            data: {
+                withdrawalId: withdrawal.withdrawal_id,
+                otpExpiresInSeconds: getOtpExpirySeconds()
+            }
+        });
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Error resending withdrawal OTP:', error);
+        return res.status(500).json({ message: 'Error resending withdrawal OTP', error: error.message });
     }
 };
 
@@ -238,6 +472,8 @@ const getUserWithdrawals = async (req, res) => {
                 walletAddress: w.wallet_address,
                 network: w.network,
                 status: w.status,
+                verificationStatus: w.verification_status || 'otp_verified',
+                userOtpVerifiedAt: w.user_otp_verified_at,
                 rejectionReason: w.rejection_reason,
                 processedAt: w.processed_at,
                 processedBy: w.processed_by,
@@ -343,6 +579,8 @@ const getAllWithdrawals = async (req, res) => {
                 walletAddress: w.wallet_address,
                 network: w.network,
                 status: w.status,
+                verificationStatus: w.verification_status || 'otp_verified',
+                userOtpVerifiedAt: w.user_otp_verified_at,
                 rejectionReason: w.rejection_reason,
                 processedAt: w.processed_at,
                 processedBy: w.processed_by,
@@ -388,7 +626,13 @@ const getAllWithdrawals = async (req, res) => {
 const getPendingWithdrawals = async (req, res) => {
     try {
         const withdrawals = await Withdrawal.findAll({
-            where: { status: 'pending' },
+            where: {
+                status: 'pending',
+                [Op.or]: [
+                    { verification_status: 'otp_verified' },
+                    { verification_status: null }
+                ]
+            },
             include: [
                 { 
                     model: User, 
@@ -417,6 +661,8 @@ const getPendingWithdrawals = async (req, res) => {
                 walletAddress: w.wallet_address,
                 network: w.network,
                 status: w.status,
+                verificationStatus: w.verification_status || 'otp_verified',
+                userOtpVerifiedAt: w.user_otp_verified_at,
                 rejectionReason: w.rejection_reason,
                 processedAt: w.processed_at,
                 processedBy: w.processed_by,
@@ -488,6 +734,14 @@ const updateWithdrawalStatus = async (req, res) => {
         if (!withdrawal) {
             await transaction.rollback();
             return res.status(404).json({ message: 'Withdrawal request not found' });
+        }
+
+        if (withdrawal.verification_status && withdrawal.verification_status !== 'otp_verified') {
+            await transaction.rollback();
+            return res.status(400).json({
+                message: 'Withdrawal is waiting for user OTP verification and cannot be processed yet',
+                verificationStatus: withdrawal.verification_status
+            });
         }
 
         // If rejecting, must provide reason and refund the user
@@ -573,6 +827,7 @@ const updateWithdrawalStatus = async (req, res) => {
                 walletAddress: withdrawal.wallet_address,
                 network: withdrawal.network,
                 status: withdrawal.status,
+                verificationStatus: withdrawal.verification_status || 'otp_verified',
                 transactionHash: withdrawal.transaction_hash,
                 transactionId: withdrawal.transaction_id,
                 processedAt: withdrawal.processed_at,
@@ -591,6 +846,8 @@ const updateWithdrawalStatus = async (req, res) => {
 
 module.exports = {
     requestWithdrawal,
+    verifyWithdrawalOTP,
+    resendWithdrawalOTP,
     getUserWithdrawals,
     getAllWithdrawals,
     getPendingWithdrawals,

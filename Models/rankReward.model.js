@@ -28,12 +28,12 @@ RankReward.init(
             },
             onDelete: 'CASCADE'
         },
-        // Period for which reward is earned (e.g., "2026-04")
+        // Retained for backward compatibility. One-time rewards use value "onetime".
         reward_period: {
             type: DataTypes.STRING(7),
             allowNull: false
         },
-        // Amount of reward for this period and rank
+        // One-time reward amount for this rank
         reward_amount: {
             type: DataTypes.DECIMAL(20, 8),
             allowNull: false
@@ -69,6 +69,7 @@ RankReward.init(
             { fields: ['rank_id'] },
             { fields: ['reward_period'] },
             { fields: ['status'] },
+            { unique: true, fields: ['user_id', 'rank_id'] },
             { unique: true, fields: ['user_id', 'rank_id', 'reward_period'] },
             { fields: ['user_id', 'reward_period'] },
             { fields: ['user_id', 'status'] }

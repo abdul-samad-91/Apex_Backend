@@ -55,6 +55,35 @@ Withdrawal.init(
             type: DataTypes.ENUM('pending', 'processing', 'completed', 'rejected'),
             defaultValue: 'pending'
         },
+        verification_status: {
+            type: DataTypes.ENUM('otp_pending', 'otp_verified'),
+            defaultValue: 'otp_verified'
+        },
+        user_otp_hash: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            defaultValue: null
+        },
+        user_otp_expiry: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
+        otp_attempts: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+        otp_last_sent_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
+        user_otp_verified_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
         rejection_reason: {
             type: DataTypes.TEXT,
             allowNull: true,
@@ -95,6 +124,7 @@ Withdrawal.init(
             { unique: true, fields: ['withdrawal_id'] },
             { fields: ['user_id'] },
             { fields: ['status'] },
+            { fields: ['verification_status'] },
             { fields: ['network'] },
             { fields: ['processed_by'] },
             { fields: ['created_at'] }

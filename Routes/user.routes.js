@@ -10,6 +10,9 @@ const {
     updatePassword,
     verifyOTP,
     resendOTP,
+    forgotPassword,
+    verifyForgotPasswordOTP,
+    resetPassword,
     purchaseApexCoins,
     lockApexCoins,
     requestUnlockApexCoins,
@@ -42,6 +45,11 @@ router.post('/verify-otp', verifyOTP);
 
 // Resend OTP
 router.post('/resend-otp', resendOTP);
+
+// Forgot password flow
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-forgot-password-otp', verifyForgotPasswordOTP);
+router.post('/reset-password', resetPassword);
 
 // authenticate user/admin
 router.post ('/auth' , login)

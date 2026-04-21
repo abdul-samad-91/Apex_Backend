@@ -26,6 +26,8 @@ const LEG_PROGRESS_WEIGHTS = {
     leg4: 15
 };
 
+const ONE_TIME_RANK_REWARD_PERIOD = 'onetime';
+
 const normalizeLegUsers = (rawLegUsers) => {
     if (Array.isArray(rawLegUsers)) {
         return rawLegUsers.filter(Boolean);
@@ -103,17 +105,6 @@ const buildLegWiseDirectBreakdown = (rootUser, minimumDirectRequirement) => {
     return legWise;
 };
 
-const getPreviousRewardPeriodMeta = () => {
-    const now = new Date();
-    const previousMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const month = String(previousMonthDate.getMonth() + 1).padStart(2, '0');
-
-    return {
-        period: `${previousMonthDate.getFullYear()}-${month}`,
-        periodStart: new Date(previousMonthDate.getFullYear(), previousMonthDate.getMonth(), 1)
-    };
-};
-
 const roundToTwo = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
 
 const getLegCompletionRatio = (currentAmount, requiredAmount) => {
@@ -178,9 +169,27 @@ const calculateWeightedLegProgress = ({ legSales, legMins }) => {
     };
 };
 
-const ensureRankRewardForCompletedPeriod = async (userId) => {
+const hasMetRankLegRequirements = (user, rank) => {
+    if (!user || !rank) {
+        return false;
+    }
+
+    const leg1Sales = parseFloat(user.leg_1_sales) || 0;
+    const leg2Sales = parseFloat(user.leg_2_sales) || 0;
+    const leg3Sales = parseFloat(user.leg_3_sales) || 0;
+    const leg4Sales = parseFloat(user.leg_4_sales) || 0;
+
+    return (
+        leg1Sales >= (parseFloat(rank.leg_1_min) || 0) &&
+        leg2Sales >= (parseFloat(rank.leg_2_min) || 0) &&
+        leg3Sales >= (parseFloat(rank.leg_3_min) || 0) &&
+        leg4Sales >= (parseFloat(rank.leg_4_min) || 0)
+    );
+};
+
+const ensureOneTimeRankReward = async (userId) => {
     const user = await User.findByPk(userId, {
-        attributes: ['id', 'current_rank', 'rank_achieved_date']
+        attributes: ['id', 'current_rank', 'leg_1_sales', 'leg_2_sales', 'leg_3_sales', 'leg_4_sales']
     });
 
     if (!user || !user.current_rank || user.current_rank === 'none') {
@@ -198,33 +207,47 @@ const ensureRankRewardForCompletedPeriod = async (userId) => {
         return { reward: null, created: false, eligible: false, reason: 'Active rank config not found' };
     }
 
-    const { period, periodStart } = getPreviousRewardPeriodMeta();
-    const achievedAt = user.rank_achieved_date ? new Date(user.rank_achieved_date) : null;
-
-    // Reward is created only after the full reward period is completed at this rank.
-    if (!achievedAt || achievedAt > periodStart) {
+    if (!hasMetRankLegRequirements(user, rank)) {
         return {
             reward: null,
             created: false,
             eligible: false,
-            reason: 'Rank period not yet fully completed',
-            rewardPeriod: period
+            reason: 'Current rank leg requirements not met'
         };
     }
 
-    const [reward, created] = await RankReward.findOrCreate({
+    // One-time rank reward: if any record already exists for the same user/rank,
+    // do not create a duplicate even if user gets downgraded and re-upgraded later.
+    const existingReward = await RankReward.findOne({
         where: {
             user_id: userId,
-            rank_id: rank.id,
-            reward_period: period
-        },
-        defaults: {
-            reward_amount: rank.monthly_reward,
-            status: 'pending'
+            rank_id: rank.id
         }
     });
 
-    return { reward, created, eligible: true, rewardPeriod: period };
+    if (existingReward) {
+        return {
+            reward: existingReward,
+            created: false,
+            eligible: true,
+            rewardPeriod: existingReward.reward_period
+        };
+    }
+
+    const reward = await RankReward.create({
+        user_id: userId,
+        rank_id: rank.id,
+        reward_period: ONE_TIME_RANK_REWARD_PERIOD,
+        reward_amount: rank.monthly_reward,
+        status: 'pending'
+    });
+
+    return {
+        reward,
+        created: true,
+        eligible: true,
+        rewardPeriod: reward.reward_period
+    };
 };
 
 /**
@@ -437,7 +460,7 @@ const recalculateUserRank = async (req, res) => {
         const rankUpdate = await updateUserRank(userId);
 
         let rewardIssued = null;
-        const rewardResult = await ensureRankRewardForCompletedPeriod(userId);
+        const rewardResult = await ensureOneTimeRankReward(userId);
         if (rewardResult.reward) {
             rewardIssued = {
                 id: rewardResult.reward.id,
@@ -766,6 +789,26 @@ const claimRankReward = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        const rewardRank = await Rank.findByPk(reward.rank_id, {
+            transaction
+        });
+
+        if (!rewardRank || rewardRank.status !== 'active') {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'Reward rank is not active' });
+        }
+
+        // Reward can only be claimed for the user's current rank when that rank's leg requirements are met.
+        if (user.current_rank !== rewardRank.rank_name) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'Reward can only be claimed for your current rank' });
+        }
+
+        if (!hasMetRankLegRequirements(user, rewardRank)) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'Current rank leg requirements are not met yet' });
+        }
+
         // Update reward status
         const claimedAt = new Date();
         await reward.update({
@@ -896,7 +939,7 @@ const processWeeklyRankRecalculation = async (req, res) => {
                     const rankUpdate = await updateUserRank(user.id);
 
                     // Create pending reward only after a full reward period at the current rank is completed.
-                    const rewardResult = await ensureRankRewardForCompletedPeriod(user.id);
+                    const rewardResult = await ensureOneTimeRankReward(user.id);
                     if (rewardResult.created) {
                         results.rewardsCreated++;
                     }

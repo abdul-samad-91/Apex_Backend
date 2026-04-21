@@ -5,8 +5,14 @@ const LockedCoinsEntry = require('../Models/lockedCoinsEntry.model');
 const ApexCoinRate = require('../Models/apexCoinRate.model');
 const Roi = require('../Models/roi.model');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { generateToken } = require('../utils/generateToken');
-const { generateOTP, sendOTPEmail } = require('../utils/sendEmail');
+const {
+    generateOTP,
+    sendOTPEmail,
+    sendPasswordResetOTPEmail
+} = require('../utils/sendEmail');
 const generateReferralCode = require('../utils/generateReferalCode');
 const { assignUserToLeg } = require('../utils/legAssignment');
 const {
@@ -17,6 +23,13 @@ const {
 } = require('./referralBonus.controller');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 const { createWalletLedgerEntry } = require('../utils/walletLedger.util');
+
+const PASSWORD_RESET_OTP_EXPIRY_MS = 10 * 60 * 1000;
+const PASSWORD_RESET_OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+const PASSWORD_RESET_MAX_ATTEMPTS = 5;
+const PASSWORD_RESET_SESSION_EXPIRY = '15m';
+
+const hashOtp = (otp) => crypto.createHash('sha256').update(String(otp)).digest('hex');
 
 // Create new user
 const createUser = async (req, res) => {
@@ -746,6 +759,180 @@ const resendOTP = async (req, res) => {
     } catch (error) {
         console.error('Error resending OTP:', error);
         res.status(500).json({ message: 'Error resending OTP', error: error.message });
+    }
+};
+
+// Forgot password: send OTP to email
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+        const genericMessage = 'If the account exists, an OTP has been sent to your email.';
+
+        const user = await User.scope('withPasswordResetOtp').findOne({
+            where: { email: normalizedEmail }
+        });
+
+        // Always return generic message to prevent account enumeration.
+        if (!user) {
+            return res.status(200).json({ message: genericMessage });
+        }
+
+        if (user.password_reset_otp_last_sent_at) {
+            const elapsedMs = Date.now() - new Date(user.password_reset_otp_last_sent_at).getTime();
+            if (elapsedMs < PASSWORD_RESET_OTP_RESEND_COOLDOWN_MS) {
+                const waitSeconds = Math.ceil((PASSWORD_RESET_OTP_RESEND_COOLDOWN_MS - elapsedMs) / 1000);
+                return res.status(429).json({
+                    message: `Please wait ${waitSeconds} seconds before requesting another OTP.`
+                });
+            }
+        }
+
+        const otp = generateOTP();
+        const otpHash = hashOtp(otp);
+        const otpExpiry = new Date(Date.now() + PASSWORD_RESET_OTP_EXPIRY_MS);
+
+        await user.update({
+            password_reset_otp_hash: otpHash,
+            password_reset_otp_expiry: otpExpiry,
+            password_reset_otp_attempts: 0,
+            password_reset_otp_last_sent_at: new Date()
+        });
+
+        const emailResult = await sendPasswordResetOTPEmail(user.email, otp, user.full_name);
+        if (!emailResult.success) {
+            return res.status(500).json({
+                message: 'Failed to send password reset OTP',
+                error: emailResult.error
+            });
+        }
+
+        return res.status(200).json({
+            message: genericMessage,
+            data: {
+                otpExpiresInSeconds: Math.floor(PASSWORD_RESET_OTP_EXPIRY_MS / 1000)
+            }
+        });
+    } catch (error) {
+        console.error('Error sending forgot-password OTP:', error);
+        return res.status(500).json({ message: 'Error processing forgot-password request', error: error.message });
+    }
+};
+
+// Forgot password: verify OTP and return reset session token
+const verifyForgotPasswordOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ message: 'Email and OTP are required' });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+
+        const user = await User.scope('withPasswordResetOtp').findOne({
+            where: { email: normalizedEmail }
+        });
+
+        if (!user || !user.password_reset_otp_hash || !user.password_reset_otp_expiry) {
+            return res.status(400).json({ message: 'Invalid OTP request. Please request a new OTP.' });
+        }
+
+        if (new Date(user.password_reset_otp_expiry) < new Date()) {
+            return res.status(400).json({ message: 'OTP has expired. Please request a new OTP.' });
+        }
+
+        if ((user.password_reset_otp_attempts || 0) >= PASSWORD_RESET_MAX_ATTEMPTS) {
+            return res.status(429).json({ message: 'Maximum OTP attempts reached. Please request a new OTP.' });
+        }
+
+        const isOtpValid = hashOtp(otp) === user.password_reset_otp_hash;
+        if (!isOtpValid) {
+            await user.update({
+                password_reset_otp_attempts: (user.password_reset_otp_attempts || 0) + 1
+            });
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+
+        await user.update({
+            password_reset_otp_hash: null,
+            password_reset_otp_expiry: null,
+            password_reset_otp_attempts: 0
+        });
+
+        const resetSessionToken = jwt.sign(
+            {
+                id: user.id,
+                email: user.email,
+                purpose: 'password_reset'
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: PASSWORD_RESET_SESSION_EXPIRY }
+        );
+
+        return res.status(200).json({
+            message: 'OTP verified successfully',
+            data: {
+                resetSessionToken,
+                expiresIn: PASSWORD_RESET_SESSION_EXPIRY
+            }
+        });
+    } catch (error) {
+        console.error('Error verifying forgot-password OTP:', error);
+        return res.status(500).json({ message: 'Error verifying forgot-password OTP', error: error.message });
+    }
+};
+
+// Forgot password: set new password after OTP verification
+const resetPassword = async (req, res) => {
+    try {
+        const { email, resetSessionToken, newPassword, confirmPassword } = req.body;
+
+        if (!email || !resetSessionToken || !newPassword || !confirmPassword) {
+            return res.status(400).json({ message: 'Email, resetSessionToken, newPassword and confirmPassword are required' });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: 'Passwords do not match' });
+        }
+
+        let payload;
+        try {
+            payload = jwt.verify(resetSessionToken, process.env.JWT_SECRET);
+        } catch {
+            return res.status(401).json({ message: 'Invalid or expired reset session token' });
+        }
+
+        if (payload.purpose !== 'password_reset') {
+            return res.status(401).json({ message: 'Invalid reset session token' });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+        if (payload.email !== normalizedEmail) {
+            return res.status(401).json({ message: 'Token email mismatch' });
+        }
+
+        const user = await User.scope('withPasswordResetOtp').scope('withPassword').findByPk(payload.id);
+        if (!user || user.email !== normalizedEmail) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.password = newPassword;
+        user.password_reset_otp_hash = null;
+        user.password_reset_otp_expiry = null;
+        user.password_reset_otp_attempts = 0;
+        user.password_reset_otp_last_sent_at = null;
+        await user.save();
+
+        return res.status(200).json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        return res.status(500).json({ message: 'Error resetting password', error: error.message });
     }
 };
 
@@ -1778,6 +1965,9 @@ module.exports = {
     updatePassword,
     verifyOTP,
     resendOTP,
+    forgotPassword,
+    verifyForgotPasswordOTP,
+    resetPassword,
     purchaseApexCoins,
     lockApexCoins,
     requestUnlockApexCoins,

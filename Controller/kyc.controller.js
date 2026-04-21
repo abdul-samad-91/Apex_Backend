@@ -368,6 +368,13 @@ const reviewKycRequest = async (req, res) => {
             return res.status(404).json({ message: 'KYC request not found' });
         }
 
+        if (kyc.status !== 'under_review') {
+            await transaction.rollback();
+            return res.status(409).json({
+                message: `KYC request is already ${kyc.status.replace('_', ' ')} and cannot be reviewed again`
+            });
+        }
+
         const user = await User.findByPk(kyc.user_id, { transaction });
         if (!user) {
             await transaction.rollback();

@@ -230,6 +230,26 @@ User.init(
             type: DataTypes.DATE,
             allowNull: true
         },
+        password_reset_otp_hash: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            defaultValue: null
+        },
+        password_reset_otp_expiry: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
+        password_reset_otp_attempts: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
+        password_reset_otp_last_sent_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
         referral_code: {
             type: DataTypes.STRING(20),
             unique: true
@@ -374,7 +394,17 @@ User.init(
             { fields: ['role'] }
         ],
         defaultScope: {
-            attributes: { exclude: ['password', 'otp', 'otp_expiry'] }
+            attributes: {
+                exclude: [
+                    'password',
+                    'otp',
+                    'otp_expiry',
+                    'password_reset_otp_hash',
+                    'password_reset_otp_expiry',
+                    'password_reset_otp_attempts',
+                    'password_reset_otp_last_sent_at'
+                ]
+            }
         },
         scopes: {
             withPassword: {
@@ -383,8 +413,28 @@ User.init(
             withOtp: {
                 attributes: { include: ['otp', 'otp_expiry'] }
             },
+            withPasswordResetOtp: {
+                attributes: {
+                    include: [
+                        'password_reset_otp_hash',
+                        'password_reset_otp_expiry',
+                        'password_reset_otp_attempts',
+                        'password_reset_otp_last_sent_at'
+                    ]
+                }
+            },
             withAll: {
-                attributes: { include: ['password', 'otp', 'otp_expiry'] }
+                attributes: {
+                    include: [
+                        'password',
+                        'otp',
+                        'otp_expiry',
+                        'password_reset_otp_hash',
+                        'password_reset_otp_expiry',
+                        'password_reset_otp_attempts',
+                        'password_reset_otp_last_sent_at'
+                    ]
+                }
             }
         }
     }
