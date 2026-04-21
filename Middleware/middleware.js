@@ -84,6 +84,26 @@ const requestLogger = (req, res, next) => {
 // Error handling middleware
 const errorHandler = (err, req, res, next) => {
     console.error(err.stack);
+
+    if (err?.name === 'MulterError') {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({
+                message: 'File too large. Maximum allowed size is 5MB.'
+            });
+        }
+
+        if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+            return res.status(400).json({
+                message: `Unexpected file field "${err.field}". Use frontImage/backImage (or idFrontImage/idBackImage).`
+            });
+        }
+
+        return res.status(400).json({ message: err.message });
+    }
+
+    if (err?.message === 'Only image files are allowed!') {
+        return res.status(400).json({ message: err.message });
+    }
     
     res.status(err.status || 500).json({
         message: err.message || 'Internal Server Error',

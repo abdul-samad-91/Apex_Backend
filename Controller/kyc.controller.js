@@ -6,6 +6,33 @@ const uploadToCloudinary = require('../utils/uploadToCloudinary');
 
 const ALLOWED_ADMIN_STATUSES = ['verified', 'rejected'];
 const ALLOWED_FILTER_STATUSES = ['under_review', 'verified', 'rejected'];
+const KYC_FRONT_IMAGE_FIELDS = [
+    'frontImage',
+    'idFrontImage',
+    'idFront',
+    'front',
+    'front_image',
+    'id_front_image'
+];
+const KYC_BACK_IMAGE_FIELDS = [
+    'backImage',
+    'idBackImage',
+    'idBack',
+    'back',
+    'back_image',
+    'id_back_image'
+];
+
+const getFirstUploadedFile = (files, fieldNames) => {
+    for (const fieldName of fieldNames) {
+        const candidate = files?.[fieldName];
+        if (Array.isArray(candidate) && candidate.length > 0) {
+            return candidate[0];
+        }
+    }
+
+    return null;
+};
 
 const formatKyc = (kyc) => ({
     id: kyc.id,
@@ -97,9 +124,14 @@ const submitKyc = async (req, res) => {
 
     try {
         const userId = req.user?.id;
-        const { fullName, idPassportNumber } = req.body;
-        const frontImage = req.files?.frontImage?.[0];
-        const backImage = req.files?.backImage?.[0];
+        const fullName = req.body?.fullName ?? req.body?.full_name;
+        const idPassportNumber =
+            req.body?.idPassportNumber ??
+            req.body?.id_passport_number ??
+            req.body?.idNumber ??
+            req.body?.id_number;
+        const frontImage = getFirstUploadedFile(req.files, KYC_FRONT_IMAGE_FIELDS);
+        const backImage = getFirstUploadedFile(req.files, KYC_BACK_IMAGE_FIELDS);
 
         if (!userId) {
             await transaction.rollback();
