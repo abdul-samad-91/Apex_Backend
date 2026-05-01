@@ -341,14 +341,45 @@ const calculateUserRank = async (userId) => {
             const legSales = await calculateLegSales(userId, requirementData.countingDepth);
             totalSales = legSales.total_sales;
 
-            // Determine rank based on per-leg minimums
-            newRank = await determineRankByLegMinimums(
-                legSales.leg_1_sales,
-                legSales.leg_2_sales,
-                legSales.leg_3_sales,
-                legSales.leg_4_sales
-            );
-            newRankLevel = RANK_LEVELS[newRank] || 0;
+                // Determine rank progression.
+                // If user already has a current rank and they have completed that rank's leg minima,
+                // promote them to the next rank (even if they have not yet met the next rank minima).
+                const currentRankName = user.current_rank || 'none';
+                let promotedByCompletion = false;
+
+                if (currentRankName && currentRankName !== 'none') {
+                    const currentRankConfig = await Rank.findOne({ where: { rank_name: currentRankName, status: 'active' } });
+                    if (currentRankConfig) {
+                        const meetsCurrentRankMins =
+                            legSales.leg_1_sales >= (parseFloat(currentRankConfig.leg_1_min) || 0) &&
+                            legSales.leg_2_sales >= (parseFloat(currentRankConfig.leg_2_min) || 0) &&
+                            legSales.leg_3_sales >= (parseFloat(currentRankConfig.leg_3_min) || 0) &&
+                            legSales.leg_4_sales >= (parseFloat(currentRankConfig.leg_4_min) || 0);
+
+                        if (meetsCurrentRankMins) {
+                            // Promote to next rank level if exists
+                            const currentLevel = RANK_LEVELS[currentRankName] || 0;
+                            const nextLevel = currentLevel + 1;
+                            const nextRankName = Object.keys(RANK_LEVELS).find((r) => RANK_LEVELS[r] === nextLevel);
+                            if (nextRankName) {
+                                newRank = nextRankName;
+                                newRankLevel = RANK_LEVELS[newRank] || 0;
+                                promotedByCompletion = true;
+                            }
+                        }
+                    }
+                }
+
+                // If not promoted by completing current rank, determine rank based on per-leg minimums
+                if (!promotedByCompletion) {
+                    newRank = await determineRankByLegMinimums(
+                        legSales.leg_1_sales,
+                        legSales.leg_2_sales,
+                        legSales.leg_3_sales,
+                        legSales.leg_4_sales
+                    );
+                    newRankLevel = RANK_LEVELS[newRank] || 0;
+                }
 
             // Update user's leg sales
             await user.update({
@@ -412,12 +443,39 @@ const updateUserRank = async (userId) => {
 
         // If rank changed, create history record
         if (currentRank !== newRank) {
+            // Re-fetch user to get updated leg sales written by calculateUserRank
+            const updatedUser = await User.findByPk(userId);
+
             // Determine change type
             const currentRankLevel = RANK_LEVELS[currentRank] || 0;
             const newRankLevel = RANK_LEVELS[newRank] || 0;
-            const changeType = newRankLevel > currentRankLevel ? 'upgrade' : 'downgrade';
+            let changeType = newRankLevel > currentRankLevel ? 'upgrade' : 'downgrade';
 
-            // Update user's current rank
+            // Prevent immediate downgrade back to previous rank if the user still meets
+            // the leg minima of the previous rank that caused the promotion.
+            if (changeType === 'downgrade' && currentRankLevel > 0) {
+                const prevLevel = currentRankLevel - 1;
+                const prevRankName = Object.keys(RANK_LEVELS).find((r) => RANK_LEVELS[r] === prevLevel);
+                if (prevRankName && prevRankName !== 'none') {
+                    const prevRankConfig = await Rank.findOne({ where: { rank_name: prevRankName, status: 'active' } });
+                    if (prevRankConfig) {
+                        const meetsPrevRankMins =
+                            (parseFloat(updatedUser.leg_1_sales) || 0) >= (parseFloat(prevRankConfig.leg_1_min) || 0) &&
+                            (parseFloat(updatedUser.leg_2_sales) || 0) >= (parseFloat(prevRankConfig.leg_2_min) || 0) &&
+                            (parseFloat(updatedUser.leg_3_sales) || 0) >= (parseFloat(prevRankConfig.leg_3_min) || 0) &&
+                            (parseFloat(updatedUser.leg_4_sales) || 0) >= (parseFloat(prevRankConfig.leg_4_min) || 0);
+
+                        if (meetsPrevRankMins) {
+                            // Keep current rank (treat as no change)
+                            return { changed: false };
+                        }
+                    }
+                }
+            }
+
+            // Proceed with update
+            changeType = newRankLevel > currentRankLevel ? 'upgrade' : 'downgrade';
+
             const achievedDate = changeType === 'upgrade' ? new Date() : user.rank_achieved_date;
             await user.update({
                 current_rank: newRank,

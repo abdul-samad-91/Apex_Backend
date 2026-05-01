@@ -1,9 +1,22 @@
 const nodemailer = require('nodemailer');
 
 // Create transporter
+// const createTransporter = () => {
+//   return nodemailer.createTransport({
+//     service: process.env.EMAIL_SERVICE || 'gmail',
+//     auth: {
+//       user: process.env.EMAIL_USER,
+//       pass: process.env.EMAIL_PASS
+//     }
+//   });
+// };
+
+// Create transporter (UPDATED FOR HOSTINGER)
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+    host: process.env.EMAIL_HOST,   // smtp.hostinger.com
+    port: process.env.EMAIL_PORT,   // 465 or 587
+    secure: true,                   // true for 465
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
@@ -19,14 +32,14 @@ const generateOTP = () => {
 // Send OTP email
 const sendOTPEmail = async (email, otp, fullName) => {
   try {
-    console.log('📧 Attempting to send email...');
-    console.log('Email config:', {
-      service: process.env.EMAIL_SERVICE,
-      user: process.env.EMAIL_USER,
-      hasPassword: !!process.env.EMAIL_PASS
-    });
-    console.log('Sending to:', email);
-    console.log('OTP:', otp);
+    // console.log('📧 Attempting to send email...');
+    // console.log('Email config:', {
+    //   service: process.env.EMAIL_SERVICE,
+    //   user: process.env.EMAIL_USER,
+    //   hasPassword: !!process.env.EMAIL_PASS
+    // });
+    // console.log('Sending to:', email);
+    // console.log('OTP:', otp);
 
     const transporter = createTransporter();
 
@@ -51,11 +64,11 @@ const sendOTPEmail = async (email, otp, fullName) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent successfully:', info.messageId);
+    // console.log('✅ Email sent successfully:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Error sending email:', error);
-    console.error('Error details:', error.message);
+    // console.error('❌ Error sending email:', error);
+    // console.error('Error details:', error.message);
     return { success: false, error: error.message };
   }
 };

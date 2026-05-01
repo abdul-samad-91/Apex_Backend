@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../Middleware/upload.middleware');
 const { protect, isAdmin } = require('../Middleware/authorization.middleware');
+const { authIpLimiterMiddleware } = require('../Middleware/rateLimiter');
 const {
     getMyKycStatus,
     submitKyc,
@@ -36,6 +37,7 @@ router.get('/myStatus', protect, getMyKycStatus);
 router.post(
     '/submit',
     protect,
+    authIpLimiterMiddleware,
     upload.fields(KYC_UPLOAD_FIELDS),
     submitKyc
 );

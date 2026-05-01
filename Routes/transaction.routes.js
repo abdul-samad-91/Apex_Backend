@@ -5,9 +5,11 @@ const {
 } = require('../Controller/transaction.controller');
 const {protect , isAdmin} = require("../Middleware/authorization.middleware");
 const upload = require('../Middleware/upload.middleware');
+const { transactionLimiterMiddleware } = require('../Middleware/rateLimiter');
 
 // Create new transaction (with file upload)
-router.post('/createTransaction', protect, upload.single('screenshot'), createTransaction);
+// limit transaction creation to prevent automated abuse
+router.post('/createTransaction', protect, transactionLimiterMiddleware, upload.single('screenshot'), createTransaction);
 
 // Get all transactions (admin only)
 router.get('/getAllTransactions', protect, getAllTransactions);

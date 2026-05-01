@@ -37,22 +37,23 @@ const {protect , isAdmin} = require("../Middleware/authorization.middleware")
 
 
 const upload = require('../Middleware/upload.middleware');
+const { authIpLimiterMiddleware, claimsLimiterMiddleware, otpLimiterMiddleware } = require('../Middleware/rateLimiter');
 // Create new user (with profile picture upload)
-router.post('/register', upload.single('profilePicture'), createUser);
+router.post('/register', authIpLimiterMiddleware, upload.single('profilePicture'), createUser);
 
 // Verify OTP
-router.post('/verify-otp', verifyOTP);
+router.post('/verify-otp', otpLimiterMiddleware, verifyOTP);
 
 // Resend OTP
-router.post('/resend-otp', resendOTP);
+router.post('/resend-otp', otpLimiterMiddleware, resendOTP);
 
-// Forgot password flow
-router.post('/forgot-password', forgotPassword);
-router.post('/verify-forgot-password-otp', verifyForgotPasswordOTP);
-router.post('/reset-password', resetPassword);
+// Forgot password flow (rate-limited by IP)
+router.post('/forgot-password', authIpLimiterMiddleware, forgotPassword);
+router.post('/verify-forgot-password-otp', authIpLimiterMiddleware, verifyForgotPasswordOTP);
+router.post('/reset-password', authIpLimiterMiddleware, resetPassword);
 
-// authenticate user/admin
-router.post ('/auth' , login)
+// authenticate user/admin (rate-limited by IP)
+router.post ('/auth', authIpLimiterMiddleware, login)
 
 // Get all users (must be before /:id route)
 router.get('/getAllUsers', protect, isAdmin , getAllUsers);
@@ -61,19 +62,19 @@ router.get('/getAllUsers', protect, isAdmin , getAllUsers);
 router.put('/:id/password', protect, updatePassword);
 
 // Purchase ApexCoins (user only)
-router.post('/purchaseApex', protect, purchaseApexCoins);
+router.post('/purchaseApex', protect, claimsLimiterMiddleware, purchaseApexCoins);
 
 // Lock ApexCoins for 14 months to earn ROI (user only)
-router.post('/lockApexCoins', protect, lockApexCoins);
+router.post('/lockApexCoins', protect, claimsLimiterMiddleware, lockApexCoins);
 
 // Request unlock of locked ApexCoins (user only)
-router.post('/requestUnlock', protect, requestUnlockApexCoins);
+router.post('/requestUnlock', protect, claimsLimiterMiddleware, requestUnlockApexCoins);
 
 // User: Get pending unlock request status and processing time remaining
 router.get('/myUnlockRequestStatus', protect, getMyUnlockRequestStatus);
 
 // Claim accumulated daily profits (user only)
-router.post('/claimDailyProfits', protect, claimDailyProfits);
+router.post('/claimDailyProfits', protect, claimsLimiterMiddleware, claimDailyProfits);
 
 // Admin: Get all pending unlock requests
 router.get('/pendingUnlocks', protect, isAdmin, getPendingUnlockRequests);
@@ -99,13 +100,13 @@ router.get('/referralStats', protect, getReferralStats);
 router.get('/unclaimedBonuses', protect, getUnclaimedBonuses);
 
 // Claim bonuses (transfer to account balance)
-router.post('/claimBonuses', protect, claimBonuses);
+router.post('/claimBonuses', protect, claimsLimiterMiddleware, claimBonuses);
 
 // Get available downchain profit shares (view claimable amount)
 router.get('/availableDownchainProfitShares', protect, getAvailableDownchainProfitShares);
 
 // Claim downchain profit shares (independent of when downchain users claim)
-router.post('/claimDownchainProfitShares', protect, claimDownchainProfitShares);
+router.post('/claimDownchainProfitShares', protect, claimsLimiterMiddleware, claimDownchainProfitShares);
 
 // ======================================================
 

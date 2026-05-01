@@ -187,37 +187,77 @@ const hasMetRankLegRequirements = (user, rank) => {
     );
 };
 
-const ensureOneTimeRankReward = async (userId) => {
+const formatRewardIssued = (rewardResult) => {
+    if (!rewardResult || !rewardResult.reward) {
+        return null;
+    }
+
+    return {
+        id: rewardResult.reward.id,
+        rewardPeriod: rewardResult.reward.reward_period,
+        amount: parseFloat(rewardResult.reward.reward_amount),
+        status: rewardResult.reward.status,
+        created: rewardResult.created
+    };
+};
+
+// Create a one-time pending rank reward for a specific rank name (or current_rank by default).
+// Returns the created/existing reward and metadata.
+const ensureOneTimeRankReward = async (userId, forRankName = null, options = {}) => {
+    const { allowHistoricalAchievement = false } = options;
+
     const user = await User.findByPk(userId, {
         attributes: ['id', 'current_rank', 'leg_1_sales', 'leg_2_sales', 'leg_3_sales', 'leg_4_sales']
     });
 
-    if (!user || !user.current_rank || user.current_rank === 'none') {
-        return { reward: null, created: false, eligible: false, reason: 'No active rank' };
+    if (!user) {
+        return { reward: null, created: false, eligible: false, reason: 'User not found' };
+    }
+
+    const targetRankName = forRankName || user.current_rank;
+    if (!targetRankName || targetRankName === 'none') {
+        return { reward: null, created: false, eligible: false, reason: 'No active rank specified' };
     }
 
     const rank = await Rank.findOne({
         where: {
-            rank_name: user.current_rank,
+            rank_name: targetRankName,
             status: 'active'
         }
     });
 
     if (!rank) {
-        return { reward: null, created: false, eligible: false, reason: 'Active rank config not found' };
+        return { reward: null, created: false, eligible: false, reason: 'Rank config not found' };
     }
 
-    if (!hasMetRankLegRequirements(user, rank)) {
+    // Verify eligibility either by current leg minima or historical rank achievement.
+    const meetsLegRequirementsNow = hasMetRankLegRequirements(user, rank);
+    let achievedHistorically = false;
+
+    if (!meetsLegRequirementsNow && allowHistoricalAchievement) {
+        const achievementRecord = await RankHistory.findOne({
+            where: {
+                user_id: userId,
+                new_rank: targetRankName,
+                change_type: 'upgrade'
+            },
+            attributes: ['id'],
+            order: [['changed_at', 'DESC'], ['created_at', 'DESC']]
+        });
+
+        achievedHistorically = Boolean(achievementRecord);
+    }
+
+    if (!meetsLegRequirementsNow && !achievedHistorically) {
         return {
             reward: null,
             created: false,
             eligible: false,
-            reason: 'Current rank leg requirements not met'
+            reason: `Eligibility not met for rank ${targetRankName}`
         };
     }
 
-    // One-time rank reward: if any record already exists for the same user/rank,
-    // do not create a duplicate even if user gets downgraded and re-upgraded later.
+    // Prevent duplicate reward creation for same user and rank.
     const existingReward = await RankReward.findOne({
         where: {
             user_id: userId,
@@ -248,6 +288,27 @@ const ensureOneTimeRankReward = async (userId) => {
         eligible: true,
         rewardPeriod: reward.reward_period
     };
+};
+
+// Backfill helper for users who were already upgraded but missed reward creation
+// for the most recently completed rank.
+const ensureMostRecentCompletedRankReward = async (userId) => {
+    const latestUpgrade = await RankHistory.findOne({
+        where: {
+            user_id: userId,
+            change_type: 'upgrade'
+        },
+        attributes: ['previous_rank'],
+        order: [['changed_at', 'DESC'], ['created_at', 'DESC']]
+    });
+
+    const completedRankName = latestUpgrade?.previous_rank;
+
+    if (!completedRankName || completedRankName === 'none') {
+        return { reward: null, created: false, eligible: false, reason: 'No completed rank found in history' };
+    }
+
+    return ensureOneTimeRankReward(userId, completedRankName, { allowHistoricalAchievement: true });
 };
 
 /**
@@ -459,17 +520,21 @@ const recalculateUserRank = async (req, res) => {
         // Update the user's rank
         const rankUpdate = await updateUserRank(userId);
 
-        let rewardIssued = null;
-        const rewardResult = await ensureOneTimeRankReward(userId);
-        if (rewardResult.reward) {
-            rewardIssued = {
-                id: rewardResult.reward.id,
-                rewardPeriod: rewardResult.reward.reward_period,
-                amount: parseFloat(rewardResult.reward.reward_amount),
-                status: rewardResult.reward.status,
-                created: rewardResult.created
-            };
+        let rewardResult = null;
+        // If user upgraded, create the reward for the completed (previous) rank.
+        if (rankUpdate.changed && rankUpdate.changeType === 'upgrade') {
+            rewardResult = await ensureOneTimeRankReward(userId, rankUpdate.previousRank);
+        } else {
+            rewardResult = await ensureOneTimeRankReward(userId);
+
+            // If no reward can be issued for the unchanged current rank,
+            // backfill the most recently completed rank reward from history.
+            if (!rewardResult.reward) {
+                rewardResult = await ensureMostRecentCompletedRankReward(userId);
+            }
         }
+
+        const rewardIssued = formatRewardIssued(rewardResult);
 
         // Check for downgrade warning
         const warning = await checkRankDowngradeWarning(userId);
@@ -569,24 +634,46 @@ const getUserLegs = async (req, res) => {
         const nextRankName = Object.keys(RANK_LEVELS).find(
             (rankName) => RANK_LEVELS[rankName] === currentRankLevel + 1
         );
-        const targetRankName = nextRankName || currentRankName;
+        // const targetRankName = nextRankName || currentRankName;
+        // let targetRank = null;
+        // if (targetRankName && targetRankName !== 'none') {
+        //     targetRank = await Rank.findOne({
+        //         where: {
+        //             rank_name: currentRankName,
+        //             status: 'active'
+        //         }
+        //     });
+        // }
 
-        let targetRank = null;
-        if (targetRankName && targetRankName !== 'none') {
-            targetRank = await Rank.findOne({
-                where: {
-                    rank_name: targetRankName,
-                    status: 'active'
-                }
-            });
+        let currentRankData = null;
+        let nextRankData = null;
+
+        // current rank → for requirements
+        if (currentRankName && currentRankName !== 'none') {
+        currentRankData = await Rank.findOne({
+            where: {
+                rank_name: currentRankName,
+                status: 'active'
+            }
+        });
         }
 
-        const requiredByLeg = targetRank
+        // next rank → for display
+        if (nextRankName) {
+        nextRankData = await Rank.findOne({
+            where: {
+            rank_name: nextRankName,
+            status: 'active'
+            }
+        });
+        }
+
+        const requiredByLeg = currentRankData
             ? [
-                  parseFloat(targetRank.leg_1_min) || 0,
-                  parseFloat(targetRank.leg_2_min) || 0,
-                  parseFloat(targetRank.leg_3_min) || 0,
-                  parseFloat(targetRank.leg_4_min) || 0
+                  parseFloat(currentRankData.leg_1_min) || 0,
+                  parseFloat(currentRankData.leg_2_min) || 0,
+                  parseFloat(currentRankData.leg_3_min) || 0,
+                  parseFloat(currentRankData.leg_4_min) || 0
               ]
             : [0, 0, 0, 0];
 
@@ -620,10 +707,10 @@ const getUserLegs = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            targetRankForLegCompletion: targetRank
+            targetRankForLegCompletion: (nextRankData || currentRankData)
                 ? {
-                      rankName: targetRank.rank_name,
-                      rankLevel: targetRank.rank_level,
+                      rankName: (nextRankData || currentRankData).rank_name,
+                      rankLevel: (nextRankData || currentRankData).rank_level,
                       basedOn: nextRankName ? 'next_rank_progression' : 'current_rank_maintenance'
                   }
                 : null,
@@ -798,16 +885,9 @@ const claimRankReward = async (req, res) => {
             return res.status(400).json({ message: 'Reward rank is not active' });
         }
 
-        // Reward can only be claimed for the user's current rank when that rank's leg requirements are met.
-        if (user.current_rank !== rewardRank.rank_name) {
-            await transaction.rollback();
-            return res.status(400).json({ message: 'Reward can only be claimed for your current rank' });
-        }
-
-        if (!hasMetRankLegRequirements(user, rewardRank)) {
-            await transaction.rollback();
-            return res.status(400).json({ message: 'Current rank leg requirements are not met yet' });
-        }
+        // Allow claiming of a pending rank reward that belongs to the user even if
+        // the user has since been upgraded. The reward is created only when the
+        // rank's leg requirements were met, so we trust the existing pending record.
 
         // Update reward status
         const claimedAt = new Date();
@@ -938,10 +1018,23 @@ const processWeeklyRankRecalculation = async (req, res) => {
                     // Recalculate rank.
                     const rankUpdate = await updateUserRank(user.id);
 
-                    // Create pending reward only after a full reward period at the current rank is completed.
-                    const rewardResult = await ensureOneTimeRankReward(user.id);
-                    if (rewardResult.created) {
-                        results.rewardsCreated++;
+                    // Create pending reward for the completed rank when user upgraded,
+                    // otherwise attempt to create reward for current rank.
+                    if (rankUpdate.changed && rankUpdate.changeType === 'upgrade') {
+                        const rewardResult = await ensureOneTimeRankReward(user.id, rankUpdate.previousRank);
+                        if (rewardResult.created) {
+                            results.rewardsCreated++;
+                        }
+                    } else {
+                        let rewardResult = await ensureOneTimeRankReward(user.id);
+
+                        if (!rewardResult.reward) {
+                            rewardResult = await ensureMostRecentCompletedRankReward(user.id);
+                        }
+
+                        if (rewardResult.created) {
+                            results.rewardsCreated++;
+                        }
                     }
 
                     // Check for downgrade warning.

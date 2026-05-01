@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require('../Models/user.model');
 const { generateToken } = require('../utils/generateToken');
+const { consumeAuthIp, consumeAuthAccount } = require('../Middleware/rateLimiter');
 
 // Login user
 const login = async (req, res) => {
@@ -14,7 +15,7 @@ const login = async (req, res) => {
                 message: 'Please provide username and password'
             });
         }
-        console.log("details", email, password);
+        // console.log("details", email, password);
         
         // Find user with password included
         const user = await User.scope('withPassword').findOne({
@@ -22,6 +23,16 @@ const login = async (req, res) => {
         });
         
         if (!user || !user.is_active) {
+            // Count failed attempt (IP + account when available)
+            try {
+                await consumeAuthIp(req);
+                if (user) await consumeAuthAccount(user.email);
+            } catch (rl) {
+                const retrySecs = Math.ceil((rl.msBeforeNext || 0) / 1000) || 1;
+                res.set('Retry-After', String(retrySecs));
+                return res.status(429).json({ success: false, message: 'Too many requests. Try again later.' });
+            }
+
             return res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
@@ -37,6 +48,16 @@ const login = async (req, res) => {
         isPasswordMatch = await user.comparePassword(password);
         }
         if (!isPasswordMatch) {
+            // Count failed login for IP and account
+            try {
+                await consumeAuthIp(req);
+                if (user) await consumeAuthAccount(user.email);
+            } catch (rl) {
+                const retrySecs = Math.ceil((rl.msBeforeNext || 0) / 1000) || 1;
+                res.set('Retry-After', String(retrySecs));
+                return res.status(429).json({ success: false, message: 'Too many requests. Try again later.' });
+            }
+
             return res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
@@ -64,7 +85,7 @@ const login = async (req, res) => {
             }
         });
     } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).json({
             success: false,
             message: error.message

@@ -10,19 +10,20 @@ const {
     updateWithdrawalStatus
 } = require('../Controller/withdrawal.controller');
 const { protect, isAdmin } = require('../Middleware/authorization.middleware');
+const { withdrawalLimiterMiddleware } = require('../Middleware/rateLimiter');
 
 // User routes
 // Request a new withdrawal
-router.post('/requestWithdrawal', protect, requestWithdrawal);
+router.post('/requestWithdrawal', protect, withdrawalLimiterMiddleware, requestWithdrawal);
 
 // Verify withdrawal request OTP
-router.post('/verify-otp', protect, verifyWithdrawalOTP);
+router.post('/verify-otp', protect, withdrawalLimiterMiddleware, verifyWithdrawalOTP);
 
 // Resend withdrawal request OTP
-router.post('/resend-otp', protect, resendWithdrawalOTP);
+router.post('/resend-otp', protect, withdrawalLimiterMiddleware, resendWithdrawalOTP);
 
 // Get user's withdrawal history
-router.get('/myWithdrawals', protect, getUserWithdrawals);
+router.get('/myWithdrawals', protect, withdrawalLimiterMiddleware, getUserWithdrawals);
 
 // Admin routes
 // Get all withdrawals

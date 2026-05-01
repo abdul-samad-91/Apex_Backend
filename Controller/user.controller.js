@@ -208,7 +208,7 @@ const createUser = async (req, res) => {
         }
 
         const token = generateToken(user.id, user.role);
-        console.log(token);
+        // console.log(token);
         
         res.status(201).json({
             message: isRootUser
@@ -229,7 +229,7 @@ const createUser = async (req, res) => {
         });
     } catch (error) {
         await transaction.rollback();
-        console.log(error);
+        // console.log(error);
         res.status(500).json({
             message: 'Error creating user',
             error: error.message
@@ -1197,7 +1197,7 @@ const lockApexCoins = async (req, res) => {
         // Distribute one-time bonus to upline (6 levels) in the same transaction.
         // If this fails, staking is rolled back to prevent missing bonus allocations.
         const bonusResult = await distributeStakingBonus(userId, lockAmount, newLockEntry.id, transaction);
-        console.log('Bonus distribution result:', bonusResult);
+        // console.log('Bonus distribution result:', bonusResult);
 
         if (!bonusResult.success) {
             await transaction.rollback();

@@ -2,11 +2,11 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
 // Database connection configuration
-console.log('Database Configuration:');
-console.log('Host:', process.env.MYSQL_HOST);
-console.log('Database:', process.env.MYSQL_DATABASE);
-console.log('User:', process.env.MYSQL_USER);
-console.log('password:', process.env.MYSQL_PASSWORD);
+// console.log('Database Configuration:');
+// console.log('Host:', process.env.MYSQL_HOST);
+// console.log('Database:', process.env.MYSQL_DATABASE);
+// console.log('User:', process.env.MYSQL_USER);
+// console.log('password:', process.env.MYSQL_PASSWORD);
 // Note: Avoid logging sensitive information like passwords in production
 const sequelize = new Sequelize(
     process.env.MYSQL_DATABASE || 'apex_db',
@@ -26,11 +26,10 @@ const connectDB = async () => {
         
         // Sync all models (in production, use migrations instead)
         if (process.env.NODE_ENV !== 'production') {
-            // await sequelize.sync({ alter: true });
             console.log('Database synchronized');
         }
     } catch (error) {
-        console.error('MySQL connection error:', error);
+        // console.error('MySQL connection error:', error);
         process.exit(1);
     }
 };

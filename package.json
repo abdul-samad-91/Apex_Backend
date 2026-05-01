@@ -27,6 +27,8 @@
     "nodemailer": "^8.0.4",
     "nodemon": "^3.1.11",
     "sequelize": "^6.37.7",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "ioredis": "^5.3.2",
+    "rate-limiter-flexible": "^2.4.0"
   }
 }

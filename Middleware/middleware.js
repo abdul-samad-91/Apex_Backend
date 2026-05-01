@@ -83,7 +83,7 @@ const requestLogger = (req, res, next) => {
 
 // Error handling middleware
 const errorHandler = (err, req, res, next) => {
-    console.error(err.stack);
+    // console.error(err.stack);
 
     if (err?.name === 'MulterError') {
         if (err.code === 'LIMIT_FILE_SIZE') {

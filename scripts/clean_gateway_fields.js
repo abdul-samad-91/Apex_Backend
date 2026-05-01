@@ -24,12 +24,12 @@ async function cleanGatewayFields() {
 
   // Get all gateways first
   const allGateways = await Gateway.find({});
-  console.log(`Found ${allGateways.length} gateway documents.`);
+  // console.log(`Found ${allGateways.length} gateway documents.`);
 
   // Use direct MongoDB collection update to force removal
   const result = await Gateway.collection.updateMany({}, { $unset: unsetFields });
-  console.log(`Matched ${result.matchedCount} documents.`);
-  console.log(`Modified ${result.modifiedCount} documents.`);
+  // console.log(`Matched ${result.matchedCount} documents.`);
+  // console.log(`Modified ${result.modifiedCount} documents.`);
 
   // Verify the cleanup
   const remainingWithOldFields = await Gateway.find({

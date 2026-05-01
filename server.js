@@ -21,6 +21,7 @@
         errorHandler, 
         notFound 
     } = require('./Middleware/middleware');
+    const { globalRateLimiterMiddleware } = require('./Middleware/rateLimiter');
     const path = require("path")
 
 
@@ -65,6 +66,9 @@
     }));
     app.use(requestLogger);
     app.use(express.static(path.join(__dirname ,"public")))
+
+    // Apply conservative global rate limiter to all API routes
+    app.use('/api', globalRateLimiterMiddleware);
 
     // Initialize database connection and sync models
     const initializeDB = async () => {

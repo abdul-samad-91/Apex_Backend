@@ -12,22 +12,22 @@ async function checkUserActiveStatus() {
     // Find all users and their isActive status
     const allUsers = await mongoose.connection.db.collection('users').find({}).toArray();
     
-    console.log(`\n📊 Database Status Check - Total Users: ${allUsers.length}\n`);
+    // console.log(`\n📊 Database Status Check - Total Users: ${allUsers.length}\n`);
     
     const activeUsers = allUsers.filter(user => user.isActive === true);
     const inactiveUsers = allUsers.filter(user => user.isActive === false);
     
-    console.log(`✅ Active Users: ${activeUsers.length}`);
-    console.log(`❌ Inactive Users: ${inactiveUsers.length}\n`);
+    // console.log(`✅ Active Users: ${activeUsers.length}`);
+    // console.log(`❌ Inactive Users: ${inactiveUsers.length}\n`);
     
     if (inactiveUsers.length > 0) {
-      console.log(`Inactive Users List:`);
+      // console.log(`Inactive Users List:`);
       inactiveUsers.forEach((user, index) => {
         console.log(`   ${index + 1}. ${user.fullName} (${user.email}) - isActive: ${user.isActive}`);
       });
     }
     
-    console.log(`\nAll Users Status:`);
+    // console.log(`\nAll Users Status:`);
     allUsers.forEach((user, index) => {
       const status = user.isActive ? '✅' : '❌';
       console.log(`   ${status} ${user.fullName} (${user.email}) - isActive: ${user.isActive}`);

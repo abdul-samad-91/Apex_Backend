@@ -18,7 +18,7 @@ const createTransaction = async (req, res) => {
             status
         } = req.body;
 
-        console.log('req.user:', req.user); // Debug log
+        // // console.log('req.user:', req.user); // Debug log
         const userId = req.user?.id; // Get user ID from authenticated user
 
         if (!userId) {
@@ -92,7 +92,7 @@ const createTransaction = async (req, res) => {
         });
     } catch (error) {
         await dbTransaction.rollback();
-        console.log(error);
+        // console.log(error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -247,7 +247,7 @@ const updateTransactionStatus = async (req, res) => {
                     transaction: dbTransaction
                 });
 
-                console.log(`Added ${amountToAdd} to user ${user.id} accountBalance. New balance: ${newBalance}`);
+                // console.log(`Added ${amountToAdd} to user ${user.id} accountBalance. New balance: ${newBalance}`);
             } else {
                 await dbTransaction.rollback();
                 return res.status(404).json({ message: 'User not found' });

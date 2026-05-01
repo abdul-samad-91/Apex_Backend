@@ -105,10 +105,10 @@ const migrateRankRewardsToOneTime = async () => {
 
             await transaction.commit();
 
-            console.log('Rank rewards migration completed.');
-            console.log(`Total rewards scanned: ${allRewards.length}`);
-            console.log(`Duplicate rewards removed: ${duplicateIds.length}`);
-            console.log(`Unique user+rank entries kept: ${keepIds.size}`);
+            // console.log('Rank rewards migration completed.');
+            // console.log(`Total rewards scanned: ${allRewards.length}`);
+            // console.log(`Duplicate rewards removed: ${duplicateIds.length}`);
+            // console.log(`Unique user+rank entries kept: ${keepIds.size}`);
         } catch (error) {
             await transaction.rollback();
             throw error;
@@ -116,7 +116,7 @@ const migrateRankRewardsToOneTime = async () => {
 
         await sequelize.close();
     } catch (error) {
-        console.error('Rank rewards migration failed:', error);
+        // console.error('Rank rewards migration failed:', error);
         process.exit(1);
     }
 };

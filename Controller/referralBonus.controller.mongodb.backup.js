@@ -133,7 +133,7 @@ const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) 
   try {
     const stakingUser = await User.findById(stakingUserId);
     if (!stakingUser || !stakingUser.referralChain || stakingUser.referralChain.length === 0) {
-      console.log('No referral chain for bonus distribution');
+      // console.log('No referral chain for bonus distribution');
       return { success: true, bonusesDistributed: 0, details: [] };
     }
 
@@ -149,7 +149,7 @@ const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) 
       // Check if upline user exists
       const uplineUser = await User.findById(uplineUserId);
       if (!uplineUser) {
-        console.log(`Upline user not found at level ${level}`);
+        // console.log(`Upline user not found at level ${level}`);
         continue;
       }
 
@@ -159,7 +159,7 @@ const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) 
       // Check if upline has enough active referrals to unlock this level
       // Each level requires that many active direct referrals
       if (activeDirectReferrals < level) {
-        console.log(`Level ${level} not unlocked for user ${uplineUserId}. Active referrals: ${activeDirectReferrals}, Required: ${level}`);
+        // console.log(`Level ${level} not unlocked for user ${uplineUserId}. Active referrals: ${activeDirectReferrals}, Required: ${level}`);
         continue;
       }
 
@@ -189,7 +189,7 @@ const distributeStakingBonus = async (stakingUserId, stakeAmount, stakeEntryId) 
       });
 
       bonusesDistributed++;
-      console.log(`Bonus distributed: Level ${level}, User ${uplineUserId}, Amount ${bonusAmount}`);
+      // console.log(`Bonus distributed: Level ${level}, User ${uplineUserId}, Amount ${bonusAmount}`);
     }
 
     return {
@@ -217,7 +217,7 @@ const distributeProfitShare = async (claimingUserId, roiAmount) => {
   try {
     const claimingUser = await User.findById(claimingUserId);
     if (!claimingUser || !claimingUser.referralChain || claimingUser.referralChain.length === 0) {
-      console.log('No referral chain for profit share distribution');
+      // console.log('No referral chain for profit share distribution');
       return { success: true, sharesDistributed: 0, details: [] };
     }
 
@@ -234,7 +234,7 @@ const distributeProfitShare = async (claimingUserId, roiAmount) => {
       // Check if upline user exists
       const uplineUser = await User.findById(uplineUserId);
       if (!uplineUser) {
-        console.log(`Upline user not found at level ${level}`);
+        // console.log(`Upline user not found at level ${level}`);
         continue;
       }
 
@@ -243,7 +243,7 @@ const distributeProfitShare = async (claimingUserId, roiAmount) => {
       
       // Check if upline has enough active referrals to unlock this level
       if (activeDirectReferrals < level) {
-        console.log(`Level ${level} not unlocked for user ${uplineUserId}. Active referrals: ${activeDirectReferrals}, Required: ${level}`);
+        // console.log(`Level ${level} not unlocked for user ${uplineUserId}. Active referrals: ${activeDirectReferrals}, Required: ${level}`);
         continue;
       }
 
@@ -273,7 +273,7 @@ const distributeProfitShare = async (claimingUserId, roiAmount) => {
       });
 
       sharesDistributed++;
-      console.log(`Profit share distributed: Level ${level}, User ${uplineUserId}, Amount ${shareAmount}`);
+      // console.log(`Profit share distributed: Level ${level}, User ${uplineUserId}, Amount ${shareAmount}`);
     }
 
     return {

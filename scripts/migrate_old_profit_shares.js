@@ -23,17 +23,17 @@ const migrateOldProfitShares = async () => {
   try {
     // Connect to MongoDB
     await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB successfully');
+    // console.log('Connected to MongoDB successfully');
 
     // Find all unclaimed profit share transactions
     const unclaimedShares = await ProfitShareTransaction.find({ isClaimed: false });
     
     if (unclaimedShares.length === 0) {
-      console.log('No unclaimed profit shares found. Nothing to migrate.');
+      // console.log('No unclaimed profit shares found. Nothing to migrate.');
       return;
     }
 
-    console.log(`Found ${unclaimedShares.length} unclaimed profit share transactions`);
+    //  console.log(`Found ${unclaimedShares.length} unclaimed profit share transactions`);
 
     // Group by userId
     const groupedByUser = {};
@@ -51,7 +51,7 @@ const migrateOldProfitShares = async () => {
     }
 
     const userIds = Object.keys(groupedByUser);
-    console.log(`Processing ${userIds.length} users with unclaimed profit shares`);
+    // console.log(`Processing ${userIds.length} users with unclaimed profit shares`);
 
     const now = new Date();
     let totalMigrated = 0;
@@ -65,7 +65,7 @@ const migrateOldProfitShares = async () => {
         // Find the user
         const user = await User.findById(userData.userId);
         if (!user) {
-          console.log(`User ${userData.userId} not found, skipping ${userData.shares.length} transactions`);
+          // console.log(`User ${userData.userId} not found, skipping ${userData.shares.length} transactions`);
           continue;
         }
 
@@ -90,31 +90,31 @@ const migrateOldProfitShares = async () => {
         totalMigrated += userData.shares.length;
         totalAmountMigrated += totalAmount;
 
-        console.log(`✅ User ${user.fullName} (${user.email}): Claimed ${userData.shares.length} shares, Amount: $${totalAmount.toFixed(2)}`);
+        // console.log(`✅ User ${user.fullName} (${user.email}): Claimed ${userData.shares.length} shares, Amount: $${totalAmount.toFixed(2)}`);
       } catch (err) {
-        console.error(`❌ Error processing user ${userData.userId}:`, err.message);
+        // console.error(`❌ Error processing user ${userData.userId}:`, err.message);
       }
     }
 
-    console.log('\n========== MIGRATION COMPLETE ==========');
-    console.log(`Total transactions migrated: ${totalMigrated}`);
-    console.log(`Total amount migrated: $${totalAmountMigrated.toFixed(2)}`);
-    console.log(`Users processed: ${userIds.length}`);
-    console.log('=========================================\n');
+    // console.log('\n========== MIGRATION COMPLETE ==========');
+    // console.log(`Total transactions migrated: ${totalMigrated}`);
+    // console.log(`Total amount migrated: $${totalAmountMigrated.toFixed(2)}`);
+    // console.log(`Users processed: ${userIds.length}`);
+    //  console.log('=========================================\n');
 
     // Verify no unclaimed shares remain
     const remainingUnclaimed = await ProfitShareTransaction.countDocuments({ isClaimed: false });
     if (remainingUnclaimed === 0) {
-      console.log('✅ All old profit shares have been claimed successfully!');
+      // console.log('✅ All old profit shares have been claimed successfully!');
     } else {
-      console.log(`⚠️ ${remainingUnclaimed} unclaimed profit shares still remain`);
+      //  console.log(`⚠️ ${remainingUnclaimed} unclaimed profit shares still remain`);
     }
 
   } catch (error) {
-    console.error('Migration failed:', error);
+    // console.error('Migration failed:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    // console.log('Disconnected from MongoDB');
   }
 };
 

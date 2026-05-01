@@ -14,9 +14,9 @@ async function activateInactiveUsers() {
       { isActive: false }
     ).toArray();
     
-    console.log(`\n📋 Found ${inactiveUsers.length} inactive user(s):`);
+    // console.log(`\n📋 Found ${inactiveUsers.length} inactive user(s):`);
     inactiveUsers.forEach((user, index) => {
-      console.log(`   ${index + 1}. ${user.fullName} (${user.email})`);
+      // console.log(`   ${index + 1}. ${user.fullName} (${user.email})`);
     });
     
     // Update all inactive users to isActive: true
@@ -25,8 +25,8 @@ async function activateInactiveUsers() {
       { $set: { isActive: true } }
     );
     
-    console.log(`\n Successfully activated ${result.modifiedCount} user(s)`);
-    console.log(`   Total users matched: ${result.matchedCount}`);
+    // console.log(`\n Successfully activated ${result.modifiedCount} user(s)`);
+    // console.log(`   Total users matched: ${result.matchedCount}`);
     
     // Close connection
     await mongoose.connection.close();

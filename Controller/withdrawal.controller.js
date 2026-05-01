@@ -703,8 +703,8 @@ const updateWithdrawalStatus = async (req, res) => {
         const { status, rejectionReason, transactionHash, transactionId } = req.body;
         const adminId = req.user?.id;
 
-        console.log('Withdrawal approval request body:', req.body);
-        console.log('Extracted transactionId:', transactionId);
+        // console.log('Withdrawal approval request body:', req.body);
+        // console.log('Extracted transactionId:', transactionId);
 
         if (!adminId) {
             await transaction.rollback();
