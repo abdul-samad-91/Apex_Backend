@@ -30,7 +30,7 @@ const login = async (req, res) => {
             } catch (rl) {
                 const retrySecs = Math.ceil((rl.msBeforeNext || 0) / 1000) || 1;
                 res.set('Retry-After', String(retrySecs));
-                return res.status(429).json({ success: false, message: 'Too many requests. Try again later.' });
+                return res.status(429).json({ success: false, message: 'Too many requests. Try again later after ' + retrySecs + ' seconds.' });
             }
 
             return res.status(401).json({
@@ -55,7 +55,7 @@ const login = async (req, res) => {
             } catch (rl) {
                 const retrySecs = Math.ceil((rl.msBeforeNext || 0) / 1000) || 1;
                 res.set('Retry-After', String(retrySecs));
-                return res.status(429).json({ success: false, message: 'Too many requests. Try again later.' });
+                return res.status(429).json({ success: false, message: 'Too many requests. Try again later after ' + retrySecs + ' seconds.' });
             }
 
             return res.status(401).json({

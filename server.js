@@ -67,6 +67,22 @@
     app.use(requestLogger);
     app.use(express.static(path.join(__dirname ,"public")))
 
+    // Health endpoints for liveness/readiness checks
+    app.get('/healthz', (req, res) => {
+        res.status(200).json({ status: 'ok', uptime: process.uptime() });
+    });
+
+    app.get('/readyz', async (req, res) => {
+        try {
+            // Lightweight readiness check — verify DB connection
+            await sequelize.authenticate();
+            res.status(200).json({ status: 'ready' });
+        } catch (err) {
+            console.error('Readiness check failed:', err);
+            res.status(503).json({ status: 'unavailable' });
+        }
+    });
+
     // Apply conservative global rate limiter to all API routes
     app.use('/api', globalRateLimiterMiddleware);
 
@@ -80,11 +96,24 @@
             console.log('✅ All models synchronized with database');
         } catch (error) {
             console.error('❌ Database initialization failed:', error);
+            throw error;
+        }
+    };
+
+    // Start server only after database initialization completes
+    const startServer = async () => {
+        try {
+            await initializeDB();
+            app.listen(PORT, () => {
+                console.log(`🚀 Server is running on port ${PORT}`);
+            });
+        } catch (err) {
+            console.error('Failed to start server due to DB error:', err);
             process.exit(1);
         }
     };
 
-    initializeDB();
+    startServer();
 
     // Routes
     app.get('/', (req, res) => {
@@ -108,8 +137,4 @@
     app.use(notFound);
     app.use(errorHandler);
 
-    // Start server immediately
-    app.listen(PORT, () => {
-        console.log(`🚀 Server is running on port ${PORT}`);
-
-    });
+    // Note: server is started in startServer() after DB init
